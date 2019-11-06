@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zerops-backend
+spec:
+  selector:
+    app: zerops
+    tier: backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zerops-backend
+spec:
+  selector:
+    matchLabels:
+      app: zerops
+      tier: backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zerops
+        tier: backend
+    spec:
+      serviceAccountName: zerops-admin
+      containers:
+        - name: hello
+          #image: "sven90/devrepo-sven:zerops-monitor-2.0"
+          image: "antongulenko/zerops-monitor"
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "1024Mi"
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
