@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+import { HostListener  } from "@angular/core";
 import * as d3 from 'd3-selection';
 
 declare class dataSource {
@@ -33,6 +34,10 @@ declare class d3Edge {
 export class AppComponent {
   title = 'zerops-frontend';
 
+  @HostListener("click", ["$event.target"]) onClick(target){
+    if (!target.closest('rect')) return;
+      alert(target.id);
+  }
 
   dataSources: dataSource[] = this.getDataSources().items[0].spec.ingest;
   steps: step[] = this.getSteps().items[0].spec.ingest;
@@ -42,6 +47,7 @@ export class AppComponent {
   edges: d3Edge[] = [{start: 'dataSource:collector', stop: 'step:^layer$'}];
 
   ngAfterContentInit() {
+
     d3.select('#mysvg');
 
     const graph = {
