@@ -1,19 +1,30 @@
 import {Component, HostListener} from '@angular/core';
 import * as d3 from 'd3-selection';
 
-declare class keyValuePair {
+declare class dataSourceStepMatch {
+  dataSource: dataSource;
+  step: step;
+}
+
+declare class dataSourceLabelKeyValuePair {
+  key: string;
+  value: string;
+}
+
+declare class stepKeyValuePair {
+  regex: boolean;
   key: string;
   value: string;
 }
 
 declare class dataSource {
   name: string;
-  labels: keyValuePair[];
+  labels: dataSourceLabelKeyValuePair[];
 }
 
 declare class step {
-  key: string;
-  value: string;
+  name: string;
+  keyValuePairs: stepKeyValuePair[];
 }
 
 declare class d3Node {
@@ -30,6 +41,52 @@ declare class d3Edge {
   stop: string;
 }
 
+function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: dataSourceLabelKeyValuePair, stepKeyValuePair: stepKeyValuePair) {
+  if (stepKeyValuePair.regex) {
+    let keyRegex: RegExp = RegExp(stepKeyValuePair.key);
+    if (!keyRegex.test(dataSourceLabel.key)) {
+      return false;
+    }
+    let valueRegex: RegExp = RegExp(stepKeyValuePair.value);
+    if (!valueRegex.test(dataSourceLabel.value)) {
+      return false;
+    }
+  }
+  else {
+    if (dataSourceLabel.key !== stepKeyValuePair.key) {
+      return false;
+    }
+    if (dataSourceLabel.value !== stepKeyValuePair.value) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function stepMatchesDataSource(step: step, dataSource: dataSource) {
+  for (let stepKeyValuePair of step.keyValuePairs) {
+    for (let dataSourceLabel of dataSource.labels) {
+      if (dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel, stepKeyValuePair)) {
+        break;
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
+function getDataSourceStepMatches(dataSources: dataSource[], steps: step[]) {
+  let dataSourceStepMatches: dataSourceStepMatch[] = [];
+  for (let dataSource of dataSources) {
+    for (let step of steps) {
+      if (stepMatchesDataSource(step, dataSource)) {
+        dataSourceStepMatches.push({dataSource: dataSource, step: step})
+      }
+    }
+  }
+  return dataSourceStepMatches;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -38,34 +95,47 @@ declare class d3Edge {
 export class AppComponent {
   title = 'zerops-frontend';
 
-  @HostListener("click", ["$event.target"]) onClick(target) {
+  @HostListener('click', ['$event.target']) onClick(target) {
     if (!target.closest('rect')) return;
     alert(target.id);
   }
 
   dataSources: dataSource[] = this.getDataSourcesRaw().items.map(dataSourceRaw => ({
     name: dataSourceRaw.metadata.name,
-    labels: []
+    labels: Object.keys(dataSourceRaw.metadata.labels).map(dataSourceLabelKey => ({
+      key: dataSourceLabelKey,
+      value: dataSourceRaw.metadata.labels[dataSourceLabelKey]
+    }))
   }));
-  steps: step[] = this.getStepsRaw().items[0].spec.ingest;
+  steps: step[] = this.getStepsRaw().items.map(stepRaw => ({
+    name: stepRaw.metadata.name,
+    keyValuePairs: stepRaw.spec.ingest.map(ingest => ({
+      regex: ingest.check === 'regex',
+      key: ingest.key,
+      value: ingest.value
+    }))
+  }));
+
+  dataSourceStepMatches: dataSourceStepMatch[] = getDataSourceStepMatches(this.dataSources, this.steps);
+
   dataSourcesNodes: d3Node[] = this.dataSources.map((dataSource, i) => ({
     id: 'dataSource:' + dataSource.name,
-    text: dataSource.name,
+    text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
     x: 10,
     y: 10 + 150 * i,
     width: 200,
     height: 100
   }));
   stepsNodes: d3Node[] = this.steps.map((step, i) => ({
-    id: 'step:' + step.key,
-    text: step.key + ':' + step.value,
+    id: 'step:' + step.name,
+    text: step.name,
     x: 260,
     y: 10 + 150 * i,
     width: 200,
     height: 100
   }));
   nodes: d3Node[] = [...this.dataSourcesNodes, ...this.stepsNodes];
-  edges: d3Edge[] = [{start: 'dataSource:data-source-a', stop: 'step:^layer$'}];
+  edges: d3Edge[] = this.dataSourceStepMatches.map(match => ({start: 'dataSource:' + match.dataSource.name, stop: 'step:' + match.step.name}));
 
   ngAfterContentInit() {
 
@@ -144,9 +214,10 @@ export class AppComponent {
       })
       .attr('pointer-events', 'visible');
     g.append('text')
-      .attr("x", 10)
-      .attr("y", 10)
-      .attr("dy", ".35em")
+      .attr('x', 10)
+      .attr('y', 10)
+      .attr('dy', '.35em')
+      .attr('font-size', 'smaller')
       .text(function (d) {
         return d.text;
       });
