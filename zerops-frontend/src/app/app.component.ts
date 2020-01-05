@@ -20,6 +20,7 @@ declare class stepKeyValuePair {
 declare class dataSource {
   name: string;
   labels: dataSourceLabelKeyValuePair[];
+  depth?: number;
 }
 
 declare class step {
