@@ -1,34 +1,34 @@
 import {Component, HostListener} from '@angular/core';
 import * as d3 from 'd3-selection';
 
-declare class dataSourceStepMatch {
-  dataSource: dataSource;
-  step: step;
+declare class DataSourceStepMatch {
+  dataSource: DataSource;
+  step: Step;
 }
 
-declare class dataSourceLabelKeyValuePair {
+declare class DataSourceLabelKeyValuePair {
   key: string;
   value: string;
 }
 
-declare class stepKeyValuePair {
+declare class StepKeyValuePair {
   regex: boolean;
   key: string;
   value: string;
 }
 
-declare class dataSource {
+declare class DataSource {
   name: string;
-  labels: dataSourceLabelKeyValuePair[];
+  labels: DataSourceLabelKeyValuePair[];
   depth?: number;
 }
 
-declare class step {
+declare class Step {
   name: string;
-  keyValuePairs: stepKeyValuePair[];
+  keyValuePairs: StepKeyValuePair[];
 }
 
-declare class d3Node {
+declare class D3Node {
   id: string;
   text: string;
   x: number;
@@ -37,12 +37,12 @@ declare class d3Node {
   height: number;
 }
 
-declare class d3Edge {
+declare class D3Edge {
   start: string;
   stop: string;
 }
 
-function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: dataSourceLabelKeyValuePair, stepKeyValuePair: stepKeyValuePair) {
+function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: DataSourceLabelKeyValuePair, stepKeyValuePair: StepKeyValuePair) {
   if (stepKeyValuePair.regex) {
     let keyRegex: RegExp = RegExp(stepKeyValuePair.key);
     if (!keyRegex.test(dataSourceLabel.key)) {
@@ -64,7 +64,7 @@ function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: dataSourceLabel
   return true;
 }
 
-function stepMatchesDataSource(step: step, dataSource: dataSource) {
+function stepMatchesDataSource(step: Step, dataSource: DataSource) {
   for (let stepKeyValuePair of step.keyValuePairs) {
     let foundMatchingLabel: boolean = false;
     for (let dataSourceLabel of dataSource.labels) {
@@ -80,8 +80,8 @@ function stepMatchesDataSource(step: step, dataSource: dataSource) {
   return true;
 }
 
-function getDataSourceStepMatches(dataSources: dataSource[], steps: step[]) {
-  let dataSourceStepMatches: dataSourceStepMatch[] = [];
+function getDataSourceStepMatches(dataSources: DataSource[], steps: Step[]) {
+  let dataSourceStepMatches: DataSourceStepMatch[] = [];
   for (let dataSource of dataSources) {
     for (let step of steps) {
       if (stepMatchesDataSource(step, dataSource)) {
@@ -108,14 +108,14 @@ export class AppComponent {
   width: number = 200;
   height: number = 100;
 
-  dataSources: dataSource[] = this.getDataSourcesRaw().items.map(dataSourceRaw => ({
+  dataSources: DataSource[] = this.getDataSourcesRaw().items.map(dataSourceRaw => ({
     name: dataSourceRaw.metadata.name,
     labels: Object.keys(dataSourceRaw.metadata.labels).map(dataSourceLabelKey => ({
       key: dataSourceLabelKey,
       value: dataSourceRaw.metadata.labels[dataSourceLabelKey]
     }))
   }));
-  steps: step[] = this.getStepsRaw().items.map(stepRaw => ({
+  steps: Step[] = this.getStepsRaw().items.map(stepRaw => ({
     name: stepRaw.metadata.name,
     keyValuePairs: stepRaw.spec.ingest.map(ingest => ({
       regex: ingest.check === 'regex',
@@ -124,9 +124,9 @@ export class AppComponent {
     }))
   }));
 
-  dataSourceStepMatches: dataSourceStepMatch[] = getDataSourceStepMatches(this.dataSources, this.steps);
+  dataSourceStepMatches: DataSourceStepMatch[] = getDataSourceStepMatches(this.dataSources, this.steps);
 
-  dataSourcesNodes: d3Node[] = this.dataSources.map((dataSource, i) => ({
+  dataSourcesNodes: D3Node[] = this.dataSources.map((dataSource, i) => ({
     id: 'dataSource:' + dataSource.name,
     text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
     x: 10,
@@ -134,7 +134,7 @@ export class AppComponent {
     width: this.width,
     height: this.height
   }));
-  stepsNodes: d3Node[] = this.steps.map((step, i) => ({
+  stepsNodes: D3Node[] = this.steps.map((step, i) => ({
     id: 'step:' + step.name,
     text: step.name,
     x: 160 + this.width,
@@ -142,8 +142,8 @@ export class AppComponent {
     width: this.width,
     height: this.height
   }));
-  nodes: d3Node[] = [...this.dataSourcesNodes, ...this.stepsNodes];
-  edges: d3Edge[] = this.dataSourceStepMatches.map(match => ({start: 'dataSource:' + match.dataSource.name, stop: 'step:' + match.step.name}));
+  nodes: D3Node[] = [...this.dataSourcesNodes, ...this.stepsNodes];
+  edges: D3Edge[] = this.dataSourceStepMatches.map(match => ({start: 'dataSource:' + match.dataSource.name, stop: 'step:' + match.step.name}));
 
   ngAfterContentInit() {
 
