@@ -65,10 +65,14 @@ function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: dataSourceLabel
 
 function stepMatchesDataSource(step: step, dataSource: dataSource) {
   for (let stepKeyValuePair of step.keyValuePairs) {
+    let foundMatchingLabel: boolean = false;
     for (let dataSourceLabel of dataSource.labels) {
       if (dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel, stepKeyValuePair)) {
+        foundMatchingLabel = true;
         break;
       }
+    }
+    if (!foundMatchingLabel) {
       return false;
     }
   }
