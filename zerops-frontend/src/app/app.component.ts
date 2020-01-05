@@ -104,6 +104,9 @@ export class AppComponent {
     alert(target.id);
   }
 
+  width: number = 200;
+  height: number = 100;
+
   dataSources: dataSource[] = this.getDataSourcesRaw().items.map(dataSourceRaw => ({
     name: dataSourceRaw.metadata.name,
     labels: Object.keys(dataSourceRaw.metadata.labels).map(dataSourceLabelKey => ({
@@ -126,17 +129,17 @@ export class AppComponent {
     id: 'dataSource:' + dataSource.name,
     text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
     x: 10,
-    y: 10 + 150 * i,
-    width: 200,
-    height: 100
+    y: 10 + 1.50 * this.height * i,
+    width: this.width,
+    height: this.height
   }));
   stepsNodes: d3Node[] = this.steps.map((step, i) => ({
     id: 'step:' + step.name,
     text: step.name,
-    x: 260,
-    y: 10 + 150 * i,
-    width: 200,
-    height: 100
+    x: 160 + this.width,
+    y: 10 + 1.50 * this.height * i,
+    width: this.width,
+    height: this.height
   }));
   nodes: d3Node[] = [...this.dataSourcesNodes, ...this.stepsNodes];
   edges: d3Edge[] = this.dataSourceStepMatches.map(match => ({start: 'dataSource:' + match.dataSource.name, stop: 'step:' + match.step.name}));
@@ -178,19 +181,18 @@ export class AppComponent {
         return d.stop;
       })
       .attr('x1', function (d) {
-        return graph.mid(d.start).x;
-      })
+        return graph.mid(d.start).x + this.width / 2;
+      }.bind(this))
       .attr('y1', function (d) {
         return graph.mid(d.start).y;
       })
       .attr('x2', function (d) {
-        return graph.mid(d.stop).x;
-      })
+        return graph.mid(d.stop).x - this.width / 2;
+      }.bind(this))
       .attr('y2', function (d) {
         return graph.mid(d.stop).y
       })
-      .attr('style', 'stroke:rgb(255,0,0);stroke-width:2')
-      .attr('marker-end', 'url(#arrow)');
+      .attr('style', 'stroke:rgb(80,80,80);stroke-width:2');
 
     var g = d3.select('#mysvg')
       .selectAll('g')
