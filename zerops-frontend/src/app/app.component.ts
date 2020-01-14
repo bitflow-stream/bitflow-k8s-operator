@@ -1,9 +1,42 @@
 import {Component, HostListener} from '@angular/core';
 import * as d3 from 'd3-selection';
 
+let dataSourceMap: Map<string, DataSource> = new Map();
+let stepMap: Map<string, Step> = new Map();
+
+// let amountOfNodesByDepth: number[] = [];
+
+enum AnalysisType {
+  ALL_TO_ONE = 'all-to-one',
+  ONE_TO_ONE = 'one-to-one'
+}
+
+declare class KubernetesGraph {
+  dataSourceGraphElements: DataSourceGraphElement[];
+  stepGraphElements: StepGraphElement[];
+}
+
+declare class DataSourceGraphElement {
+  uuid: string;
+  stepGraphElements: string[];
+  creatorStepGraphElement: string;
+}
+
+declare class StepGraphElement {
+  uuid: string;
+  outputDataSourceGraphElements: string[];
+  sourceDataSourceGraphElements: string[];
+}
+
+declare class DataSourcesAndStepsAndMatches {
+  dataSources: DataSource[];
+  steps: Step[];
+  matches: DataSourceStepMatch[];
+}
+
 declare class DataSourceStepMatch {
-  dataSource: DataSource;
-  step: Step;
+  dataSource: string;
+  step: string;
 }
 
 declare class DataSourceLabelKeyValuePair {
@@ -17,15 +50,24 @@ declare class StepKeyValuePair {
   value: string;
 }
 
+declare class KeyValuePair {
+  key: string;
+  value: string;
+}
+
 declare class DataSource {
+  uuid: string;
   name: string;
   labels: DataSourceLabelKeyValuePair[];
-  depth?: number;
+  depth;
 }
 
 declare class Step {
+  uuid: string;
   name: string;
   keyValuePairs: StepKeyValuePair[];
+  type: string;
+  outputLabelsArray: KeyValuePair[][];
 }
 
 declare class D3Node {
@@ -42,7 +84,14 @@ declare class D3Edge {
   stop: string;
 }
 
-function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: DataSourceLabelKeyValuePair, stepKeyValuePair: StepKeyValuePair) {
+function uuidv4(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: DataSourceLabelKeyValuePair, stepKeyValuePair: StepKeyValuePair): boolean {
   if (stepKeyValuePair.regex) {
     let keyRegex: RegExp = RegExp(stepKeyValuePair.key);
     if (!keyRegex.test(dataSourceLabel.key)) {
@@ -52,8 +101,7 @@ function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: DataSourceLabel
     if (!valueRegex.test(dataSourceLabel.value)) {
       return false;
     }
-  }
-  else {
+  } else {
     if (dataSourceLabel.key !== stepKeyValuePair.key) {
       return false;
     }
@@ -64,7 +112,7 @@ function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: DataSourceLabel
   return true;
 }
 
-function stepMatchesDataSource(step: Step, dataSource: DataSource) {
+function stepMatchesDataSource(step: Step, dataSource: DataSource): boolean {
   for (let stepKeyValuePair of step.keyValuePairs) {
     let foundMatchingLabel: boolean = false;
     for (let dataSourceLabel of dataSource.labels) {
@@ -80,16 +128,138 @@ function stepMatchesDataSource(step: Step, dataSource: DataSource) {
   return true;
 }
 
-function getDataSourceStepMatches(dataSources: DataSource[], steps: Step[]) {
+function getDataSourceStepMatches(dataSources: string[], steps: string[]): DataSourceStepMatch[] {
   let dataSourceStepMatches: DataSourceStepMatch[] = [];
   for (let dataSource of dataSources) {
     for (let step of steps) {
-      if (stepMatchesDataSource(step, dataSource)) {
+      if (stepMatchesDataSource(stepMap.get(step), dataSourceMap.get(dataSource))) {
         dataSourceStepMatches.push({dataSource: dataSource, step: step})
       }
     }
   }
   return dataSourceStepMatches;
+}
+
+function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): KubernetesGraph {
+  let dataSourceGraphElements: DataSourceGraphElement[] = [];
+  dataSources.forEach(dataSource => dataSourceGraphElements.push({
+    uuid: dataSource.uuid,
+    stepGraphElements: [],
+    creatorStepGraphElement: null
+  }));
+
+  let stepGraphElements: StepGraphElement[] = [];
+  steps.forEach(step => stepGraphElements.push({
+    uuid: step.uuid,
+    outputDataSourceGraphElements: [],
+    sourceDataSourceGraphElements: []
+  }));
+
+  let dataSourceStepMatches: DataSourceStepMatch[] = getDataSourceStepMatches(dataSources.map(dataSource => dataSource.uuid), steps.map(step => step.uuid));
+  dataSourceStepMatches.forEach(match => {
+    let dataSourceGraphElement: DataSourceGraphElement = dataSourceGraphElements.filter(dataSourceGraphElement => dataSourceGraphElement.uuid === match.dataSource)[0];
+    let stepGraphElement: StepGraphElement = stepGraphElements.filter(stepGraphElement => stepGraphElement.uuid === match.step)[0];
+
+    dataSourceGraphElement.stepGraphElements.push(stepGraphElement.uuid);
+    stepGraphElement.sourceDataSourceGraphElements.push(dataSourceGraphElement.uuid);
+  });
+
+  let dataSourceStepCombinationsWhichAlreadyCreatedNewDataSources: KeyValuePair[] = [];
+
+  stepGraphElements.forEach(stepGraphElement => {
+    let currentStep: Step = stepMap.get(stepGraphElement.uuid);
+    if (currentStep.type === AnalysisType.ONE_TO_ONE) {
+      stepGraphElement.sourceDataSourceGraphElements.forEach(sourceDataSourceGraphElement => {
+        currentStep.outputLabelsArray.forEach(outputLabels => {
+          let currentDataSource: DataSource = dataSourceMap.get(sourceDataSourceGraphElement);
+          let outputDataSource: DataSource = {
+            uuid: uuidv4(),
+            name: currentDataSource.name + '->' + currentStep.name,
+            labels: [...currentDataSource.labels, ...outputLabels], // TODO prevent doubles, overwrite old ones
+            depth: currentDataSource.depth + 1
+          };
+          dataSourceMap.set(outputDataSource.uuid, outputDataSource);
+          // incrementNumberOfNodesInDepth(outputDataSource.depth);
+          dataSourceGraphElements.push({
+            uuid: outputDataSource.uuid,
+            stepGraphElements: [],
+            creatorStepGraphElement: currentStep.uuid
+          });
+          stepGraphElements.filter(stepGraphElement => stepGraphElement.uuid === currentStep.uuid)[0].outputDataSourceGraphElements.push(outputDataSource.uuid);
+        });
+      });
+    } else if (currentStep.type === AnalysisType.ALL_TO_ONE) {
+      let sourceDataSources: DataSource[] = [];
+      stepGraphElement.sourceDataSourceGraphElements.forEach(sourceDataSource => sourceDataSources.push(dataSourceMap.get(sourceDataSource)));
+      let labelIntersection: KeyValuePair[] = [];
+      if (sourceDataSources.length > 0) {
+        sourceDataSources[0].labels.forEach(label => {
+          let labelIsPartOfEverySourceDataSource: boolean = true;
+          for (let sourceDataSource of sourceDataSources) {
+            if (sourceDataSource.labels[label.key] === undefined || sourceDataSource.labels[label.key] !== label.value) {
+              labelIsPartOfEverySourceDataSource = false;
+              break;
+            }
+          }
+          if (labelIsPartOfEverySourceDataSource) {
+            labelIntersection.push(label);
+          }
+        });
+      }
+      currentStep.outputLabelsArray.forEach(outputLabels => {
+        let uuid: string = uuidv4();
+        let outputDataSource: DataSource = {
+          uuid: uuid,
+          name: '(all-to-one-' + uuid + ')->' + currentStep.name,
+          labels: [...labelIntersection, ...outputLabels], // TODO prevent doubles, overwrite old ones
+          depth: Math.max(...sourceDataSources.map(dataSource => dataSource.depth))  + 1
+        };
+
+        dataSourceMap.set(outputDataSource.uuid, outputDataSource);
+        // incrementNumberOfNodesInDepth(outputDataSource.depth);
+        dataSourceGraphElements.push({
+          uuid: outputDataSource.uuid,
+          stepGraphElements: [],
+          creatorStepGraphElement: currentStep.uuid
+        });
+        stepGraphElements.filter(stepGraphElement => stepGraphElement.uuid === currentStep.uuid)[0].outputDataSourceGraphElements.push(outputDataSource.uuid);
+
+      })
+    }
+  });
+
+
+  return {
+    dataSourceGraphElements: dataSourceGraphElements,
+    stepGraphElements: stepGraphElements
+  };
+}
+
+// function incrementNumberOfNodesInDepth(depth: number): void {
+//   if (amountOfNodesByDepth[depth] === undefined || amountOfNodesByDepth[depth] === null) {
+//     amountOfNodesByDepth[depth] = 1;
+//   } else {
+//     amountOfNodesByDepth[depth] = amountOfNodesByDepth[depth] + 1;
+//   }
+// }
+
+function fillDataSourceMap(dataSources: DataSource[]): void {
+  dataSources.forEach(dataSource => {
+    dataSourceMap.set(dataSource.uuid, dataSource);
+      // incrementNumberOfNodesInDepth(dataSource.depth);
+  });
+}
+
+function fillStepMap(steps: Step[]): void {
+  steps.forEach(step => stepMap.set(step.uuid, step));
+}
+
+function getAllDataSources(): DataSource[] {
+  return Array.from(dataSourceMap.keys()).map(dataSourceKey => dataSourceMap.get(dataSourceKey));
+}
+
+function getAllSteps(): Step[] {
+  return Array.from(stepMap.keys()).map(stepKey => stepMap.get(stepKey));
 }
 
 @Component({
@@ -108,50 +278,92 @@ export class AppComponent {
   width: number = 200;
   height: number = 100;
 
-  dataSources: DataSource[] = this.getDataSourcesRaw().items.map(dataSourceRaw => ({
-    name: dataSourceRaw.metadata.name,
-    labels: Object.keys(dataSourceRaw.metadata.labels).map(dataSourceLabelKey => ({
-      key: dataSourceLabelKey,
-      value: dataSourceRaw.metadata.labels[dataSourceLabelKey]
-    }))
-  }));
-  steps: Step[] = this.getStepsRaw().items.map(stepRaw => ({
-    name: stepRaw.metadata.name,
-    keyValuePairs: stepRaw.spec.ingest.map(ingest => ({
-      regex: ingest.check === 'regex',
-      key: ingest.key,
-      value: ingest.value
-    }))
-  }));
-
-  dataSourceStepMatches: DataSourceStepMatch[] = getDataSourceStepMatches(this.dataSources, this.steps);
-
-  dataSourcesNodes: D3Node[] = this.dataSources.map((dataSource, i) => ({
-    id: 'dataSource:' + dataSource.name,
-    text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
-    x: 10,
-    y: 10 + 1.50 * this.height * i,
-    width: this.width,
-    height: this.height
-  }));
-  stepsNodes: D3Node[] = this.steps.map((step, i) => ({
-    id: 'step:' + step.name,
-    text: step.name,
-    x: 160 + this.width,
-    y: 10 + 1.50 * this.height * i,
-    width: this.width,
-    height: this.height
-  }));
-  nodes: D3Node[] = [...this.dataSourcesNodes, ...this.stepsNodes];
-  edges: D3Edge[] = this.dataSourceStepMatches.map(match => ({start: 'dataSource:' + match.dataSource.name, stop: 'step:' + match.step.name}));
 
   ngAfterContentInit() {
+
+    let initialDataSources: DataSource[] = this.getDataSourcesRaw().items.map(dataSourceRaw => ({
+      name: dataSourceRaw.metadata.name,
+      labels: Object.keys(dataSourceRaw.metadata.labels).map(dataSourceLabelKey => ({
+        key: dataSourceLabelKey,
+        value: dataSourceRaw.metadata.labels[dataSourceLabelKey]
+      })),
+      uuid: uuidv4(),
+      depth: 0
+    }));
+    fillDataSourceMap(initialDataSources);
+    let initialSteps: Step[] = this.getStepsRaw().items.map(stepRaw => ({
+      name: stepRaw.metadata.name,
+      keyValuePairs: stepRaw.spec.ingest.map(ingest => ({
+        regex: ingest.check === 'regex',
+        key: ingest.key,
+        value: ingest.value
+      })),
+      uuid: uuidv4(),
+      type: stepRaw.spec.type,
+      outputLabelsArray: stepRaw.spec.outputs.map(output => {
+        return Object.keys(output.labels).map(labelKey => ({
+          key: labelKey,
+          value: output.labels[labelKey]
+        }));
+      })
+    }));
+    fillStepMap(initialSteps);
+
+    let kubernetesGraph: KubernetesGraph = createKubernetesGraph(getAllDataSources(), getAllSteps());
+    // kubernetesGraph = createKubernetesGraph(getAllDataSources(), getAllSteps());
+
+    let dataSourcesNodes: D3Node[] = kubernetesGraph.dataSourceGraphElements.map(dataSourceGraphElement => dataSourceMap.get(dataSourceGraphElement.uuid))
+      .sort((a, b) => {
+        if (a.depth < b.depth) {
+          return -1;
+        }
+        if (a.depth > b.depth) {
+          return 1;
+        }
+        return 0;
+      })
+      .map((dataSource, i) => ({
+        id: dataSource.uuid,
+        text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
+        x: 10 + ((this.width + 150) * 2) * dataSource.depth,
+        y: 10 + 1.50 * this.height * i,
+        width: this.width,
+        height: this.height
+      }));
+    let stepsNodes: D3Node[] = kubernetesGraph.stepGraphElements.map(stepGraphElement => stepMap.get(stepGraphElement.uuid))
+      .map((step, i) => ({
+        id: step.uuid,
+        text: step.name,
+        x: 160 + this.width,
+        y: 10 + 1.50 * this.height * i,
+        width: this.width,
+        height: this.height
+      }));
+    let nodes: D3Node[] = [...dataSourcesNodes, ...stepsNodes];
+    let edges: D3Edge[] = [];
+
+    kubernetesGraph.dataSourceGraphElements.forEach(dataSourceGraphElement => {
+      dataSourceGraphElement.stepGraphElements.forEach(stepGraphElement => {
+        edges.push({
+          start: dataSourceGraphElement.uuid,
+          stop: stepGraphElement
+        });
+      });
+    });
+    kubernetesGraph.stepGraphElements.forEach(stepGraphElement => {
+      stepGraphElement.outputDataSourceGraphElements.forEach(outputDataSourceGraphElement => {
+        edges.push({
+          start: stepGraphElement.uuid,
+          stop: outputDataSourceGraphElement
+        });
+      });
+    });
 
     d3.select('#mysvg');
 
     const graph = {
-      nodes: this.nodes,
-      edges: this.edges,
+      nodes: nodes,
+      edges: edges,
       node: function (id) {
         if (!this.nmap) {
           this.nmap = {};
@@ -228,6 +440,9 @@ export class AppComponent {
       .text(function (d) {
         return d.text;
       });
+
+    document.getElementById('mysvg').setAttribute('width', '2000');
+    document.getElementById('mysvg').setAttribute('height', '20000');
 
   }
 
@@ -487,6 +702,67 @@ export class AppComponent {
             },
             "type": "all-to-one"
           }
+        },
+        {
+          "apiVersion": "zerops.com/v1",
+          "kind": "ZerOpsStep",
+          "metadata": {
+            "annotations": {
+              "kubectl.kubernetes.io/last-applied-configuration": "{}"
+            },
+            "creationTimestamp": "2019-11-07T13:35:48Z",
+            "generation": 1,
+            "name": "example-step-matches-ab",
+            "resourceVersion": "55010",
+            "selfLink": "/apis/zerops.com/v1/zerops-steps/example-step-one-to-one-1",
+            "uid": "a3eaaa0a-46f2-46bf-8604-220542d4a78d"
+          },
+          "spec": {
+            "ingest": [
+              {
+                "check": "regex",
+                "key": "name",
+                "value": "^(A|B)$"
+              }
+            ],
+            "outputs": [
+              {
+                "labels": {
+                  "data": "aggregated-all-physical"
+                },
+                "name": "phys",
+                "url": "tcp://:9000"
+              }
+            ],
+            "template": {
+              "metadata": {
+                "labels": {
+                  "app": "aggregate-physical-data"
+                }
+              },
+              "spec": {
+                "containers": [
+                  {
+                    "command": [
+                      "sh",
+                      "-c",
+                      "echo \"My IP: $(ip route get 1 | awk '{print $NF;exit}')\"\n/bitflow-pipeline \\\n\"{ZEROPS_DATA_SOURCE}\n-\u003e csv://:9000\"\n"
+                    ],
+                    "image": "teambitflow/go-bitflow",
+                    "imagePullPolicy": "IfNotPresent",
+                    "name": "container",
+                    "ports": [
+                      {
+                        "containerPort": 9000,
+                        "name": "data"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "type": "one-to-one"
+          }
         }
       ],
       "kind": "List",
@@ -515,6 +791,27 @@ export class AppComponent {
               "name": "A"
             },
             "name": "data-source-a",
+            "resourceVersion": "54932",
+            "selfLink": "/apis/zerops.com/v1/zerops-data-sources/data-source-a",
+            "uid": "1d724749-13a0-4a6d-9cbe-b3f3fa304030"
+          },
+          "spec": {
+            "url": "tcp://172.17.0.8:9000"
+          }
+        },
+        {
+          "apiVersion": "zerops.com/v1",
+          "kind": "ZerOpsDataSource",
+          "metadata": {
+            "annotations": {
+              "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"zerops.com/v1\",\"kind\":\"ZerOpsDataSource\",\"metadata\":{\"annotations\":{},\"labels\":{\"name\":\"A\"},\"name\":\"data-source-a\"},\"spec\":{\"url\":\"tcp://172.17.0.8:9000\"}}\n"
+            },
+            "creationTimestamp": "2019-11-07T13:34:46Z",
+            "generation": 1,
+            "labels": {
+              "name": "A"
+            },
+            "name": "data-source-a-(2)",
             "resourceVersion": "54932",
             "selfLink": "/apis/zerops.com/v1/zerops-data-sources/data-source-a",
             "uid": "1d724749-13a0-4a6d-9cbe-b3f3fa304030"
@@ -596,179 +893,4 @@ export class AppComponent {
       }
     };
   }
-
-
-  // getSteps() {
-  //   return {
-  //     "apiVersion": "v1",
-  //     "items": [
-  //       {
-  //         "apiVersion": "zerops.com/v1",
-  //         "kind": "ZerOpsStep",
-  //         "metadata": {
-  //           "annotations": {
-  //             "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"zerops.com/v1\",\"kind\":\"ZerOpsStep\",\"metadata\":{\"annotations\":{},\"name\":\"example-analysis-all-to-one\"},\"spec\":{\"ingest\":[{\"key\":\"collector\",\"value\":\"bitflow\"},{\"check\":\"regex\",\"key\":\"^layer$\",\"value\":\"^physical$\"},{\"check\":\"regex\",\"key\":\"host\",\"value\":\"wally1.*\"}],\"outputs\":[{\"labels\":{\"data\":\"aggregated-all-physical\"},\"name\":\"phys\",\"url\":\"tcp://:9000\"}],\"template\":{\"metadata\":{\"labels\":{\"app\":\"aggregate-physical-data\"}},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"echo \\\"My IP: $(ip route get 1 | awk '{print $NF;exit}')\\\"\\n/bitflow-pipeline \\\\\\n\\\"{ZEROPS_DATA_SOURCE}\\n-\\u003e csv://:9000\\\"\\n\"],\"image\":\"teambitflow/go-bitflow\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"container\",\"ports\":[{\"containerPort\":9000,\"name\":\"data\"}]}]}},\"type\":\"all-to-one\"}}\n"
-  //           },
-  //           "creationTimestamp": "2019-11-03T17:24:46Z",
-  //           "generation": 1,
-  //           "name": "example-analysis-all-to-one",
-  //           "resourceVersion": "8295",
-  //           "selfLink": "/apis/zerops.com/v1/zerops-steps/example-analysis-all-to-one",
-  //           "uid": "3cf37727-5651-434a-8ae0-15df62fc5086"
-  //         },
-  //         "spec": {
-  //           "ingest": [
-  //             {
-  //               "key": "collector",
-  //               "value": "bitflow"
-  //             },
-  //             {
-  //               "check": "regex",
-  //               "key": "^layer$",
-  //               "value": "^physical$"
-  //             },
-  //             {
-  //               "check": "regex",
-  //               "key": "host",
-  //               "value": "wally1.*"
-  //             }
-  //           ],
-  //           "outputs": [
-  //             {
-  //               "labels": {
-  //                 "data": "aggregated-all-physical"
-  //               },
-  //               "name": "phys",
-  //               "url": "tcp://:9000"
-  //             }
-  //           ],
-  //           "template": {
-  //             "metadata": {
-  //               "labels": {
-  //                 "app": "aggregate-physical-data"
-  //               }
-  //             },
-  //             "spec": {
-  //               "containers": [
-  //                 {
-  //                   "command": [
-  //                     "sh",
-  //                     "-c",
-  //                     "echo \"My IP: $(ip route get 1 | awk '{print $NF;exit}')\"\n/bitflow-pipeline \\\n\"{ZEROPS_DATA_SOURCE}\n-\u003e csv://:9000\"\n"
-  //                   ],
-  //                   "image": "teambitflow/go-bitflow",
-  //                   "imagePullPolicy": "IfNotPresent",
-  //                   "name": "container",
-  //                   "ports": [
-  //                     {
-  //                       "containerPort": 9000,
-  //                       "name": "data"
-  //                     }
-  //                   ]
-  //                 }
-  //               ]
-  //             }
-  //           },
-  //           "type": "all-to-one"
-  //         }
-  //       }
-  //     ],
-  //     "kind": "List",
-  //     "metadata": {
-  //       "resourceVersion": "",
-  //       "selfLink": ""
-  //     }
-  //   };
-  // }
-
-
-  // getDataSources() {
-  //   return {
-  //     "apiVersion": "v1"
-  //     ,
-  //     "items": [
-  //       {
-  //         "apiVersion": "zerops.com/v1",
-  //         "kind": "ZerOpsStep",
-  //         "metadata": {
-  //           "annotations": {
-  //             "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"zerops.com/v1\",\"kind\":\"ZerOpsStep\",\"metadata\":{\"annotations\":{},\"name\":\"example-analysis-all-to-one\"},\"spec\":{\"ingest\":[{\"key\":\"collector\",\"value\":\"bitflow\"},{\"check\":\"regex\",\"key\":\"^layer$\",\"value\":\"^physical$\"},{\"check\":\"regex\",\"key\":\"host\",\"value\":\"wally1.*\"}],\"outputs\":[{\"labels\":{\"data\":\"aggregated-all-physical\"},\"name\":\"phys\",\"url\":\"tcp://:9000\"}],\"template\":{\"metadata\":{\"labels\":{\"app\":\"aggregate-physical-data\"}},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"echo \\\"My IP: $(ip route get 1 | awk '{print $NF;exit}')\\\"\\n/bitflow-pipeline \\\\\\n\\\"{ZEROPS_DATA_SOURCE}\\n-\\u003e csv://:9000\\\"\\n\"],\"image\":\"teambitflow/go-bitflow\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"container\",\"ports\":[{\"containerPort\":9000,\"name\":\"data\"}]}]}},\"type\":\"all-to-one\"}}\n"
-  //           },
-  //           "creationTimestamp": "2019-11-03T17:24:46Z",
-  //           "generation": 1,
-  //           "name": "example-analysis-all-to-one",
-  //           "resourceVersion": "8295",
-  //           "selfLink": "/apis/zerops.com/v1/zerops-steps/example-analysis-all-to-one",
-  //           "uid": "3cf37727-5651-434a-8ae0-15df62fc5086"
-  //         },
-  //         "spec": {
-  //           "ingest": [
-  //             {
-  //               "key": "collector",
-  //               "value": "bitflow"
-  //             },
-  //             {
-  //               "check": "regex",
-  //               "key": "^layer$",
-  //               "value": "^physical$"
-  //             },
-  //             {
-  //               "check": "regex",
-  //               "key": "host",
-  //               "value": "wally1.*"
-  //             },
-  //             {
-  //               "key": "unusedKey",
-  //               "value": "unusedValue"
-  //             }
-  //           ],
-  //           "outputs": [
-  //             {
-  //               "labels": {
-  //                 "data": "aggregated-all-physical"
-  //               },
-  //               "name": "phys",
-  //               "url": "tcp://:9000"
-  //             }
-  //           ],
-  //           "template": {
-  //             "metadata": {
-  //               "labels": {
-  //                 "app": "aggregate-physical-data"
-  //               }
-  //             },
-  //             "spec": {
-  //               "containers": [
-  //                 {
-  //                   "command": [
-  //                     "sh",
-  //                     "-c",
-  //                     "echo \"My IP: $(ip route get 1 | awk '{print $NF;exit}')\"\n/bitflow-pipeline \\\n\"{ZEROPS_DATA_SOURCE}\n-\u003e csv://:9000\"\n"
-  //                   ],
-  //                   "image": "teambitflow/go-bitflow",
-  //                   "imagePullPolicy": "IfNotPresent",
-  //                   "name": "container",
-  //                   "ports": [
-  //                     {
-  //                       "containerPort": 9000,
-  //                       "name": "data"
-  //                     }
-  //                   ]
-  //                 }
-  //               ]
-  //             }
-  //           },
-  //           "type": "all-to-one"
-  //         }
-  //       }
-  //     ]
-  //     ,
-  //     "kind": "List"
-  //     ,
-  //     "metadata": {
-  //       "resourceVersion": "",
-  //       "selfLink": ""
-  //     }
-  //   };
-  // }
 }
