@@ -43,7 +43,8 @@ export function drawSvg(kubernetesGraph: KubernetesGraph, nodeLayout: string[][]
       x: 10 + (svgNodeWidth + 150) * getNodeLayoutColumnByUuid(nodeLayout, dataSource.uuid),
       y: 10 + 1.50 * svgNodeHeight * getNodeLayoutRowByUuid(nodeLayout, dataSource.uuid),
       width: svgNodeWidth,
-      height: svgNodeHeight
+      height: svgNodeHeight,
+      type: 'data-source'
     }));
   let stepsNodes: D3Node[] = kubernetesGraph.stepGraphElements.map(stepGraphElement => stepMap.get(stepGraphElement.uuid))
     .map((step, i) => ({
@@ -52,7 +53,8 @@ export function drawSvg(kubernetesGraph: KubernetesGraph, nodeLayout: string[][]
       x: 10 + (svgNodeWidth + 150) * getNodeLayoutColumnByUuid(nodeLayout, step.uuid),
       y: 10 + 1.50 * svgNodeHeight * getNodeLayoutRowByUuid(nodeLayout, step.uuid),
       width: svgNodeWidth,
-      height: svgNodeHeight
+      height: svgNodeHeight,
+      type: 'step'
     }));
   let nodes: D3Node[] = [...dataSourcesNodes, ...stepsNodes];
   let edges: D3Edge[] = [];
@@ -137,7 +139,12 @@ export function drawSvg(kubernetesGraph: KubernetesGraph, nodeLayout: string[][]
     })
     .attr('x', 0)
     .attr('y', 0)
-    .attr('style', 'stroke:#000000; fill:#eeeeee;')
+    .attr('style', function(d) {
+      if (d.type === 'data-source') {
+        return 'stroke:#000000; fill:#eeeeee;';
+      }
+      return 'stroke:#000000; fill:#ffaa1d;';
+    })
     .attr('width', function (d) {
       return d.width;
     })

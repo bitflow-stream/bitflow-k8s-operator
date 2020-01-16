@@ -68,6 +68,7 @@ export declare class D3Node {
   y: number;
   width: number;
   height: number;
+  type: string;
 }
 
 export declare class D3Edge {
