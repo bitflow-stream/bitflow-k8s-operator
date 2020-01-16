@@ -234,6 +234,19 @@ function getRawStepsAndSaveToMap() {
   fillStepMap(initialSteps);
 }
 
+function getNodeLayoutFromKubernetesGraph(kubernetesGraph: KubernetesGraph) {
+  let nodeLayout: string[][] = [];
+  nodeLayout[0] = [];
+  nodeLayout[1] = [];
+  kubernetesGraph.dataSourceGraphElements.forEach(dataSourceGraphElement => {
+    nodeLayout[0].push(dataSourceGraphElement.uuid);
+  });
+  kubernetesGraph.stepGraphElements.forEach(stepGraphElement => {
+    nodeLayout[1].push(stepGraphElement.uuid);
+  });
+  return nodeLayout;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -249,6 +262,7 @@ export class AppComponent implements AfterContentInit {
     getRawDataSourcesAndSaveToMap();
     getRawStepsAndSaveToMap();
     let kubernetesGraph: KubernetesGraph = createKubernetesGraph(getAllDataSources(), getAllSteps());
-    drawSvg.call(this, kubernetesGraph);
+    let nodeLayout: string[][] = getNodeLayoutFromKubernetesGraph(kubernetesGraph);
+    drawSvg.call(this, kubernetesGraph, nodeLayout);
   }
 }

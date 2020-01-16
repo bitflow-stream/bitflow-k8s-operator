@@ -2,7 +2,31 @@ import {D3Edge, D3Node, dataSourceMap, KubernetesGraph, stepMap} from "../defini
 import {svgNodeHeight, svgNodeWidth} from "../config/config";
 import * as d3 from "d3-selection";
 
-export function drawSvg(kubernetesGraph: KubernetesGraph) {
+function getNodeLayoutColumnByUuid(nodeLayout: string[][], uuid: string): number {
+  let columnId: number = null;
+  nodeLayout.forEach((column, currentColumnId) => {
+    column.forEach(rowElement => {
+      if (rowElement === uuid) {
+        columnId = currentColumnId;
+      }
+    })
+  });
+  return columnId;
+}
+
+function getNodeLayoutRowByUuid(nodeLayout: string[][], uuid: string): number {
+  let rowId: number = null;
+  nodeLayout.forEach((column) => {
+    column.forEach((rowElement, currentRowId) => {
+      if (rowElement === uuid) {
+        rowId = currentRowId;
+      }
+    })
+  });
+  return rowId;
+}
+
+export function drawSvg(kubernetesGraph: KubernetesGraph, nodeLayout: string[][]) {
   let dataSourcesNodes: D3Node[] = kubernetesGraph.dataSourceGraphElements.map(dataSourceGraphElement => dataSourceMap.get(dataSourceGraphElement.uuid))
     .sort((a, b) => {
       if (a.depth < b.depth) {
@@ -13,11 +37,11 @@ export function drawSvg(kubernetesGraph: KubernetesGraph) {
       }
       return 0;
     })
-    .map((dataSource, i) => ({
+    .map(dataSource => ({
       id: dataSource.uuid,
       text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
-      x: 10 + ((svgNodeWidth + 150) * 2) * dataSource.depth,
-      y: 10 + 1.50 * svgNodeHeight * i,
+      x: 10 + (svgNodeWidth + 150) * getNodeLayoutColumnByUuid(nodeLayout, dataSource.uuid),
+      y: 10 + 1.50 * svgNodeHeight * getNodeLayoutRowByUuid(nodeLayout, dataSource.uuid),
       width: svgNodeWidth,
       height: svgNodeHeight
     }));
@@ -25,8 +49,8 @@ export function drawSvg(kubernetesGraph: KubernetesGraph) {
     .map((step, i) => ({
       id: step.uuid,
       text: step.name,
-      x: 160 + svgNodeWidth,
-      y: 10 + 1.50 * svgNodeHeight * i,
+      x: 10 + (svgNodeWidth + 150) * getNodeLayoutColumnByUuid(nodeLayout, step.uuid),
+      y: 10 + 1.50 * svgNodeHeight * getNodeLayoutRowByUuid(nodeLayout, step.uuid),
       width: svgNodeWidth,
       height: svgNodeHeight
     }));

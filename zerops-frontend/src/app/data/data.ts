@@ -322,7 +322,6 @@ const stepsRaw = {
   }
 };
 
-
 const dataSourcesRaw = {
   "apiVersion": "v1",
   "items": [
