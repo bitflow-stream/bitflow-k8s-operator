@@ -28,18 +28,9 @@ function getNodeLayoutRowByUuid(nodeLayout: string[][], uuid: string): number {
 
 export function drawSvg(kubernetesGraph: KubernetesGraph, nodeLayout: string[][]) {
   let dataSourcesNodes: D3Node[] = kubernetesGraph.dataSourceGraphElements.map(dataSourceGraphElement => dataSourceMap.get(dataSourceGraphElement.uuid))
-    .sort((a, b) => {
-      if (a.depth < b.depth) {
-        return -1;
-      }
-      if (a.depth > b.depth) {
-        return 1;
-      }
-      return 0;
-    })
     .map(dataSource => ({
       id: dataSource.uuid,
-      text: dataSource.name + ' | ' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | '),
+      text: 'name[' + dataSource.name + '], labels[' + dataSource.labels.map(label => [label.key, label.value].join(':')).join(' | ') + ']',
       x: 10 + (svgNodeWidth + 150) * getNodeLayoutColumnByUuid(nodeLayout, dataSource.uuid),
       y: 10 + 1.50 * svgNodeHeight * getNodeLayoutRowByUuid(nodeLayout, dataSource.uuid),
       width: svgNodeWidth,
@@ -161,6 +152,6 @@ export function drawSvg(kubernetesGraph: KubernetesGraph, nodeLayout: string[][]
       return d.text;
     });
 
-  document.getElementById('mysvg').setAttribute('width', '2000');
+  document.getElementById('mysvg').setAttribute('width', '20000');
   document.getElementById('mysvg').setAttribute('height', '20000');
 }

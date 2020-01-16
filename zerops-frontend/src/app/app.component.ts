@@ -3,6 +3,7 @@ import {
   AnalysisType,
   DataSource,
   DataSourceGraphElement,
+  dataSourceGraphElementMap,
   DataSourceLabelKeyValuePair,
   dataSourceMap,
   DataSourceStepMatch,
@@ -10,6 +11,7 @@ import {
   KubernetesGraph,
   Step,
   StepGraphElement,
+  stepGraphElementMap,
   StepKeyValuePair,
   stepMap
 } from './definitions/definitions';
@@ -17,8 +19,51 @@ import {uuidv4} from "./util/util";
 import {dataSourcesRaw, stepsRaw} from "./data/data";
 import {drawSvg} from "./util/d3Helper";
 
-function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): KubernetesGraph {
-  function getDataSourceStepMatches(dataSources: string[], steps: string[]): DataSourceStepMatch[] {
+let matches: DataSourceStepMatch[] = [];
+
+function getDepthOfDataSource(elementUuid: string): number {
+  let element: DataSourceGraphElement = dataSourceGraphElementMap.get(elementUuid);
+  if (!element) {
+    return undefined;
+  }
+  if (!element.creatorStepGraphElement) {
+    return 0;
+  }
+  return getDepthOfStep(element.creatorStepGraphElement) + 1;
+}
+
+function getDepthOfStep(elementUuid: string): number {
+  let element: StepGraphElement = stepGraphElementMap.get(elementUuid);
+  if (!element) {
+    return undefined;
+  }
+  if (!element.sourceDataSourceGraphElements) {
+    return undefined;
+  }
+  let depth: number = 0;
+  element.sourceDataSourceGraphElements.forEach(sourceElement => {
+    let sourceDepth = getDepthOfDataSource(sourceElement);
+    if (sourceDepth !== undefined && sourceDepth > depth) {
+      depth = sourceDepth;
+    }
+  });
+  return depth + 1;
+}
+
+function getDepthByUuid(uuid: string): number {
+  let dataSourceGraphElement: DataSourceGraphElement = dataSourceGraphElementMap.get(uuid);
+  if (dataSourceGraphElement) {
+    return getDepthOfDataSource(dataSourceGraphElement.uuid)
+  }
+  let stepGraphElement: StepGraphElement = stepGraphElementMap.get(uuid);
+  if (stepGraphElement) {
+    return getDepthOfStep(stepGraphElement.uuid);
+  }
+  return undefined;
+}
+
+function createKubernetesGraph(): KubernetesGraph {
+  function getDataSourceStepMatches(): DataSourceStepMatch[] {
     function stepMatchesDataSource(step: Step, dataSource: DataSource): boolean {
       function dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel: DataSourceLabelKeyValuePair, stepKeyValuePair: StepKeyValuePair): boolean {
         if (stepKeyValuePair.regex) {
@@ -55,41 +100,59 @@ function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): Kubern
       }
       return true;
     }
+    function stepIsAncestorOfDataSource(stepUuid: string, dataSourceUuid: string): boolean {
+      let stepGraphElement: StepGraphElement = stepGraphElementMap.get(stepUuid);
+      let dataSourceGraphElement: DataSourceGraphElement = dataSourceGraphElementMap.get(dataSourceUuid);
+      if (dataSourceGraphElement.creatorStepGraphElement === stepUuid) {
+        return true;
+      }
+      let sourceStepGraphElement: StepGraphElement = stepGraphElementMap.get(dataSourceGraphElement.creatorStepGraphElement);
+      if (!sourceStepGraphElement) {
+        return false;
+      }
+      let stepIsAncestor: boolean = false;
+      sourceStepGraphElement.sourceDataSourceGraphElements.forEach(element => {
+        if (stepIsAncestorOfDataSource(stepUuid, element)) {
+          stepIsAncestor = true;
+        }
+      });
+      return stepIsAncestor;
+    }
+    function stepAlreadyMatchedDataSource(stepUuid: string, dataSourceUuid: string): boolean {
+      let alreadyMatched: boolean = false;
+      matches.forEach(match => {
+        if (match.step === stepUuid && match.dataSource === dataSourceUuid) {
+          alreadyMatched = true;
+        }
+      });
+      return alreadyMatched;
+    }
 
     let dataSourceStepMatches: DataSourceStepMatch[] = [];
-    for (let dataSource of dataSources) {
-      for (let step of steps) {
-        if (stepMatchesDataSource(stepMap.get(step), dataSourceMap.get(dataSource))) {
-          dataSourceStepMatches.push({dataSource: dataSource, step: step})
+
+    for (let dataSource of getAllDataSources()) {
+      for (let step of getAllSteps()) {
+        if (stepMatchesDataSource(step, dataSource)) {
+          if (!stepIsAncestorOfDataSource(step.uuid, dataSource.uuid)) {
+            if (!stepAlreadyMatchedDataSource(step.uuid, dataSource.uuid)) {
+              dataSourceStepMatches.push({dataSource: dataSource.uuid, step: step.uuid})
+            }
+          }
         }
       }
     }
     return dataSourceStepMatches;
   }
-  function fillDataSourceGraphElementsArray(dataSources: DataSource[], dataSourceGraphElements: DataSourceGraphElement[]) {
-    dataSources.forEach(dataSource => dataSourceGraphElements.push({
-      uuid: dataSource.uuid,
-      stepGraphElements: [],
-      creatorStepGraphElement: null
-    }));
-  }
-  function fillStepGraphElementsArray(steps: Step[], stepGraphElements: StepGraphElement[]) {
-    steps.forEach(step => stepGraphElements.push({
-      uuid: step.uuid,
-      outputDataSourceGraphElements: [],
-      sourceDataSourceGraphElements: []
-    }));
-  }
-  function connectDataSourceStepMatchesInDataStructures(dataSourceStepMatches: DataSourceStepMatch[], dataSourceGraphElements: DataSourceGraphElement[], stepGraphElements: StepGraphElement[]) {
+  function connectDataSourceStepMatchesInDataStructures(dataSourceStepMatches: DataSourceStepMatch[]) {
     dataSourceStepMatches.forEach(match => {
-      let dataSourceGraphElement: DataSourceGraphElement = dataSourceGraphElements.filter(dataSourceGraphElement => dataSourceGraphElement.uuid === match.dataSource)[0];
-      let stepGraphElement: StepGraphElement = stepGraphElements.filter(stepGraphElement => stepGraphElement.uuid === match.step)[0];
+      let dataSourceGraphElement: DataSourceGraphElement = dataSourceGraphElementMap.get(match.dataSource);
+      let stepGraphElement: StepGraphElement = stepGraphElementMap.get(match.step);
 
       dataSourceGraphElement.stepGraphElements.push(stepGraphElement.uuid);
       stepGraphElement.sourceDataSourceGraphElements.push(dataSourceGraphElement.uuid);
     });
   }
-  function handleAllSteps(stepGraphElements: StepGraphElement[]) {
+  function createOutputDataSources() {
     function handleOneToOneStep(stepGraphElement, currentStep: Step) {
       stepGraphElement.sourceDataSourceGraphElements.forEach(sourceDataSourceGraphElement => {
         currentStep.outputLabelsArray.forEach(outputLabels => {
@@ -98,15 +161,14 @@ function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): Kubern
             uuid: uuidv4(),
             name: currentDataSource.name + '->' + currentStep.name,
             labels: [...currentDataSource.labels, ...outputLabels], // TODO prevent doubles, overwrite old ones
-            depth: currentDataSource.depth + 2
           };
           dataSourceMap.set(outputDataSource.uuid, outputDataSource);
-          dataSourceGraphElements.push({
+          dataSourceGraphElementMap.set(outputDataSource.uuid, {
             uuid: outputDataSource.uuid,
             stepGraphElements: [],
             creatorStepGraphElement: currentStep.uuid
           });
-          stepGraphElements.filter(stepGraphElement => stepGraphElement.uuid === currentStep.uuid)[0].outputDataSourceGraphElements.push(outputDataSource.uuid);
+          stepGraphElementMap.get(currentStep.uuid).outputDataSourceGraphElements.push(outputDataSource.uuid);
         });
       });
     }
@@ -134,21 +196,19 @@ function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): Kubern
           uuid: uuid,
           name: '(all-to-one-' + uuid + ')->' + currentStep.name,
           labels: [...labelIntersection, ...outputLabels], // TODO prevent doubles, overwrite old ones
-          depth: Math.max(...sourceDataSources.map(dataSource => dataSource.depth)) + 2
         };
 
         dataSourceMap.set(outputDataSource.uuid, outputDataSource);
-        dataSourceGraphElements.push({
+        dataSourceGraphElementMap.set(outputDataSource.uuid, {
           uuid: outputDataSource.uuid,
           stepGraphElements: [],
           creatorStepGraphElement: currentStep.uuid
         });
-        stepGraphElements.filter(stepGraphElement => stepGraphElement.uuid === currentStep.uuid)[0].outputDataSourceGraphElements.push(outputDataSource.uuid);
-
+        stepGraphElementMap.get(currentStep.uuid).outputDataSourceGraphElements.push(outputDataSource.uuid);
       });
     }
 
-    stepGraphElements.forEach(stepGraphElement => {
+    getAllStepGraphElements().forEach(stepGraphElement => {
       let currentStep: Step = stepMap.get(stepGraphElement.uuid);
       if (currentStep.type === AnalysisType.ONE_TO_ONE) {
         handleOneToOneStep(stepGraphElement, currentStep);
@@ -157,22 +217,25 @@ function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): Kubern
       }
     });
   }
-  function buildKubernetesGraph(dataSourceGraphElements: DataSourceGraphElement[], stepGraphElements: StepGraphElement[]) {
+  function buildKubernetesGraph() {
     return {
-      dataSourceGraphElements: dataSourceGraphElements,
-      stepGraphElements: stepGraphElements
+      dataSourceGraphElements: getAllDataSourceGraphElements(),
+      stepGraphElements: getAllStepGraphElements()
     };
   }
 
-  let dataSourceGraphElements: DataSourceGraphElement[] = [];
-  fillDataSourceGraphElementsArray(dataSources, dataSourceGraphElements);
-  let stepGraphElements: StepGraphElement[] = [];
-  fillStepGraphElementsArray(steps, stepGraphElements);
-  let dataSourceStepMatches: DataSourceStepMatch[] = getDataSourceStepMatches(dataSources.map(dataSource => dataSource.uuid), steps.map(step => step.uuid));
-  connectDataSourceStepMatchesInDataStructures(dataSourceStepMatches, dataSourceGraphElements, stepGraphElements);
-  handleAllSteps(stepGraphElements);
+  let dataSourceStepMatches: DataSourceStepMatch[] = getDataSourceStepMatches();
+  console.log(dataSourceStepMatches);
+  dataSourceStepMatches.forEach(match => matches.push(match));
+  connectDataSourceStepMatchesInDataStructures(dataSourceStepMatches);
+  createOutputDataSources();
 
-  return buildKubernetesGraph(dataSourceGraphElements, stepGraphElements);
+  // dataSourceStepMatches = getDataSourceStepMatches();
+  // dataSourceStepMatches.forEach(match => matches.push(match));
+  // connectDataSourceStepMatchesInDataStructures(dataSourceStepMatches);
+  // createOutputDataSources();
+
+  return buildKubernetesGraph();
 }
 
 function getAllDataSources(): DataSource[] {
@@ -183,7 +246,15 @@ function getAllSteps(): Step[] {
   return Array.from(stepMap.keys()).map(stepKey => stepMap.get(stepKey));
 }
 
-function getRawDataSourcesAndSaveToMap() {
+function getAllDataSourceGraphElements(): DataSourceGraphElement[] {
+  return Array.from(dataSourceGraphElementMap.keys()).map(dataSourceGraphElementKey => dataSourceGraphElementMap.get(dataSourceGraphElementKey));
+}
+
+function getAllStepGraphElements(): StepGraphElement[] {
+  return Array.from(stepGraphElementMap.keys()).map(stepGraphElementKey => stepGraphElementMap.get(stepGraphElementKey));
+}
+
+function getRawDataSourcesAndSaveToMaps() {
   function getDataSourcesFromRawData() {
     return dataSourcesRaw.items.map(dataSourceRaw => ({
       name: dataSourceRaw.metadata.name,
@@ -202,15 +273,27 @@ function getRawDataSourcesAndSaveToMap() {
     });
   }
 
+  function fillDataSourceGraphElementMap(dataSources: DataSource[]): void {
+    dataSources.forEach(dataSource => {
+      dataSourceGraphElementMap.set(dataSource.uuid, {
+        uuid: dataSource.uuid,
+        stepGraphElements: [],
+        creatorStepGraphElement: null
+      });
+    });
+  }
+
   let initialDataSources: DataSource[] = getDataSourcesFromRawData();
   fillDataSourceMap(initialDataSources);
+  fillDataSourceGraphElementMap(initialDataSources);
 }
 
-function getRawStepsAndSaveToMap() {
+function getRawStepsAndSaveToMaps() {
   function getStepsFromRawData() {
     function getStepsRaw(): any { // TODO to fix TSLint and allow multiple output labels
       return stepsRaw;
     }
+
     return getStepsRaw().items.map(stepRaw => ({
       name: stepRaw.metadata.name,
       keyValuePairs: stepRaw.spec.ingest.map(ingest => ({
@@ -233,25 +316,48 @@ function getRawStepsAndSaveToMap() {
     steps.forEach(step => stepMap.set(step.uuid, step));
   }
 
+  function fillStepGraphElementMap(steps: Step[]): void {
+    steps.forEach(step => stepGraphElementMap.set(step.uuid, {
+      uuid: step.uuid,
+      outputDataSourceGraphElements: [],
+      sourceDataSourceGraphElements: []
+    }));
+  }
+
   let initialSteps: Step[] = getStepsFromRawData();
   fillStepMap(initialSteps);
+  fillStepGraphElementMap(initialSteps);
 }
 
 function getNodeLayoutFromKubernetesGraph(kubernetesGraph: KubernetesGraph) {
   let nodeLayout: string[][] = [];
 
-  let maxDepth: number = kubernetesGraph.dataSourceGraphElements.map(element => dataSourceMap.get(element.uuid).depth).reduce((p, c) => Math.max(p, c));
+  let maxDataSourceDepth: number = kubernetesGraph.dataSourceGraphElements.map(element => getDepthOfDataSource(element.uuid)).reduce((p, c) => {
+    if (!c) {
+      return p;
+    }
+    return Math.max(p, c)
+  });
+
+  let maxStepDepth: number = kubernetesGraph.stepGraphElements.map(element => getDepthOfStep(element.uuid)).reduce((p, c) => {
+    if (!c) {
+      return p;
+    }
+    return Math.max(p, c)
+  });
+
+  let maxDepth = Math.max(maxDataSourceDepth, maxStepDepth);
 
   for (let i = 0; i <= maxDepth; i++) {
     nodeLayout[i] = [];
   }
 
   kubernetesGraph.dataSourceGraphElements.forEach(dataSourceGraphElement => {
-    let depth: number = dataSourceMap.get(dataSourceGraphElement.uuid).depth;
+    let depth: number = getDepthOfDataSource(dataSourceGraphElement.uuid);
     nodeLayout[depth].push(dataSourceGraphElement.uuid);
   });
   kubernetesGraph.stepGraphElements.forEach(stepGraphElement => {
-    let depth: number = stepGraphElement.sourceDataSourceGraphElements.map(element => dataSourceMap.get(element).depth).reduce((p, c) => Math.max(p, c), 0) + 1;
+    let depth: number = getDepthOfStep(stepGraphElement.uuid);
     nodeLayout[depth].push(stepGraphElement.uuid);
   });
   return nodeLayout;
@@ -269,9 +375,9 @@ export class AppComponent implements AfterContentInit {
   }
 
   ngAfterContentInit() {
-    getRawDataSourcesAndSaveToMap();
-    getRawStepsAndSaveToMap();
-    let kubernetesGraph: KubernetesGraph = createKubernetesGraph(getAllDataSources(), getAllSteps());
+    getRawDataSourcesAndSaveToMaps();
+    getRawStepsAndSaveToMaps();
+    let kubernetesGraph: KubernetesGraph = createKubernetesGraph();
     let nodeLayout: string[][] = getNodeLayoutFromKubernetesGraph(kubernetesGraph);
     drawSvg.call(this, kubernetesGraph, nodeLayout);
   }

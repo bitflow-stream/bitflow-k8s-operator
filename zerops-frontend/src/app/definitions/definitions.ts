@@ -1,7 +1,9 @@
 const dataSourceMap: Map<string, DataSource> = new Map();
 const stepMap: Map<string, Step> = new Map();
+const dataSourceGraphElementMap: Map<string, DataSourceGraphElement> = new Map();
+const stepGraphElementMap: Map<string, StepGraphElement> = new Map();
 
-export {dataSourceMap, stepMap};
+export {dataSourceMap, stepMap, dataSourceGraphElementMap, stepGraphElementMap};
 
 export enum AnalysisType {
   ALL_TO_ONE = 'all-to-one',
@@ -17,6 +19,11 @@ export declare class DataSourceGraphElement {
   uuid: string;
   stepGraphElements: string[];
   creatorStepGraphElement: string;
+}
+
+export interface SourceDataSourceGraphElement {
+  uuid: string;
+  alreadyCreatedOutputFromThisDataSource: boolean;
 }
 
 export declare class StepGraphElement {
@@ -50,7 +57,6 @@ export declare class DataSource {
   uuid: string;
   name: string;
   labels: DataSourceLabelKeyValuePair[];
-  depth;
 }
 
 export declare class Step {
