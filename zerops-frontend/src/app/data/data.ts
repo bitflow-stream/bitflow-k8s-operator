@@ -278,7 +278,69 @@ const stepsRaw = {
         "outputs": [
           {
             "labels": {
-              "data": "aggregated-all-physical"
+              "data": "aggregated-all-physical",
+              "unique-label": "unique-content"
+            },
+            "name": "phys",
+            "url": "tcp://:9000"
+          }
+        ],
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "aggregate-physical-data"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "command": [
+                  "sh",
+                  "-c",
+                  "echo \"My IP: $(ip route get 1 | awk '{print $NF;exit}')\"\n/bitflow-pipeline \\\n\"{ZEROPS_DATA_SOURCE}\n-\u003e csv://:9000\"\n"
+                ],
+                "image": "teambitflow/go-bitflow",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "container",
+                "ports": [
+                  {
+                    "containerPort": 9000,
+                    "name": "data"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "type": "one-to-one"
+      }
+    },
+    {
+      "apiVersion": "zerops.com/v1",
+      "kind": "ZerOpsStep",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{}"
+        },
+        "creationTimestamp": "2019-11-07T13:35:48Z",
+        "generation": 1,
+        "name": "matches-unique-label",
+        "resourceVersion": "55010",
+        "selfLink": "/apis/zerops.com/v1/zerops-steps/example-step-one-to-one-1",
+        "uid": "a3eaaa0a-46f2-46bf-8604-220542d4a78d"
+      },
+      "spec": {
+        "ingest": [
+          {
+            "key": "unique-label",
+            "value": "unique-content"
+          }
+        ],
+        "outputs": [
+          {
+            "labels": {
+              "data": "aggregated-all-physical",
+              // "unique-label": "unique-content"
             },
             "name": "phys",
             "url": "tcp://:9000"

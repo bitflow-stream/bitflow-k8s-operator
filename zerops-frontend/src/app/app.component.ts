@@ -98,7 +98,7 @@ function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): Kubern
             uuid: uuidv4(),
             name: currentDataSource.name + '->' + currentStep.name,
             labels: [...currentDataSource.labels, ...outputLabels], // TODO prevent doubles, overwrite old ones
-            depth: currentDataSource.depth + 1
+            depth: currentDataSource.depth + 2
           };
           dataSourceMap.set(outputDataSource.uuid, outputDataSource);
           dataSourceGraphElements.push({
@@ -134,7 +134,7 @@ function createKubernetesGraph(dataSources: DataSource[], steps: Step[]): Kubern
           uuid: uuid,
           name: '(all-to-one-' + uuid + ')->' + currentStep.name,
           labels: [...labelIntersection, ...outputLabels], // TODO prevent doubles, overwrite old ones
-          depth: Math.max(...sourceDataSources.map(dataSource => dataSource.depth)) + 1
+          depth: Math.max(...sourceDataSources.map(dataSource => dataSource.depth)) + 2
         };
 
         dataSourceMap.set(outputDataSource.uuid, outputDataSource);
@@ -208,7 +208,10 @@ function getRawDataSourcesAndSaveToMap() {
 
 function getRawStepsAndSaveToMap() {
   function getStepsFromRawData() {
-    return stepsRaw.items.map(stepRaw => ({
+    function getStepsRaw(): any { // TODO to fix TSLint and allow multiple output labels
+      return stepsRaw;
+    }
+    return getStepsRaw().items.map(stepRaw => ({
       name: stepRaw.metadata.name,
       keyValuePairs: stepRaw.spec.ingest.map(ingest => ({
         regex: ingest.check === 'regex',
@@ -218,7 +221,7 @@ function getRawStepsAndSaveToMap() {
       uuid: uuidv4(),
       type: stepRaw.spec.type,
       outputLabelsArray: stepRaw.spec.outputs.map(output => {
-        return Object.keys(output.labels).map(labelKey => ({
+        return Object.keys(output.labels).map((labelKey): KeyValuePair => ({
           key: labelKey,
           value: output.labels[labelKey]
         }));
@@ -236,13 +239,20 @@ function getRawStepsAndSaveToMap() {
 
 function getNodeLayoutFromKubernetesGraph(kubernetesGraph: KubernetesGraph) {
   let nodeLayout: string[][] = [];
-  nodeLayout[0] = [];
-  nodeLayout[1] = [];
+
+  let maxDepth: number = kubernetesGraph.dataSourceGraphElements.map(element => dataSourceMap.get(element.uuid).depth).reduce((p, c) => Math.max(p, c));
+
+  for (let i = 0; i <= maxDepth; i++) {
+    nodeLayout[i] = [];
+  }
+
   kubernetesGraph.dataSourceGraphElements.forEach(dataSourceGraphElement => {
-    nodeLayout[0].push(dataSourceGraphElement.uuid);
+    let depth: number = dataSourceMap.get(dataSourceGraphElement.uuid).depth;
+    nodeLayout[depth].push(dataSourceGraphElement.uuid);
   });
   kubernetesGraph.stepGraphElements.forEach(stepGraphElement => {
-    nodeLayout[1].push(stepGraphElement.uuid);
+    let depth: number = stepGraphElement.sourceDataSourceGraphElements.map(element => dataSourceMap.get(element).depth).reduce((p, c) => Math.max(p, c), 0) + 1;
+    nodeLayout[depth].push(stepGraphElement.uuid);
   });
   return nodeLayout;
 }
