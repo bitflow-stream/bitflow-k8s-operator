@@ -86,17 +86,17 @@ function createKubernetesGraph(): KubernetesGraph {
         return true;
       }
 
+      let foundMatchingLabel: boolean = false;
       for (let stepKeyValuePair of step.keyValuePairs) {
-        let foundMatchingLabel: boolean = false;
         for (let dataSourceLabel of dataSource.labels) {
           if (dataSourceLabelMatchesStepKeyValuePair(dataSourceLabel, stepKeyValuePair)) {
             foundMatchingLabel = true;
             break;
           }
         }
-        if (!foundMatchingLabel) {
-          return false;
-        }
+      }
+      if (!foundMatchingLabel) {
+        return false;
       }
       return true;
     }
@@ -189,23 +189,23 @@ function createKubernetesGraph(): KubernetesGraph {
             labelIntersection.push(label);
           }
         });
-      }
-      currentStep.outputLabelsArray.forEach(outputLabels => {
-        let uuid: string = uuidv4();
-        let outputDataSource: DataSource = {
-          uuid: uuid,
-          name: '(all-to-one-' + uuid + ')->' + currentStep.name,
-          labels: [...labelIntersection, ...outputLabels], // TODO prevent doubles, overwrite old ones
-        };
+        currentStep.outputLabelsArray.forEach(outputLabels => {
+          let uuid: string = uuidv4();
+          let outputDataSource: DataSource = {
+            uuid: uuid,
+            name: currentStep.name + '->' + currentStep.name,
+            labels: [...labelIntersection, ...outputLabels], // TODO prevent doubles, overwrite old ones
+          };
 
-        dataSourceMap.set(outputDataSource.uuid, outputDataSource);
-        dataSourceGraphElementMap.set(outputDataSource.uuid, {
-          uuid: outputDataSource.uuid,
-          stepGraphElements: [],
-          creatorStepGraphElement: currentStep.uuid
+          dataSourceMap.set(outputDataSource.uuid, outputDataSource);
+          dataSourceGraphElementMap.set(outputDataSource.uuid, {
+            uuid: outputDataSource.uuid,
+            stepGraphElements: [],
+            creatorStepGraphElement: currentStep.uuid
+          });
+          stepGraphElementMap.get(currentStep.uuid).outputDataSourceGraphElements.push(outputDataSource.uuid);
         });
-        stepGraphElementMap.get(currentStep.uuid).outputDataSourceGraphElements.push(outputDataSource.uuid);
-      });
+      }
     }
 
     getAllStepGraphElements().forEach(stepGraphElement => {
