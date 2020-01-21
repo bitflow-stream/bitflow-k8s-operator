@@ -4,6 +4,14 @@ const podMap: Map<string, Pod> = new Map();
 
 export {dataSourceMap, stepMap, podMap};
 
+export type KubernetesNode = Step | DataSource;
+
+export interface KubernetesGraph {
+  dataSources: DataSource[];
+  steps: Step[];
+  pods: Pod[];
+}
+
 export interface Step {
   name: string;
   podNames: string[];
