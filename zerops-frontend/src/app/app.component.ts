@@ -119,7 +119,6 @@ function getPodsFromRawDataAndSaveToMap() {
           creatorDataSourceNames = [creatorDataSourceName];
         } else {
           creatorDataSourceNames = stepDataSourceMatches[creatorStepName]; // TODO undefined check
-          console.log(name)
         }
         return {
           name: name,
@@ -190,9 +189,6 @@ export class AppComponent implements AfterContentInit {
     getStepsFromRawDataAndSaveToMap();
     getDataSourcesFromRawDataAndSaveToMap();
     getPodsFromRawDataAndSaveToMap();
-    console.log(stepMap);
-    console.log(dataSourceMap);
-    console.log(podMap);
     let nodeLayout: KubernetesNode[][] = generateNodeLayout();
     let kubernetesGraph: KubernetesGraph = {
       dataSources: getAllDataSources(),
