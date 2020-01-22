@@ -28,10 +28,16 @@ function getDepthOfPod(podName: string): number {
   if (!element) {
     return undefined;
   }
-  if (!element.creatorDataSourceName) {
+  if (element.creatorDataSourceNames.length === 0) {
     return undefined;
   }
-  return getDepthOfDataSource(element.creatorDataSourceName) + 1;
+
+  return 1 + element.creatorDataSourceNames.map(dataSourceName => getDepthOfDataSource(dataSourceName)).reduce((p, c) => {
+    if (!c) {
+      return p;
+    }
+    return Math.max(p, c)
+  });
 }
 
 function getDepthOfStep(stepName: string): number {
@@ -49,7 +55,7 @@ function getDepthOfStep(stepName: string): number {
       depth = podDepth;
     }
   });
-  return depth + 1;
+  return depth;
 }
 
 function getAllDataSources(): DataSource[] {
@@ -108,13 +114,17 @@ function getPodsFromRawDataAndSaveToMap() {
         let name: string = podRaw.metadata.name;
         let creatorStepName: string = podRaw.metadata.labels['zerops-analysis-step'];
         let creatorDataSourceName: string = podRaw.metadata.labels['zerops-data-source-name'];
-        if (!creatorDataSourceName) {
-          creatorDataSourceName = stepDataSourceMatches[creatorStepName][0]; // TODO undefined check
+        let creatorDataSourceNames: string[] = [];
+        if (creatorDataSourceName) {
+          creatorDataSourceNames = [creatorDataSourceName];
+        } else {
+          creatorDataSourceNames = stepDataSourceMatches[creatorStepName]; // TODO undefined check
+          console.log(name)
         }
         return {
           name: name,
           creatorStepName: creatorStepName,
-          creatorDataSourceName: creatorDataSourceName
+          creatorDataSourceNames: creatorDataSourceNames
         } as Pod;
       });
   }
@@ -155,7 +165,10 @@ function generateNodeLayout() {
     nodeLayout[i] = [];
   }
 
-  getAllDataSources().filter(dataSource => !dataSource.creatorPodName).forEach(dataSource => nodeLayout[0].push(dataSource));
+  // getAllDataSources().filter(dataSource => !dataSource.creatorPodName).forEach(dataSource => nodeLayout[0].push(dataSource));
+
+  getAllDataSources().forEach(dataSource => nodeLayout[getDepthOfDataSource(dataSource.name)].push(dataSource));
+  getAllSteps().forEach(step => nodeLayout[getDepthOfStep(step.name)].push(step));
 
   // TODO Only put DataSources and steps, this way the height of steps can be calculated by the number of pods inside and pods are bundled inside the steps
 
@@ -182,7 +195,7 @@ export class AppComponent implements AfterContentInit {
     console.log(podMap);
     let nodeLayout: KubernetesNode[][] = generateNodeLayout();
     let kubernetesGraph: KubernetesGraph = {
-      dataSources: getAllDataSources().filter(dataSource => !dataSource.creatorPodName),
+      dataSources: getAllDataSources(),
       steps: getAllSteps(),
       pods: getAllPods()
     };

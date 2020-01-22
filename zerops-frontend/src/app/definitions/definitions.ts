@@ -25,7 +25,7 @@ export interface DataSource {
 export interface Pod {
   name: string;
   creatorStepName: string;
-  creatorDataSourceName: string;
+  creatorDataSourceNames: string[];
 }
 
 export interface D3Node {
