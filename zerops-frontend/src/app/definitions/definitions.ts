@@ -5,7 +5,7 @@ const podMap: Map<string, Pod> = new Map();
 export {dataSourceMap, stepMap, podMap};
 
 export interface KubernetesNode {
-  dataSource?: DataSource,
+  dataSources?: DataSource[],
   step?: Step
 }
 

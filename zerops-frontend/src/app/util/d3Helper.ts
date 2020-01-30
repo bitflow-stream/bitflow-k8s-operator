@@ -76,14 +76,19 @@ export function drawSvg(this: any, visualization: VisualizationData) {
     })
     .attr('x', 0)
     .attr('y', 0)
-    .attr('style', function (d: any) {
+    .attr('style', function (d: any): any {
       if (d.type === 'data-source') {
         return 'stroke:#000000; fill:#eeeeee;';
+      }
+      if (d.type === 'data-source-stack') {
+        return 'stroke:#000000; fill:#cccccc;';
       }
       if (d.type === 'pod') {
         return 'stroke:#000000; fill:#add8e6;';
       }
-      return 'stroke:#000000; fill:#ffaa1d;';
+      if (d.type === 'step') {
+        return 'stroke:#000000; fill:#ffaa1d;';
+      }
     })
     .attr('width', function (d: any) {
       return d.width;
