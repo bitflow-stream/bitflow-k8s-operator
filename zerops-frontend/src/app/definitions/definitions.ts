@@ -4,13 +4,12 @@ const podMap: Map<string, Pod> = new Map();
 
 export {dataSourceMap, stepMap, podMap};
 
-export type KubernetesNode = Step | DataSource;
-
-export interface KubernetesGraph {
-  dataSources: DataSource[];
-  steps: Step[];
-  pods: Pod[];
+export interface KubernetesNode {
+  dataSource?: DataSource,
+  step?: Step
 }
+
+export var kubernetesGraph: KubernetesNode[][] = [];
 
 export interface Step {
   name: string;
@@ -41,4 +40,13 @@ export interface D3Node {
 export interface D3Edge {
   start: string;
   stop: string;
+}
+
+export interface VisualizationData {
+  nodes: D3Node[];
+  edges: D3Edge[];
+}
+
+export interface StepDataSourceMatches {
+  [key: string]: string[]
 }

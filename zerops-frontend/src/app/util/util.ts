@@ -5,3 +5,11 @@ export function uuidv4(): string {
     return v.toString(16);
   });
 }
+
+export function isPresent(value: any): boolean {
+  return value !== undefined && value !== null;
+}
+
+export function notPresent(value: any): boolean {
+  return !isPresent(value);
+}
