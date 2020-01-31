@@ -1,5 +1,6 @@
 import {AfterContentInit, Component, HostListener} from '@angular/core';
 import {
+  currentDataSourcesMap, currentStepsMap,
   D3Edge,
   D3Node,
   DataSource,
@@ -84,8 +85,16 @@ function getAllDataSources(): DataSource[] {
   return Array.from(dataSourceMap.keys()).map(dataSourceKey => <DataSource>dataSourceMap.get(dataSourceKey)).filter(dataSource => dataSource != undefined);
 }
 
+function getCurrentDataSources(): DataSource[] {
+  return Array.from(currentDataSourcesMap.keys()).map(dataSourceKey => <DataSource>currentDataSourcesMap.get(dataSourceKey)).filter(dataSource => dataSource != undefined);
+}
+
 function getAllSteps(): Step[] {
   return Array.from(stepMap.keys()).map(stepKey => <Step>stepMap.get(stepKey)).filter(step => step != undefined);
+}
+
+function getCurrentSteps(): Step[] {
+  return Array.from(currentStepsMap.keys()).map(stepKey => <Step>currentStepsMap.get(stepKey)).filter(step => step != undefined);
 }
 
 // function getAllPods(): Pod[] {
@@ -244,7 +253,7 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[]): Visuali
             if (dataSource.creatorPodName != undefined) {
               let pod: Pod | undefined = podMap.get(dataSource.creatorPodName);
               if (pod != undefined) {
-                let step: Step | undefined = stepMap.get(pod.creatorStepName);
+                let step: Step | undefined = currentStepsMap.get(pod.creatorStepName);
                 if (step != undefined) {
                   edges.push({
                     start: step.podStackId,
@@ -294,7 +303,7 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[]): Visuali
           if (step.podNames.length > 1) {
             nodes.push({
               id: step.podStackId,
-              text: 'pod-stack-' + uuidv4(),
+              text: 'pod-stack-' + step.podStackId,
               x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
               y: currentHeight + .5 * svgPodNodeMargin + svgNodeMargin,
               width: svgNodeWidth,
@@ -320,7 +329,7 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[]): Visuali
             let pod: Pod | undefined = podMap.get(podName);
             if (pod != undefined) {
               pod.creatorDataSourceNames.forEach(creatorDataSourceName => {
-                let dataSource: DataSource | undefined = dataSourceMap.get(creatorDataSourceName);
+                let dataSource: DataSource | undefined = currentDataSourcesMap.get(creatorDataSourceName);
                 if (dataSource != undefined) {
                   edges.push({
                     start: dataSource.dataSourceStackId,
@@ -381,6 +390,30 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[]): Visuali
   return buildVisualizationData(maxColumnId);
 }
 
+function setCurrentDataSources(dataSources: DataSource[]) {
+  dataSources.forEach(dataSource => {
+    currentDataSourcesMap.set(dataSource.name, dataSource);
+  });
+}
+
+function setCurrentSteps(steps: Step[]) {
+  steps.forEach(step => {
+    currentStepsMap.set(step.name, step);
+  });
+}
+
+function displayGraph(this: any, dataSources: DataSource[], steps: Step[]): void {
+  setCurrentDataSources(dataSources);
+  setCurrentSteps(steps);
+
+  let visualizationResult: VisualizationData | undefined = getVisualizationData(getCurrentDataSources(), getCurrentSteps());
+  if (visualizationResult == undefined) {
+    return;
+  }
+  let visualization: VisualizationData = visualizationResult;
+  drawSvg.call(this, visualization);
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -397,11 +430,6 @@ export class AppComponent implements AfterContentInit {
     getDataSourcesFromRawDataAndSaveToMap();
     getPodsFromRawDataAndSaveToMap();
 
-    let visualizationResult: VisualizationData | undefined = getVisualizationData(getAllDataSources(), getAllSteps());
-    if (visualizationResult == undefined) {
-      return;
-    }
-    let visualization: VisualizationData = visualizationResult;
-    drawSvg.call(this, visualization);
+    displayGraph.call(this, getAllDataSources(), getAllSteps());
   }
 }

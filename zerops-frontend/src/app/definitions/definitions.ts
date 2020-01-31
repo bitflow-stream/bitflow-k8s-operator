@@ -1,8 +1,10 @@
 const dataSourceMap: Map<string, DataSource> = new Map();
 const stepMap: Map<string, Step> = new Map();
 const podMap: Map<string, Pod> = new Map();
+const currentDataSourcesMap: Map<string, DataSource> = new Map();
+const currentStepsMap: Map<string, Step> = new Map();
 
-export {dataSourceMap, stepMap, podMap};
+export {dataSourceMap, stepMap, podMap, currentDataSourcesMap, currentStepsMap};
 
 export interface KubernetesNode {
   dataSources?: DataSource[],
