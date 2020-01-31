@@ -14,11 +14,13 @@ export var kubernetesGraph: KubernetesNode[][] = [];
 export interface Step {
   name: string;
   podNames: string[];
+  podStackId: string;
 }
 
 export interface DataSource {
   name: string;
   creatorPodName?: string;
+  dataSourceStackId: string;
 }
 
 export interface Pod {

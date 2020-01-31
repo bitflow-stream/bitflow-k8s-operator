@@ -14,7 +14,14 @@ import {
 } from './definitions/definitions';
 import {dataSourcesRuntime, podsRuntime, stepDataSourceMatches, stepsRuntime} from "./data/data";
 import {drawSvg} from "./util/d3Helper";
-import {svgHorizontalGap, svgNodeHeight, svgNodeWidth, svgVerticalGap} from "./config/config";
+import {
+  svgHorizontalGap,
+  svgNodeHeight,
+  svgNodeMargin,
+  svgNodeWidth,
+  svgPodNodeMargin,
+  svgVerticalGap
+} from "./config/config";
 import {uuidv4} from "./util/util";
 
 function getDepthOfDataSource(elementName: string): number | undefined {
@@ -81,9 +88,9 @@ function getAllSteps(): Step[] {
   return Array.from(stepMap.keys()).map(stepKey => <Step>stepMap.get(stepKey)).filter(step => step != undefined);
 }
 
-function getAllPods(): Pod[] {
-  return Array.from(podMap.keys()).map(podKey => <Pod>podMap.get(podKey)).filter(pod => pod != undefined);
-}
+// function getAllPods(): Pod[] {
+//   return Array.from(podMap.keys()).map(podKey => <Pod>podMap.get(podKey)).filter(pod => pod != undefined);
+// }
 
 function getStepsFromRawDataAndSaveToMap() {
   function getStepsFromRawData(): Step[] {
@@ -91,7 +98,8 @@ function getStepsFromRawDataAndSaveToMap() {
       let name: string = stepRaw.metadata.name;
       return {
         name: name,
-        podNames: []
+        podNames: [],
+        podStackId: uuidv4()
       } as Step;
     });
   }
@@ -106,7 +114,8 @@ function getDataSourcesFromRawDataAndSaveToMap() {
       let creatorPodName: string | undefined = dataSourceRaw.metadata.labels['zerops-pod'];
       let dataSource: DataSource = {
         name: name,
-        creatorPodName: creatorPodName
+        creatorPodName: creatorPodName,
+        dataSourceStackId: uuidv4()
       };
       return dataSource;
     }).filter(dataSource => dataSource != undefined);
@@ -150,46 +159,7 @@ function getPodsFromRawDataAndSaveToMap() {
   });
 }
 
-// function generateNodeLayout() {
-//   let nodeLayout: KubernetesNode[][] = [];
-//
-//   let maxDataSourceDepth: number = getAllDataSources().map(element => getDepthOfDataSource(element.name)).reduce((p, c) => {
-//     if (!c) {
-//       return p;
-//     }
-//     return Math.max(p, c)
-//   });
-//
-//   let maxStepDepth: number = getAllSteps().map(element => getDepthOfStep(element.name)).reduce((p, c) => {
-//     if (!c) {
-//       return p;
-//     }
-//     return Math.max(p, c)
-//   });
-//
-//   let maxPodDepth: number = getAllPods().map(element => getDepthOfPod(element.name)).reduce((p, c) => {
-//     if (!c) {
-//       return p;
-//     }
-//     return Math.max(p, c)
-//   });
-//
-//   let maxDepth = Math.max(maxDataSourceDepth, maxStepDepth, maxPodDepth);
-//
-//   for (let i = 0; i <= maxDepth; i++) {
-//     nodeLayout[i] = [];
-//   }
-//
-//   // getAllDataSources().filter(dataSource => !dataSource.creatorPodName).forEach(dataSource => nodeLayout[0].push(dataSource));
-//
-//   getAllDataSources().forEach(dataSource => nodeLayout[getDepthOfDataSource(dataSource.name)].push(dataSource));
-//   getAllSteps().forEach(step => nodeLayout[getDepthOfStep(step.name)].push(step));
-//
-//   return nodeLayout;
-// }
-
-function getVisualizationData(dataSources: DataSource[], steps: Step[], pods: Pod[]): VisualizationData | undefined {
-  pods = pods;
+function getVisualizationData(dataSources: DataSource[], steps: Step[]): VisualizationData | undefined {
   function getMaxColumnId(dataSources: DataSource[], steps: Step[]): number {
     let maxColumnId: number = 0;
     dataSources.forEach(dataSource => {
@@ -206,110 +176,209 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[], pods: Po
     });
     return maxColumnId;
   }
-  let maxColumnId: number = getMaxColumnId(dataSources, steps);
-  for (let i = 0; i <= maxColumnId; i++) {
-    kubernetesGraph[i] = [];
+
+  function initializeKubernetesGraph(maxColumnId: number) {
+    for (let i = 0; i <= maxColumnId; i++) {
+      kubernetesGraph[i] = [];
+    }
   }
 
-  const dataSourceGroupMap: Map<string, DataSource[]> = new Map();
-  dataSources.forEach(dataSource => {
-    let creatorPodName: string = dataSource.creatorPodName == undefined ? 'undefined' : dataSource.creatorPodName;
+  function fillKubernetesGraph(dataSources: DataSource[], steps: Step[]) {
+    const dataSourceGroupMap: Map<string, DataSource[]> = new Map();
+    dataSources.forEach(dataSource => {
+      let creatorPodName: string = dataSource.creatorPodName == undefined ? 'undefined' : dataSource.creatorPodName;
 
 
-    let creatorStepName: string | undefined = ((): string | undefined => {
-      if (creatorPodName == 'undefined') {
-        return 'undefined';
-      }
-      let creatorPod: Pod | undefined = podMap.get(creatorPodName);
-      if (creatorPod == undefined) {
-        return undefined;
-      }
-      return creatorPod.creatorStepName == undefined ? 'undefined' : creatorPod.creatorStepName;
-    })();
-
-    if (creatorStepName == undefined) {
-      return;
-    }
-    let dataSourceGroup: DataSource[] | undefined = dataSourceGroupMap.get(creatorStepName);
-    if (dataSourceGroup == undefined || dataSourceGroup.length === 0) {
-      dataSourceGroupMap.set(creatorStepName, [dataSource]);
-    } else {
-      dataSourceGroup.push(dataSource);
-    }
-  });
-
-  Array.from(dataSourceGroupMap.keys()).forEach(key => {
-    let dataSourceGroup: DataSource[] | undefined = dataSourceGroupMap.get(key);
-    if (dataSourceGroup == undefined || dataSourceGroup.length === 0) {
-      return;
-    }
-    let depth: number | undefined = getDepthOfDataSource(dataSourceGroup[0].name);
-    if (depth == undefined) {
-      return;
-    }
-    kubernetesGraph[depth].push({dataSources: dataSourceGroup});
-  });
-
-  steps.forEach(step => {
-    let depth: number | undefined = getDepthOfStep(step.name);
-    if (depth == undefined) {
-      return;
-    }
-    kubernetesGraph[depth].push({step: step});
-  });
-
-  let nodes: D3Node[] = [];
-  let edges: D3Edge[] = [];
-
-  for (let columnId = 0; columnId <= maxColumnId; columnId++) {
-    let currentHeight: number = 0;
-    for (let rowId = 0; rowId < kubernetesGraph[columnId].length; rowId++) {
-      let currentNode: KubernetesNode = kubernetesGraph[columnId][rowId];
-      if (currentNode.dataSources != undefined) {
-        let dataSources: DataSource[] = currentNode.dataSources;
-        if (dataSources.length > 1) {
-          nodes.push({
-            id: 'data-source-stack-' + uuidv4(),
-            text: 'data-source-stack-' + uuidv4() + ' (' + dataSources.length + ')',
-            x: columnId * (svgNodeWidth + svgHorizontalGap),
-            y: currentHeight,
-            width: svgNodeWidth,
-            height: svgNodeHeight,
-            type: 'data-source-stack'
-          });
-        } else if (dataSources.length === 1) {
-          let dataSource: DataSource = dataSources[0];
-          nodes.push({
-            id: dataSource.name,
-            text: dataSource.name,
-            x: columnId * (svgNodeWidth + svgHorizontalGap),
-            y: currentHeight,
-            width: svgNodeWidth,
-            height: svgNodeHeight,
-            type: 'data-source'
-          });
+      let creatorStepName: string | undefined = ((): string | undefined => {
+        if (creatorPodName == 'undefined') {
+          return 'undefined';
         }
-        currentHeight += svgNodeHeight + svgVerticalGap;
-      } else if (currentNode.step != undefined) {
-        let step: Step = currentNode.step;
-        nodes.push({
-          id: step.name,
-          text: step.name,
-          x: columnId * (svgNodeWidth + svgHorizontalGap),
-          y: currentHeight,
-          width: svgNodeWidth,
-          height: svgNodeHeight,
-          type: 'step'
-        });
-        currentHeight += svgNodeHeight + svgVerticalGap;
+        let creatorPod: Pod | undefined = podMap.get(creatorPodName);
+        if (creatorPod == undefined) {
+          return undefined;
+        }
+        return creatorPod.creatorStepName == undefined ? 'undefined' : creatorPod.creatorStepName;
+      })();
+
+      if (creatorStepName == undefined) {
+        return;
       }
+      let dataSourceGroup: DataSource[] | undefined = dataSourceGroupMap.get(creatorStepName);
+      if (dataSourceGroup == undefined || dataSourceGroup.length === 0) {
+        dataSourceGroupMap.set(creatorStepName, [dataSource]);
+      } else {
+        dataSourceGroup.push(dataSource);
+      }
+    });
+
+    Array.from(dataSourceGroupMap.keys()).forEach(key => {
+      let dataSourceGroup: DataSource[] | undefined = dataSourceGroupMap.get(key);
+      if (dataSourceGroup == undefined || dataSourceGroup.length === 0) {
+        return;
+      }
+      let dataSourceStackId: string = uuidv4();
+      dataSourceGroup.forEach(dataSource => {
+        dataSource.dataSourceStackId = dataSourceStackId;
+      });
+      let depth: number | undefined = getDepthOfDataSource(dataSourceGroup[0].name);
+      if (depth == undefined) {
+        return;
+      }
+      kubernetesGraph[depth].push({dataSources: dataSourceGroup});
+    });
+
+    steps.forEach(step => {
+      let depth: number | undefined = getDepthOfStep(step.name);
+      if (depth == undefined) {
+        return;
+      }
+      kubernetesGraph[depth].push({step: step});
+    });
+  }
+
+  function buildVisualizationData(maxColumnId: number): VisualizationData {
+    function handleColumn(columnId: number, nodes: D3Node[], edges: D3Edge[]) {
+      function handleRow(currentHeight: number, columnId: number, rowId: number, nodes: D3Node[], edges: D3Edge[]): number {
+        function handleDataSources(currentHeight: number, dataSources: DataSource[], columnId: number, nodes: D3Node[], edges: D3Edge[]) {
+          dataSources.forEach(dataSource => {
+            if (dataSource.creatorPodName != undefined) {
+              let pod: Pod | undefined = podMap.get(dataSource.creatorPodName);
+              if (pod != undefined) {
+                let step: Step | undefined = stepMap.get(pod.creatorStepName);
+                if (step != undefined) {
+                  edges.push({
+                    start: step.podStackId,
+                    stop: dataSource.dataSourceStackId
+                  });
+                }
+              }
+            }
+          });
+
+          if (dataSources.length > 1) {
+            nodes.push({
+              id: dataSources[0].dataSourceStackId,
+              text: 'data-source-stack-' + dataSources[0].dataSourceStackId + ' (' + dataSources.length + ')',
+              x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
+              y: currentHeight + svgNodeMargin,
+              width: svgNodeWidth,
+              height: svgNodeHeight,
+              type: 'data-source-stack'
+            });
+          } else if (dataSources.length === 1) {
+            let dataSource: DataSource = dataSources[0];
+            nodes.push({
+              id: dataSources[0].dataSourceStackId,
+              text: dataSource.name,
+              x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
+              y: currentHeight + svgNodeMargin,
+              width: svgNodeWidth,
+              height: svgNodeHeight,
+              type: 'data-source'
+            });
+          }
+          return currentHeight + svgNodeHeight + svgVerticalGap;
+        }
+
+        function handleStep(currentHeight: number, step: Step, columnId: number, nodes: D3Node[]) {
+          nodes.push({
+            id: step.name,
+            text: step.name,
+            x: columnId * (svgNodeWidth + svgHorizontalGap) - svgPodNodeMargin + svgNodeMargin,
+            y: currentHeight - svgPodNodeMargin + svgNodeMargin,
+            width: svgNodeWidth +  2 * svgPodNodeMargin,
+            height: svgNodeHeight + 2 * svgPodNodeMargin,
+            type: 'step'
+          });
+
+          if (step.podNames.length > 1) {
+            nodes.push({
+              id: step.podStackId,
+              text: 'pod-stack-' + uuidv4(),
+              x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
+              y: currentHeight + .5 * svgPodNodeMargin + svgNodeMargin,
+              width: svgNodeWidth,
+              height: svgNodeHeight,
+              type: 'pod-stack'
+            });
+          } else if (step.podNames.length === 1) {
+            let pod: Pod | undefined = podMap.get(step.podNames[0]);
+            if (pod != undefined) {
+              nodes.push({
+                id: step.podStackId,
+                text: pod.name,
+                x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
+                y: currentHeight + .5 * svgPodNodeMargin + svgNodeMargin,
+                width: svgNodeWidth,
+                height: svgNodeHeight,
+                type: 'pod'
+              });
+            }
+          }
+
+          step.podNames.forEach(podName =>  {
+            let pod: Pod | undefined = podMap.get(podName);
+            if (pod != undefined) {
+              pod.creatorDataSourceNames.forEach(creatorDataSourceName => {
+                let dataSource: DataSource | undefined = dataSourceMap.get(creatorDataSourceName);
+                if (dataSource != undefined) {
+                  edges.push({
+                    start: dataSource.dataSourceStackId,
+                    stop: step.podStackId
+                  });
+                }
+              });
+            }
+          });
+
+          return currentHeight + svgNodeHeight + svgVerticalGap;
+        }
+
+        let currentNode: KubernetesNode = kubernetesGraph[columnId][rowId];
+        if (currentNode.dataSources != undefined) {
+          currentHeight = handleDataSources(currentHeight, currentNode.dataSources, columnId, nodes, edges);
+        } else if (currentNode.step != undefined) {
+          currentHeight = handleStep(currentHeight, currentNode.step, columnId, nodes);
+        }
+        return currentHeight;
+      }
+
+      let currentHeight: number = 0;
+      for (let rowId = 0; rowId < kubernetesGraph[columnId].length; rowId++) {
+        currentHeight = handleRow(currentHeight, columnId, rowId, nodes, edges);
+      }
+    }
+
+    function filterIdenticalEdges(edges: D3Edge[]): D3Edge[] {
+      return edges.filter((edges, index, self) =>
+        index === self.findIndex((t) => (
+          t.start === edges.start && t.stop === edges.stop
+        ))
+      )
+    }
+
+    let nodes: D3Node[] = [];
+    let edges: D3Edge[] = [];
+
+    for (let columnId = 0; columnId <= maxColumnId; columnId++) {
+      handleColumn(columnId, nodes, edges);
+    }
+
+    edges = filterIdenticalEdges(edges);
+
+    return {
+      nodes: nodes,
+      edges: edges
     }
   }
 
-  return {
-    nodes: nodes,
-    edges: edges
-  };
+  let maxColumnId: number = getMaxColumnId(dataSources, steps);
+
+  initializeKubernetesGraph(maxColumnId);
+
+  fillKubernetesGraph(dataSources, steps);
+
+  return buildVisualizationData(maxColumnId);
 }
 
 @Component({
@@ -328,7 +397,7 @@ export class AppComponent implements AfterContentInit {
     getDataSourcesFromRawDataAndSaveToMap();
     getPodsFromRawDataAndSaveToMap();
 
-    let visualizationResult: VisualizationData | undefined = getVisualizationData(getAllDataSources(), getAllSteps(), getAllPods());
+    let visualizationResult: VisualizationData | undefined = getVisualizationData(getAllDataSources(), getAllSteps());
     if (visualizationResult == undefined) {
       return;
     }

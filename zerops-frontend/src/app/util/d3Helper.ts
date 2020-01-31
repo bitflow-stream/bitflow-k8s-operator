@@ -2,41 +2,6 @@ import {VisualizationData} from "../definitions/definitions";
 import {svgNodeWidth} from "../config/config";
 import * as d3 from "d3-selection";
 
-// function getNodeLayoutColumnByName(nodeLayout: KubernetesNode[][], name: string): number {
-//   let columnId: number = null;
-//   nodeLayout.forEach((column, currentColumnId) => {
-//     column.forEach(rowElement => {
-//       if (rowElement.name === name) {
-//         columnId = currentColumnId;
-//       }
-//     })
-//   });
-//   return columnId;
-// }
-//
-// function getNodeLayoutRowByName(nodeLayout: KubernetesNode[][], name: string): number {
-//   function isStep(kubernetesNode: KubernetesNode): kubernetesNode is Step {
-//     return stepMap.get(kubernetesNode.name) !== undefined;
-//   }
-//
-//   let rowId: number = null;
-//   nodeLayout.forEach((column) => {
-//     let row: number = 0;
-//     column.forEach((rowElement) => {
-//       if (rowElement.name === name) {
-//         rowId = row;
-//         return;
-//       }
-//       if (isStep(rowElement)) {
-//         row += rowElement.podNames.length;
-//       } else {
-//         row++;
-//       }
-//     })
-//   });
-//   return rowId;
-// }
-
 export function drawSvg(this: any, visualization: VisualizationData) {
   const graph: any = {
     nodes: visualization.nodes,
@@ -85,6 +50,9 @@ export function drawSvg(this: any, visualization: VisualizationData) {
       }
       if (d.type === 'pod') {
         return 'stroke:#000000; fill:#add8e6;';
+      }
+      if (d.type === 'pod-stack') {
+        return 'stroke:#000000; fill:#9cc7d5;';
       }
       if (d.type === 'step') {
         return 'stroke:#000000; fill:#ffaa1d;';
