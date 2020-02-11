@@ -121,10 +121,12 @@ function getDataSourcesFromRawDataAndSaveToMap() {
     return <DataSource[]>dataSourcesRuntime.map(dataSourceRaw => {
       let name: string = dataSourceRaw.metadata.name;
       let creatorPodName: string | undefined = dataSourceRaw.metadata.labels['zerops-pod'];
+      let outputName: string | undefined = dataSourceRaw.metadata.labels['zerops-output'];
       let dataSource: DataSource = {
         name: name,
         creatorPodName: creatorPodName,
-        dataSourceStackId: uuidv4()
+        dataSourceStackId: uuidv4(),
+        outputName: outputName
       };
       return dataSource;
     }).filter(dataSource => dataSource != undefined);
@@ -212,9 +214,12 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[]): Visuali
       if (creatorStepName == undefined) {
         return;
       }
-      let dataSourceGroup: DataSource[] | undefined = dataSourceGroupMap.get(creatorStepName);
+
+      let outputName: string | undefined = dataSource.outputName == undefined ? 'undefined' : dataSource.outputName;
+
+      let dataSourceGroup: DataSource[] | undefined = dataSourceGroupMap.get(creatorStepName + '|' + outputName);
       if (dataSourceGroup == undefined || dataSourceGroup.length === 0) {
-        dataSourceGroupMap.set(creatorStepName, [dataSource]);
+        dataSourceGroupMap.set(creatorStepName + '|' + outputName, [dataSource]);
       } else {
         dataSourceGroup.push(dataSource);
       }

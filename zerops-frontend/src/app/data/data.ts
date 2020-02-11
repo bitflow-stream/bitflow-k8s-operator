@@ -620,7 +620,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "zerops-output": "B",
         "collector": "bitflow",
         "component": "wally178-instance-00000301",
         "layer": "virtual",
@@ -2796,7 +2796,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:00Z",
       "labels": {
-        "zerops-output": "B",
+        "zerops-output": "D",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
@@ -2840,7 +2840,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "zerops-output": "B",
+        "zerops-output": "D",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
@@ -2884,7 +2884,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:58Z",
       "labels": {
-        "zerops-output": "B",
+        "zerops-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
@@ -2928,7 +2928,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:55Z",
       "labels": {
-        "zerops-output": "B",
+        "zerops-output": "D",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",

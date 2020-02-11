@@ -23,6 +23,7 @@ export interface DataSource {
   name: string;
   creatorPodName?: string;
   dataSourceStackId: string;
+  outputName?: string;
 }
 
 export interface Pod {
