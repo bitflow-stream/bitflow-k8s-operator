@@ -4,10 +4,13 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {NgbdModalBasic} from './modal-basic/modal-basic.component';
+import { GraphComponent } from './graph/graph.component';
 @NgModule({
   declarations: [
     AppComponent,
-    NgbdModalBasic
+    NgbdModalBasic,
+    GraphComponent,
+    AppComponent
   ],
   imports: [
     BrowserModule,

@@ -1,29 +1,29 @@
 import {async, TestBed} from '@angular/core/testing';
-import {AppComponent} from './app.component';
+import {GraphComponent} from './graph.component';
 
 describe('AppComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        AppComponent
+        GraphComponent
       ],
     }).compileComponents();
   }));
 
   it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+    const fixture = TestBed.createComponent(GraphComponent);
     const app = fixture.debugElement.componentInstance;
     expect(app).toBeTruthy();
   });
 
   it(`should have as title 'zerops-frontend'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
+    const fixture = TestBed.createComponent(GraphComponent);
     const app = fixture.debugElement.componentInstance;
     expect(app.title).toEqual('zerops-frontend');
   });
 
   it('should return list of all DataSourceGraphElements in KubernetesGraph', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+    const fixture = TestBed.createComponent(GraphComponent);
     const app = fixture.debugElement.componentInstance;
 
     let kubernetesGraph = {
@@ -83,7 +83,7 @@ describe('AppComponent', () => {
   });
 
   it('should return list of all StepGraphElements in KubernetesGraph', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+    const fixture = TestBed.createComponent(GraphComponent);
     const app = fixture.debugElement.componentInstance;
 
     let kubernetesGraph = {
