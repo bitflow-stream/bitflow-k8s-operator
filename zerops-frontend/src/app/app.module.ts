@@ -3,14 +3,14 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import {NgbdModalBasic} from './modal-basic/modal-basic.component';
 import { GraphComponent } from './graph/graph.component';
+import { PodModalComponent } from './graph/pod-modal/pod-modal.component';
 @NgModule({
   declarations: [
     AppComponent,
-    NgbdModalBasic,
     GraphComponent,
-    AppComponent
+    AppComponent,
+    PodModalComponent
   ],
   imports: [
     BrowserModule,

@@ -1,6 +1,7 @@
-import {AfterContentInit, Component, HostListener} from '@angular/core';
+import {AfterContentInit, Component, HostListener, ViewChild} from '@angular/core';
 import {
-  currentDataSourcesMap, currentStepsMap,
+  currentDataSourcesMap,
+  currentStepsMap,
   D3Edge,
   D3Node,
   DataSource,
@@ -24,6 +25,7 @@ import {
   svgVerticalGap
 } from "./config/config";
 import {uuidv4} from "./util/util";
+import {PodModalComponent} from "./pod-modal/pod-modal.component";
 
 function getDepthOfDataSource(elementName: string): number | undefined {
   let element: DataSource | undefined = dataSourceMap.get(elementName);
@@ -425,9 +427,11 @@ function displayGraph(this: any, dataSources: DataSource[], steps: Step[]): void
   styleUrls: ['./graph.component.css']
 })
 export class GraphComponent implements AfterContentInit {
+  @ViewChild(PodModalComponent, {static: false}) modal: PodModalComponent | undefined;
+
   @HostListener('click', ['$event.target']) onClick(target: any) {
     if (target.closest('rect') == undefined) return;
-    alert(target.id);
+    this.modal?.openModal(target.id);
   }
 
   ngAfterContentInit() {
