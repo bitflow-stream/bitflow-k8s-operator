@@ -25,7 +25,7 @@ import {
   svgVerticalGap
 } from "./config/config";
 import {uuidv4} from "./util/util";
-import {PodModalComponent} from "./pod-modal/pod-modal.component";
+import {ConfigModalComponent} from "./config-modal/config-modal.component";
 
 function getDepthOfDataSource(elementName: string): number | undefined {
   let element: DataSource | undefined = dataSourceMap.get(elementName);
@@ -430,7 +430,7 @@ function displayGraph(this: any, dataSources: DataSource[], steps: Step[]): void
 export class GraphComponent implements AfterContentInit {
   kubernetesGraph = kubernetesGraph;
 
-  @ViewChild(PodModalComponent, {static: false}) modal: PodModalComponent | undefined;
+  @ViewChild(ConfigModalComponent, {static: false}) modal: ConfigModalComponent | undefined;
 
   @HostListener('click', ['$event.target']) onClick(target: any) {
     if (target.closest('rect') == undefined) return;

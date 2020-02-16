@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PodModalComponent } from './pod-modal.component';
+import { ConfigModalComponent } from './config-modal.component';
 
 describe('PodModalComponent', () => {
-  let component: PodModalComponent;
-  let fixture: ComponentFixture<PodModalComponent>;
+  let component: ConfigModalComponent;
+  let fixture: ComponentFixture<ConfigModalComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ PodModalComponent ]
+      declarations: [ ConfigModalComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(PodModalComponent);
+    fixture = TestBed.createComponent(ConfigModalComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

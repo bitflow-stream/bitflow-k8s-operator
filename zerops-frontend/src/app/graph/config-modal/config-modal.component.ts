@@ -46,10 +46,10 @@ function getElementNames(kubernetesNode: KubernetesNode | undefined) {
 
 @Component({
   selector: 'app-pod-modal',
-  templateUrl: './pod-modal.component.html',
-  styleUrls: ['./pod-modal.component.css']
+  templateUrl: './config-modal.component.html',
+  styleUrls: ['./config-modal.component.css']
 })
-export class PodModalComponent {
+export class ConfigModalComponent {
   @Input() kubernetesGraph: KubernetesNode[][] | undefined;
   uuid: string | undefined;
   kubernetesNode: KubernetesNode | undefined;
