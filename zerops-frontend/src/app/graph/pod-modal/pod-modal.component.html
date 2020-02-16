@@ -1,24 +1,46 @@
 <ng-template #content let-modal>
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
+    <h4 class="modal-title" id="modal-basic-title">
+      <div *ngIf="kubernetesNode?.step != undefined">Pod configuration</div>
+      <div *ngIf="kubernetesNode?.dataSources != undefined">DataSource configuration</div>
+    </h4>
     <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
   <div class="modal-body">
-    <form>
-      <div class="form-group">
-        <label for="dateOfBirth">Date of birth</label>
-        <div class="input-group">
-          <input id="dateOfBirth" class="form-control" placeholder="yyyy-mm-dd" name="dp" ngbDatepicker #dp="ngbDatepicker">
-          <div class="input-group-append">
-            <button class="btn btn-outline-secondary calendar" (click)="dp.toggle()" type="button"></button>
+    <select [(ngModel)]="selectedElement" class="browser-default custom-select">
+      <option *ngFor="let elementName of elementNames"
+              [value]="elementName">{{elementName}}</option>
+    </select>
+    <div *ngIf="selectedElement != undefined">
+      <br>
+      <div *ngIf="kubernetesNode?.dataSources != undefined">
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <label for="dataSourceName">Name:</label>
+              <input type="text" class="form-control" id="dataSourceName" disabled="disabled" [value]="selectedElement">
+            </div>
           </div>
         </div>
       </div>
-    </form>
+      <div *ngIf="kubernetesNode?.step != undefined">
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <label for="stepName">Name:</label>
+              <input type="text" class="form-control" id="stepName" disabled="disabled" [value]="selectedElement">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="modal-footer">
+    <div *ngIf="selectedElement != undefined">
+      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Filter click')">Filter</button>
+    </div>
     <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
   </div>
 </ng-template>

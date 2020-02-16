@@ -281,7 +281,8 @@ function getVisualizationData(dataSources: DataSource[], steps: Step[]): Visuali
               height: svgNodeHeight,
               type: 'data-source-stack'
             });
-          } else if (dataSources.length === 1) {
+          }
+          else if (dataSources.length === 1) {
             let dataSource: DataSource = dataSources[0];
             nodes.push({
               id: dataSources[0].dataSourceStackId,
@@ -427,6 +428,8 @@ function displayGraph(this: any, dataSources: DataSource[], steps: Step[]): void
   styleUrls: ['./graph.component.css']
 })
 export class GraphComponent implements AfterContentInit {
+  kubernetesGraph = kubernetesGraph;
+
   @ViewChild(PodModalComponent, {static: false}) modal: PodModalComponent | undefined;
 
   @HostListener('click', ['$event.target']) onClick(target: any) {

@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { GraphComponent } from './graph/graph.component';
 import { PodModalComponent } from './graph/pod-modal/pod-modal.component';
+import {FormsModule} from "@angular/forms";
 @NgModule({
   declarations: [
     AppComponent,
@@ -14,7 +15,8 @@ import { PodModalComponent } from './graph/pod-modal/pod-modal.component';
   ],
   imports: [
     BrowserModule,
-    NgbModule
+    NgbModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [
