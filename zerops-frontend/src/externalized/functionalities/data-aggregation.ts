@@ -23,17 +23,15 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
       let name = dataSourceRaw.metadata.name;
       let creatorPodName = dataSourceRaw.metadata.labels['zerops-pod'];
       let hasCreatorPod = false;
-      let creatorPod;
       if (creatorPodName != undefined) {
         hasCreatorPod = true;
-        creatorPod = podMap.get(creatorPodName);
       }
       let outputName = dataSourceRaw.metadata.labels['zerops-output'];
       let hasOutputName = outputName != undefined;
       return {
         name: name,
         hasCreatorPod: hasCreatorPod,
-        creatorPod: creatorPod,
+        creatorPod: hasCreatorPod? {name: creatorPodName, hasCreatorStep: true} : undefined,
         hasOutputName: hasOutputName,
         outputName: outputName
       };
@@ -43,18 +41,14 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
   getDataSourcesFromRawData().forEach(dataSource => dataSourceMap.set(dataSource.name, dataSource));
 }
 
-export function getPodsFromRawDataAndSaveToMap() {
+export function getPodsAndStepsFromRawDataAndSaveToMap() {
   function getPodsFromRawData(): Pod[] {
     return podsRuntime
       .map(podRuntime => {
         let name: string = podRuntime.metadata.name;
         let creatorStepName = podRuntime.metadata.labels['zerops-analysis-step'];
 
-        let creatorStep;
-        if (creatorStepName != undefined) {
-          creatorStep = stepMap.get(creatorStepName);
-        }
-        let hasCreatorStep = creatorStep != undefined;
+        let hasCreatorStep = creatorStepName != undefined;
 
         let creatorDataSourceName = podRuntime.metadata.labels['zerops-data-source-name'];
         let creatorDataSourceNames: string[];
@@ -70,11 +64,19 @@ export function getPodsFromRawDataAndSaveToMap() {
         return {
           name: name,
           hasCreatorStep: hasCreatorStep,
-          creatorStep: creatorStep,
+          creatorStep: {name: creatorStepName, podType: 'pod'},
           creatorDataSources: creatorDataSources
         } as Pod;
       });
   }
 
   getPodsFromRawData().forEach(pod => podMap.set(pod.name, pod));
+
+  getStepsFromRawDataAndSaveToMap();
+
+  getAllPods().forEach(pod => {
+    if (pod.hasCreatorStep === true) {
+      pod.creatorStep = stepMap.get(pod.creatorStep.name);
+    }
+  });
 }

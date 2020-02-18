@@ -68,7 +68,7 @@ export class ConfigModalComponent {
     this.selectedElement = undefined;
     this.uuid = uuid;
     this.kubernetesNode = getKubernetesNode(this.uuid);
-    this.elementNames =  getElementNames(this.kubernetesNode);
+    this.elementNames = getElementNames(this.kubernetesNode);
 
 
     this.modalService.open(this.theModal, {ariaLabelledBy: 'modal-basic-title', size: 'lg'}).result.then((result) => {
