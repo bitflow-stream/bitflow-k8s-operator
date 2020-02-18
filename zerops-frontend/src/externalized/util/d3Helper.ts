@@ -1,8 +1,8 @@
-import {VisualizationData} from "../definitions/definitions";
+import {FrontendData} from "../definitions/definitions";
 import {svgNodeWidth} from "../config/config";
 import * as d3 from "d3-selection";
 
-export function drawSvg(this: any, visualization: VisualizationData) {
+export function drawSvg(this: any, visualization: FrontendData) {
   const graph: any = {
     nodes: visualization.nodes,
     edges: visualization.edges,

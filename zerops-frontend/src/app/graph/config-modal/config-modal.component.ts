@@ -1,6 +1,6 @@
 import {Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {ModalDismissReasons, NgbModal} from "@ng-bootstrap/ng-bootstrap";
-import {kubernetesGraph, KubernetesNode} from "../definitions/definitions";
+import {kubernetesGraph, KubernetesNode} from "../../../externalized/definitions/definitions";
 
 function getKubernetesNode(uuid: string | undefined): KubernetesNode | undefined {
   if (uuid == undefined) {
