@@ -34,7 +34,6 @@ export interface GraphVisualization {
 }
 
 export interface GraphVisualizationColumn {
-  maxFilledRow: number;
   graphElements: GraphElement[];
 }
 
