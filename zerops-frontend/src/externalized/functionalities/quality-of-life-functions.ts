@@ -382,14 +382,14 @@ export function setAllCurrentGraphElementsWithStacks() {
     });
   });
 
-  dataSourceGraphElements.map(element => {
+  dataSourceGraphElements = dataSourceGraphElements.map(element => {
     if (element.type === 'data-source-stack' && element.dataSourceStack.dataSources.length <= maxNumberOfSeparateGraphElements && element.dataSourceStack.dataSources.length > 0) {
       if (element.dataSourceStack.dataSources.length > 1) {
         for (let i = 1; i < element.dataSourceStack.dataSources.length; i++) {
           dataSourceGraphElements.push({type: 'data-source', dataSource: element.dataSourceStack.dataSources[i]});
         }
       }
-      return {type: 'data-source', pod: element.dataSourceStack.dataSources[0]};
+      return {type: 'data-source', dataSource: element.dataSourceStack.dataSources[0]};
     } else {
       return element;
     }
@@ -402,6 +402,7 @@ export function setAllCurrentGraphElementsWithStacks() {
       currentGraphElementsWithStacksMap.set(element.dataSource.name, {type: 'data-source', dataSource: element.dataSource});
     }
     if (element.type === 'data-source-stack') {
+      console.log(element.dataSourceStack.dataSources.length)
       currentGraphElementsWithStacksMap.set(element.dataSourceStack.stackId, {type: 'data-source-stack', dataSourceStack: element.dataSourceStack});
     }
   });
@@ -420,6 +421,8 @@ export function setAllCurrentGraphElementsWithStacks() {
       currentGraphElementsWithStacksMap.set(element.step.name, {type: 'step', step: element.step});
     }
   });
+
+  console.log(getAllCurrentGraphElementsWithStacks())
 }
 
 export function getGraphElementByIdentifier(identifier: string) {

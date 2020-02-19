@@ -60,7 +60,6 @@
         <select id="data-source-stack-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
           <option *ngFor="let dataSource of currentGraphElement.dataSourceStack.dataSources"
                   [value]="dataSource.name">{{dataSource.name}}</option>
-          <!-- TODO there are stacks with only one dataSource, why? -->
         </select>
       </div>
       <div *ngIf="currentGraphElement.type === 'data-source'">

@@ -100,11 +100,13 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
 
         if (graphElement.dataSource.hasCreatorPod) {
           let creatorGraphElement: GraphElement = getGraphElementIncludingPod(graphElement.dataSource.creatorPod, getAllCurrentGraphElementsWithStacks());
-          if (creatorGraphElement.type === 'pod') {
-            edges.push({start: creatorGraphElement.pod.name, stop: graphElement.dataSource.name});
-          }
-          if (creatorGraphElement.type === 'pod-stack') {
-            edges.push({start: creatorGraphElement.podStack.stackId, stop: graphElement.dataSource.name});
+          if (creatorGraphElement != undefined) {
+            if (creatorGraphElement.type === 'pod') {
+              edges.push({start: creatorGraphElement.pod.name, stop: graphElement.dataSource.name});
+            }
+            if (creatorGraphElement.type === 'pod-stack') {
+              edges.push({start: creatorGraphElement.podStack.stackId, stop: graphElement.dataSource.name});
+            }
           }
         }
       }
@@ -124,11 +126,13 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
         graphElement.dataSourceStack.dataSources.forEach(dataSource => {
           if (dataSource.hasCreatorPod) {
             let creatorGraphElement: GraphElement = getGraphElementIncludingPod(dataSource.creatorPod, getAllCurrentGraphElementsWithStacks());
-            if (creatorGraphElement.type === 'pod') {
-              edges.push({start: creatorGraphElement.pod.name, stop: graphElement.dataSourceStack.stackId});
-            }
-            if (creatorGraphElement.type === 'pod-stack') {
-              edges.push({start: creatorGraphElement.podStack.stackId, stop: graphElement.dataSourceStack.stackId});
+            if (creatorGraphElement != undefined) {
+              if (creatorGraphElement.type === 'pod') {
+                edges.push({start: creatorGraphElement.pod.name, stop: graphElement.dataSourceStack.stackId});
+              }
+              if (creatorGraphElement.type === 'pod-stack') {
+                edges.push({start: creatorGraphElement.podStack.stackId, stop: graphElement.dataSourceStack.stackId});
+              }
             }
           }
         });
@@ -145,13 +149,15 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
         });
         currentHeight += svgNodeHeight + svgVerticalGap;
 
-        graphElement.pod.creatorDataSources.filter(creator => getCurrentDataSources().some(dataSource => dataSource.name === creator.name)).forEach(creator => {
-          let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creator, getAllCurrentGraphElementsWithStacks());
-          if (creatorGraphElement.type === 'data-source') {
-            edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.pod.name});
-          }
-          if (creatorGraphElement.type === 'data-source-stack') {
-            edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.pod.name});
+        graphElement.pod.creatorDataSources.filter(creator => getCurrentDataSources().some(dataSource => dataSource.name === creator.name)).forEach(creatorDataSource => {
+          let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creatorDataSource, getAllCurrentGraphElementsWithStacks());
+          if (creatorGraphElement != undefined) {
+            if (creatorGraphElement.type === 'data-source') {
+              edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.pod.name});
+            }
+            if (creatorGraphElement.type === 'data-source-stack') {
+              edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.pod.name});
+            }
           }
         });
 
@@ -171,11 +177,13 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
         graphElement.podStack.pods.forEach(pod => {
           pod.creatorDataSources.forEach(creator => {
             let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creator, getAllCurrentGraphElementsWithStacks());
-            if (creatorGraphElement.type === 'data-source') {
-              edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.podStack.stackId}); // TODO remove duplicate edges (and make edges thicker?)
-            }
-            if (creatorGraphElement.type === 'data-source-stack') {
-              edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.podStack.stackId});
+            if (creatorGraphElement != undefined) {
+              if (creatorGraphElement.type === 'data-source') {
+                edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.podStack.stackId}); // TODO remove duplicate edges (and make edges thicker?)
+              }
+              if (creatorGraphElement.type === 'data-source-stack') {
+                edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.podStack.stackId});
+              }
             }
           });
         });
@@ -284,7 +292,6 @@ export class GraphComponent implements AfterContentInit {
 
   filterGraph(graphElement: GraphElement) {
     let graphElementsToDisplay: GraphElement[] = [...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement(graphElement), ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphElement, false)];
-    // TODO duplicated HAVE to be removed
     graphElementsToDisplay = graphElementsToDisplay.filter((graphElement, index, self) =>
       index === self.findIndex((t) => (
         getIdentifierByGraphElement(t) === getIdentifierByGraphElement(graphElement)
