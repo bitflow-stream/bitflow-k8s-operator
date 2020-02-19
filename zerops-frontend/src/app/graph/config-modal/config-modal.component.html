@@ -14,13 +14,15 @@
   <div class="modal-body">
     <div *ngIf="currentGraphElement.type === 'pod-stack' || currentGraphElement.type === 'pod'">
       <div *ngIf="currentGraphElement.type === 'pod-stack'">
-        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+        <label for="pod-stack-select">Pod:</label>
+        <select id="pod-stack-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
           <option *ngFor="let pod of currentGraphElement.podStack.pods"
                   [value]="pod.name">{{pod.name}}</option>
         </select>
       </div>
       <div *ngIf="currentGraphElement.type === 'pod'">
-        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+        <label for="pod-select">Pod:</label>
+        <select id="pod-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
           <option [value]="currentGraphElement.pod.name">{{currentGraphElement.pod.name}}</option>
         </select>
       </div>
@@ -54,14 +56,16 @@
 
     <div *ngIf="currentGraphElement.type === 'data-source-stack' || currentGraphElement.type === 'data-source'">
       <div *ngIf="currentGraphElement.type === 'data-source-stack'">
-        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+        <label for="data-source-stack-select">DataSource:</label>
+        <select id="data-source-stack-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
           <option *ngFor="let dataSource of currentGraphElement.dataSourceStack.dataSources"
                   [value]="dataSource.name">{{dataSource.name}}</option>
           <!-- TODO there are stacks with only one dataSource, why? -->
         </select>
       </div>
       <div *ngIf="currentGraphElement.type === 'data-source'">
-        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+        <label for="data-source-select">DataSource:</label>
+        <select id="data-source-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
           <option [value]="currentGraphElement.dataSource.name">{{currentGraphElement.dataSource.name}}</option>
         </select>
       </div>
@@ -98,10 +102,10 @@
       </div>
     </div>
   </div>
-  <div class="modal-footer">
-        <div *ngIf="selectedElement() != undefined">
-          <button type="button" class="btn btn-outline-dark" (click)="modal.close('Filter click')">Filter</button>
-        </div>
-        <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
+  <div *ngIf="selectedElement() != undefined">
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Filter click')">Filter</button>
+      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
+    </div>
   </div>
 </ng-template>
