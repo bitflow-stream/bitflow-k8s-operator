@@ -225,7 +225,11 @@ function displayGraph(this: any, dataSources: DataSource[], steps: Step[], pods:
 
   setAllCurrentGraphElementsWithStacks();
   let graphVisualization: GraphVisualization = getGraphVisualization();
+  console.log(graphVisualization)
   let frontendData: FrontendData = getFrontendDataFromGraphVisualization(graphVisualization);
+
+  // TODO why is frontendData containing more than a pod?
+  console.log(frontendData)
   drawSvg.call(this, frontendData);
 }
 
@@ -246,5 +250,10 @@ export class GraphComponent implements AfterContentInit {
     initializeMaps();
 
     displayGraph.call(this, getAllDataSources(), getAllSteps(), getAllPods());
+  }
+
+
+  filterGraph(graphElement: GraphElement) {
+    displayGraph.call(this, [], [graphElement.pod.creatorStep], [graphElement.pod]);
   }
 }

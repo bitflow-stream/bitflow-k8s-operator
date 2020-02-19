@@ -3,6 +3,11 @@ import {svgNodeWidth} from "../config/config";
 import * as d3 from "d3-selection";
 
 export function drawSvg(this: any, visualization: FrontendData) {
+  let svg = document.getElementById('mysvg');
+  if (svg != undefined) {
+    svg.innerHTML = '';
+  }
+
   const graph: any = {
     nodes: visualization.nodes,
     edges: visualization.edges,

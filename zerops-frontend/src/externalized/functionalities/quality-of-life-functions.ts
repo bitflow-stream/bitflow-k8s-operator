@@ -60,18 +60,21 @@ export function getCurrentPods(): Pod[] {
 }
 
 export function setCurrentDataSources(dataSources: DataSource[]) {
+  currentDataSourcesMap.clear();
   dataSources.forEach(dataSource => {
     currentDataSourcesMap.set(dataSource.name, dataSource);
   });
 }
 
 export function setCurrentSteps(steps: Step[]) {
+  currentStepsMap.clear();
   steps.forEach(step => {
     currentStepsMap.set(step.name, step);
   });
 }
 
 export function setCurrentPods(pods: Pod[]) {
+  currentPodsMap.clear();
   pods.forEach(pod => {
     currentPodsMap.set(pod.name, pod);
   });
@@ -273,6 +276,8 @@ export function getAllCurrentGraphElementsWithStacks() {
 }
 
 export function setAllCurrentGraphElementsWithStacks() {
+  currentGraphElementsWithStacksMap.clear();
+
   let podGraphElements: GraphElement[] = [];
   let currentPods: Pod[] = getCurrentPods();
 
