@@ -18,7 +18,7 @@ import {
   getAllPods,
   getAllSteps,
   getCurrentDataSources,
-  getCurrentPods,
+  getCurrentPods, getCurrentSteps,
   getDepthOfGraphElement,
   getGraphElementIncludingDataSource,
   getGraphElementIncludingPod,
@@ -179,7 +179,7 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
             let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creator, getAllCurrentGraphElementsWithStacks());
             if (creatorGraphElement != undefined) {
               if (creatorGraphElement.type === 'data-source') {
-                edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.podStack.stackId}); // TODO remove duplicate edges (and make edges thicker?)
+                edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.podStack.stackId});
               }
               if (creatorGraphElement.type === 'data-source-stack') {
                 edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.podStack.stackId});
@@ -297,6 +297,16 @@ export class GraphComponent implements AfterContentInit {
         getIdentifierByGraphElement(t) === getIdentifierByGraphElement(graphElement)
       ))
     );
+    let allCurrentIdentifiers = [
+      ...getCurrentDataSources().map(dataSource => ({type: 'data-source', dataSource: dataSource} as GraphElement)),
+      ...getCurrentPods().map(pod => ({type: 'pod', pod: pod} as GraphElement)),
+      ...getCurrentSteps().map(step => ({type: 'step', step: step} as GraphElement))
+    ].map(graphElement => getIdentifierByGraphElement(graphElement));
+
+    graphElementsToDisplay = graphElementsToDisplay.filter(graphElement => {
+      let identifier = getIdentifierByGraphElement(graphElement);
+      return allCurrentIdentifiers.some(currentIdentifier => currentIdentifier === identifier);
+    });
     displayGraphFromGraphElements.call(this, graphElementsToDisplay);
   }
 }
@@ -373,7 +383,7 @@ function getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement(graphEle
     return graphElements;
   }
   if (graphElement.type === 'step') {
-    alert('Es kann nicht nach Steps gefiltert werden. Dieser Fall sollte nicht auftreten.')
+    alert('Es kann nicht nach Steps gefiltert werden. Dieser Fall sollte nicht auftreten.');
     return [];
   }
   return [];
@@ -432,7 +442,7 @@ function getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphEl
     return graphElements;
   }
   if (graphElement.type === 'step') {
-    alert('Es kann nicht nach Steps gefiltert werden. Dieser Fall sollte nicht auftreten.')
+    alert('Es kann nicht nach Steps gefiltert werden. Dieser Fall sollte nicht auftreten.');
     return [];
   }
   return [];
