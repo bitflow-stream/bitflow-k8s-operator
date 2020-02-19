@@ -67,6 +67,7 @@ export interface Step {
   podType: 'pod' | 'pod-stack'
   pods?: Pod[]
   podStack?: PodStack
+  raw: string;
 }
 
 export interface DataSource {
@@ -76,6 +77,7 @@ export interface DataSource {
   hasOutputName: boolean;
   outputName?: string;
   createdPods: Pod[];
+  raw: string;
 }
 
 export interface Pod {
@@ -84,6 +86,7 @@ export interface Pod {
   creatorStep?: Step;
   creatorDataSources: DataSource[];
   createdDataSources: DataSource[];
+  raw: string;
 }
 
 export interface StepDataSourceMatches {

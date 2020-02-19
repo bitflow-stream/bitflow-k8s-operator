@@ -9,7 +9,8 @@ export function getStepsFromRawDataAndSaveToMap() {
       return {
         name: name,
         podType: 'pod',
-        pods: getAllPods().filter(pod => pod.creatorStep?.name === name) // TODO fix circular dependency data-aggregation <-> quality-of-life-functions
+        pods: getAllPods().filter(pod => pod.creatorStep?.name === name), // TODO fix circular dependency data-aggregation <-> quality-of-life-functions
+        raw: JSON.stringify(stepRaw, null, 2)
       } as Step;
     });
   }
@@ -34,7 +35,8 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
         creatorPod: hasCreatorPod ? {name: creatorPodName, hasCreatorStep: true} : undefined,
         hasOutputName: hasOutputName,
         outputName: outputName,
-        createdPods: []
+        createdPods: [],
+        raw: JSON.stringify(dataSourceRaw, null, 2)
       };
     });
   }
@@ -45,13 +47,13 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
 export function getPodsAndStepsFromRawDataAndSaveToMap() {
   function getPodsFromRawData(): Pod[] {
     return podsRuntime
-      .map(podRuntime => {
-        let name: string = podRuntime.metadata.name;
-        let creatorStepName = podRuntime.metadata.labels['zerops-analysis-step'];
+      .map(podRaw => {
+        let name: string = podRaw.metadata.name;
+        let creatorStepName = podRaw.metadata.labels['zerops-analysis-step'];
 
         let hasCreatorStep = creatorStepName != undefined;
 
-        let creatorDataSourceName = podRuntime.metadata.labels['zerops-data-source-name'];
+        let creatorDataSourceName = podRaw.metadata.labels['zerops-data-source-name'];
         let creatorDataSourceNames: string[];
         if (creatorDataSourceName != undefined) {
           creatorDataSourceNames = [creatorDataSourceName];
@@ -67,7 +69,8 @@ export function getPodsAndStepsFromRawDataAndSaveToMap() {
           hasCreatorStep: hasCreatorStep,
           creatorStep: {name: creatorStepName, podType: 'pod'},
           creatorDataSources: creatorDataSources,
-          createdDataSources: []
+          createdDataSources: [],
+          raw: JSON.stringify(podRaw, null, 2)
         } as Pod;
       });
   }
