@@ -16,11 +16,14 @@ import {
   getAllCurrentGraphElementsWithStacks,
   getAllDataSources,
   getAllPods,
-  getAllSteps, getCurrentDataSources,
+  getAllSteps,
+  getCurrentDataSources,
   getCurrentPods,
   getDepthOfGraphElement,
   getGraphElementIncludingDataSource,
-  initializeMaps, setAllCurrentGraphElementsWithStacks,
+  getGraphElementIncludingPod,
+  initializeMaps,
+  setAllCurrentGraphElementsWithStacks,
   setCurrentGraphElements
 } from "../../externalized/functionalities/quality-of-life-functions";
 import {
@@ -92,6 +95,16 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
           type: "data-source"
         });
         currentHeight += svgNodeHeight + svgVerticalGap;
+
+        if (graphElement.dataSource.hasCreatorPod) {
+          let creatorGraphElement: GraphElement = getGraphElementIncludingPod(graphElement.dataSource.creatorPod, getAllCurrentGraphElementsWithStacks());
+          if (creatorGraphElement.type === 'pod') {
+            edges.push({start: creatorGraphElement.pod.name, stop: graphElement.dataSource.name});
+          }
+          if (creatorGraphElement.type === 'pod-stack') {
+            edges.push({start: creatorGraphElement.podStack.stackId, stop: graphElement.dataSource.name});
+          }
+        }
       }
       if (graphElement.type === 'data-source-stack') {
         nodes.push({
@@ -104,6 +117,19 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
           type: "data-source-stack"
         });
         currentHeight += svgNodeHeight + svgVerticalGap;
+
+
+        graphElement.dataSourceStack.dataSources.forEach(dataSource => {
+          if (dataSource.hasCreatorPod) {
+            let creatorGraphElement: GraphElement = getGraphElementIncludingPod(dataSource.creatorPod, getAllCurrentGraphElementsWithStacks());
+            if (creatorGraphElement.type === 'pod') {
+              edges.push({start: creatorGraphElement.pod.name, stop: graphElement.dataSourceStack.stackId});
+            }
+            if (creatorGraphElement.type === 'pod-stack') {
+              edges.push({start: creatorGraphElement.podStack.stackId, stop: graphElement.dataSourceStack.stackId});
+            }
+          }
+        });
       }
       if (graphElement.type === 'pod') {
         nodes.push({
