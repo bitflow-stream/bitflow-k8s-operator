@@ -136,7 +136,7 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
           id: graphElement.pod.name,
           text: graphElement.pod.name,
           x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
-          y: currentHeight + svgNodeMargin,
+          y: 20 + currentHeight + svgNodeMargin,
           width: svgNodeWidth,
           height: svgNodeHeight,
           type: "pod"
@@ -159,7 +159,7 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
           id: graphElement.podStack.stackId,
           text: graphElement.podStack.stackId,
           x: columnId * (svgNodeWidth + svgHorizontalGap) + svgNodeMargin,
-          y: currentHeight + svgNodeMargin,
+          y: 20 + currentHeight + svgNodeMargin,
           width: svgNodeWidth,
           height: svgNodeHeight,
           type: "pod-stack"
@@ -209,6 +209,13 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
       }
     });
   });
+
+  // Filtering identical edges
+  edges = edges.filter((edges, index, self) =>
+    index === self.findIndex((t) => (
+      t.start === edges.start && t.stop === edges.stop
+    ))
+  );
 
   return {nodes, edges} as FrontendData;
 }
