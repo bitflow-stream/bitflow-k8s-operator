@@ -396,7 +396,6 @@ export function setAllCurrentGraphElementsWithStacks() {
 }
 
 export function getGraphElementByIdentifier(identifier: string) {
-  console.log(identifier)
   let graphElements: GraphElement[] = getAllCurrentGraphElementsWithStacks();
   for (let i = 0; i < graphElements.length; i++) {
     let graphElement: GraphElement = graphElements[i];
