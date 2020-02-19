@@ -31,7 +31,7 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
       return {
         name: name,
         hasCreatorPod: hasCreatorPod,
-        creatorPod: hasCreatorPod? {name: creatorPodName, hasCreatorStep: true} : undefined,
+        creatorPod: hasCreatorPod ? {name: creatorPodName, hasCreatorStep: true} : undefined,
         hasOutputName: hasOutputName,
         outputName: outputName
       };
@@ -75,7 +75,7 @@ export function getPodsAndStepsFromRawDataAndSaveToMap() {
   getStepsFromRawDataAndSaveToMap();
 
   getAllPods().forEach(pod => {
-    if (pod.hasCreatorStep === true) {
+    if (pod.hasCreatorStep) {
       pod.creatorStep = stepMap.get(pod.creatorStep.name);
     }
   });

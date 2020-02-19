@@ -5,34 +5,24 @@ import {
   D3Edge,
   D3Node,
   DataSource,
-  DataSourceStack,
   FrontendData,
   GraphElement,
   GraphVisualization,
   GraphVisualizationColumn,
   Pod,
-  podMap,
-  PodStack,
   Step
 } from "../../externalized/definitions/definitions";
 import {
-  getDataSourcesFromRawDataAndSaveToMap,
-  getPodsAndStepsFromRawDataAndSaveToMap
-} from "../../externalized/functionalities/data-aggregation";
-import {
+  getAllCurrentGraphElementsWithStacks,
   getAllDataSources,
   getAllPods,
   getAllSteps,
-  getCurrentDataSources,
   getCurrentPods,
-  getCurrentSteps,
   getDepthOfGraphElement,
-  setCurrentDataSources,
-  setCurrentPods,
-  setCurrentSteps
+  initializeMaps,
+  setCurrentGraphElements
 } from "../../externalized/functionalities/quality-of-life-functions";
 import {
-  maxNumberOfSeparateGraphElements,
   svgHorizontalGap,
   svgNodeHeight,
   svgNodeMargin,
@@ -40,170 +30,6 @@ import {
   svgPodNodeMargin,
   svgVerticalGap
 } from "../../externalized/config/config";
-import {uuidv4} from "../../externalized/util/util";
-
-function addCreatorPodsToDataSources() {
-  getAllDataSources().forEach(dataSource => {
-    if (dataSource.hasCreatorPod == true) {
-      dataSource.creatorPod = podMap.get(dataSource.creatorPod.name);
-    }
-  });
-}
-
-function initializeMaps() {
-  getDataSourcesFromRawDataAndSaveToMap();
-  getPodsAndStepsFromRawDataAndSaveToMap();
-  addCreatorPodsToDataSources();
-}
-
-function setCurrentGraphElements(dataSources, steps, pods) {
-  setCurrentDataSources(dataSources);
-  setCurrentSteps(steps);
-  setCurrentPods(pods);
-}
-
-function podShouldBeGroupedWithPodStack(pod: Pod, podStack: PodStack) {
-  return pod.hasCreatorStep && podStack.hasCreatorStep && pod.creatorStep.name === podStack.creatorStep.name;
-}
-
-function dataSourceShouldBeGroupedWithDataSourceStack(dataSource: DataSource, dataSourceStack: DataSourceStack) {
-  return (dataSourceStack.outputName === dataSource.outputName) &&
-    (
-      (!dataSourceStack.hasSourceGraphElement && !dataSource.hasCreatorPod) ||
-      (
-        (dataSourceStack.hasSourceGraphElement && dataSource.hasCreatorPod) &&
-        (
-          (dataSourceStack.sourceGraphElement.type === 'pod' && dataSourceStack.sourceGraphElement.pod.name === dataSource.creatorPod.name) ||
-          (dataSourceStack.sourceGraphElement.type === 'pod-stack' && dataSourceStack.sourceGraphElement.podStack.pods.some(pod => pod.name === dataSource.creatorPod.name))
-        )
-      )
-    );
-}
-
-function getGraphElementIncludingPod(pod: Pod, podGraphElements: GraphElement[]) {
-  for (let i = 0; i < podGraphElements.length; i++) {
-    let podGraphElement: GraphElement = podGraphElements[i];
-    if (podGraphElement.type === 'pod') {
-      if (pod.name === podGraphElement.pod.name) {
-        return podGraphElement;
-      }
-    }
-    if (podGraphElement.type === 'pod-stack') {
-      for (let j = 0; j < podGraphElement.podStack.pods.length; j++) {
-        let innerPod: Pod = podGraphElement.podStack.pods[j];
-        if (pod.name === innerPod.name) {
-          return podGraphElement;
-        }
-      }
-    }
-  }
-  return undefined;
-}
-
-function getAllCurrentGraphElementsWithStacks(): GraphElement[] {
-  let podGraphElements: GraphElement[] = [];
-  let currentPods: Pod[] = getCurrentPods();
-
-  currentPods.forEach(pod => {
-    if (!pod.hasCreatorStep) {
-      podGraphElements.push({type: 'pod', pod: pod});
-    }
-  });
-
-  currentPods.filter(pod => pod.hasCreatorStep).forEach(pod => {
-    for (let i = 0; i < podGraphElements.length; i++) {
-      let podGraphElement = podGraphElements[i];
-      if (podGraphElement.type != "pod-stack") {
-        continue;
-      }
-      if (podShouldBeGroupedWithPodStack(pod, podGraphElement.podStack)) {
-        podGraphElement.podStack.pods.push(pod);
-        return;
-      }
-    }
-    let podStackGraphElement: GraphElement = {
-      type: "pod-stack",
-      podStack: {
-        stackId: uuidv4(),
-        hasCreatorStep: pod.hasCreatorStep,
-        creatorStep: pod.creatorStep,
-        pods: [pod]
-      }
-    };
-    podGraphElements.push(podStackGraphElement);
-    if (pod.hasCreatorStep) {
-      pod.creatorStep.podType = 'pod-stack';
-      pod.creatorStep.pods = undefined;
-      pod.creatorStep.podStack = podStackGraphElement.podStack;
-    }
-  });
-
-  let podGraphElementsSmallStacksUndone: GraphElement[] = podGraphElements.map(element => {
-    if (element.type === 'pod-stack' && element.podStack.pods.length <= maxNumberOfSeparateGraphElements && element.podStack.pods.length > 0) {
-      element.podStack.pods[0].creatorStep.podType = 'pod';
-      element.podStack.pods[0].creatorStep.pods = element.podStack.pods;
-      if (element.podStack.pods.length > 1) {
-        for (let i = 1; i < element.podStack.pods.length; i++) {
-          podGraphElements.push({type: 'pod', pod: element.podStack.pods[i]});
-        }
-      }
-      return {type: 'pod', pod: element.podStack.pods[0]};
-    } else {
-      return element;
-    }
-  });
-
-  let dataSourceGraphElements: GraphElement[] = [];
-  let currentDataSources: DataSource[] = getCurrentDataSources();
-  currentDataSources.forEach(dataSource => {
-    if (!dataSource.hasOutputName) {
-      dataSourceGraphElements.push({type: "data-source", dataSource: dataSource});
-    }
-  });
-  currentDataSources.filter(dataSource => dataSource.hasOutputName).forEach(dataSource => {
-    for (let i = 0; i < dataSourceGraphElements.length; i++) {
-      let dataSourceGraphElement = dataSourceGraphElements[i];
-      if (dataSourceGraphElement.type != "data-source-stack") {
-        continue;
-      }
-      if (dataSourceShouldBeGroupedWithDataSourceStack(dataSource, dataSourceGraphElement.dataSourceStack)) {
-        dataSourceGraphElement.dataSourceStack.dataSources.push(dataSource);
-        return;
-      }
-    }
-    dataSourceGraphElements.push({
-      type: "data-source-stack",
-      dataSourceStack: {
-        stackId: uuidv4(),
-        hasSourceGraphElement: dataSource.hasCreatorPod,
-        sourceGraphElement: dataSource.hasCreatorPod ? getGraphElementIncludingPod(dataSource.creatorPod, podGraphElements) : undefined,
-        outputName: dataSource.outputName,
-        dataSources: [dataSource]
-      }
-    });
-  });
-
-  dataSourceGraphElements.map(element => {
-    if (element.type === 'data-source-stack' && element.dataSourceStack.dataSources.length <= maxNumberOfSeparateGraphElements && element.dataSourceStack.dataSources.length > 0) {
-      if (element.dataSourceStack.dataSources.length > 1) {
-        for (let i = 1; i < element.dataSourceStack.dataSources.length; i++) {
-          dataSourceGraphElements.push({type: 'data-source', dataSource: element.dataSourceStack.dataSources[i]});
-        }
-      }
-      return {type: 'data-source', pod: element.dataSourceStack.dataSources[0]};
-    } else {
-      return element;
-    }
-  });
-
-  let stepGraphElements: GraphElement[] = getCurrentSteps().map(step => ({type: "step", step}));
-
-  return [
-    ...dataSourceGraphElements,
-    ...podGraphElementsSmallStacksUndone,
-    ...stepGraphElements
-  ]
-}
 
 function getGraphVisualization() {
   let maxColumnId = getAllCurrentGraphElementsWithStacks().map(element => {
