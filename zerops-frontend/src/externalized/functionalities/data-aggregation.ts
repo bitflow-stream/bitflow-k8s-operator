@@ -33,7 +33,8 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
         hasCreatorPod: hasCreatorPod,
         creatorPod: hasCreatorPod ? {name: creatorPodName, hasCreatorStep: true} : undefined,
         hasOutputName: hasOutputName,
-        outputName: outputName
+        outputName: outputName,
+        createdPods: []
       };
     });
   }
@@ -65,7 +66,8 @@ export function getPodsAndStepsFromRawDataAndSaveToMap() {
           name: name,
           hasCreatorStep: hasCreatorStep,
           creatorStep: {name: creatorStepName, podType: 'pod'},
-          creatorDataSources: creatorDataSources
+          creatorDataSources: creatorDataSources,
+          createdDataSources: []
         } as Pod;
       });
   }

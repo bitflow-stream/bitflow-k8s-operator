@@ -75,6 +75,7 @@ export interface DataSource {
   creatorPod?: Pod;
   hasOutputName: boolean;
   outputName?: string;
+  createdPods: Pod[];
 }
 
 export interface Pod {
@@ -82,6 +83,7 @@ export interface Pod {
   hasCreatorStep: boolean;
   creatorStep?: Step;
   creatorDataSources: DataSource[];
+  createdDataSources: DataSource[];
 }
 
 export interface StepDataSourceMatches {

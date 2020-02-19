@@ -201,10 +201,32 @@ export function addCreatorPodsToDataSources() {
   });
 }
 
+function addCreatedPodsToDataSources() {
+  getAllDataSources().forEach(dataSource => {
+    getAllPods().forEach(pod => {
+      if (pod.creatorDataSources.some(creatorDataSource => creatorDataSource.name === dataSource.name)) {
+        dataSource.createdPods.push(pod);
+      }
+    });
+  });
+}
+
+function addCreatedDataSourcesToPods() {
+  getAllPods().forEach(pod => {
+    getAllDataSources().forEach(dataSource => {
+      if (dataSource.creatorPod != undefined && dataSource.creatorPod.name === pod.name) {
+        pod.createdDataSources.push(dataSource);
+      }
+    });
+  });
+}
+
 export function initializeMaps() {
   getDataSourcesFromRawDataAndSaveToMap();
   getPodsAndStepsFromRawDataAndSaveToMap();
   addCreatorPodsToDataSources();
+  addCreatedPodsToDataSources();
+  addCreatedDataSourcesToPods();
 }
 
 export function setCurrentGraphElements(dataSources, steps, pods) {

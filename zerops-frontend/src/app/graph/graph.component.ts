@@ -35,6 +35,8 @@ import {
   svgVerticalGap
 } from "../../externalized/config/config";
 
+// TODO Test if all-to-one works as expected
+
 function getGraphVisualization() {
   let maxColumnId = getAllCurrentGraphElementsWithStacks().map(element => {
     return getDepthOfGraphElement(element);
@@ -225,12 +227,40 @@ function displayGraph(this: any, dataSources: DataSource[], steps: Step[], pods:
 
   setAllCurrentGraphElementsWithStacks();
   let graphVisualization: GraphVisualization = getGraphVisualization();
-  console.log(graphVisualization)
   let frontendData: FrontendData = getFrontendDataFromGraphVisualization(graphVisualization);
 
-  // TODO why is frontendData containing more than a pod?
-  console.log(frontendData)
   drawSvg.call(this, frontendData);
+}
+
+function displayGraphFromGraphElements(this: any, graphElements: GraphElement[]): void {
+  let dataSources: DataSource[] = [];
+  let steps: Step[] = [];
+  let pods: Pod[] = [];
+
+  for (let i = 0; i < graphElements.length; i++) {
+    let graphElement: GraphElement = graphElements[i];
+    if (graphElement.type === 'data-source') {
+      dataSources.push(graphElement.dataSource);
+    }
+    if (graphElement.type === 'data-source-stack') {
+      graphElement.dataSourceStack.dataSources.forEach(dataSource => {
+        dataSources.push(dataSource);
+      });
+    }
+    if (graphElement.type === 'pod') {
+      pods.push(graphElement.pod);
+    }
+    if (graphElement.type === 'pod-stack') {
+      graphElement.podStack.pods.forEach(pod => {
+        pods.push(pod);
+      });
+    }
+    if (graphElement.type === 'step') {
+      steps.push(graphElement.step);
+    }
+  }
+
+  displayGraph.call(this, dataSources, steps, pods);
 }
 
 @Component({
@@ -252,8 +282,151 @@ export class GraphComponent implements AfterContentInit {
     displayGraph.call(this, getAllDataSources(), getAllSteps(), getAllPods());
   }
 
-
   filterGraph(graphElement: GraphElement) {
-    displayGraph.call(this, [], [graphElement.pod.creatorStep], [graphElement.pod]);
+    let graphElementsToDisplay: GraphElement[] = [...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement(graphElement), ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphElement, false)];
+    // TODO duplicated HAVE to be removed
+    graphElementsToDisplay = graphElementsToDisplay.filter((graphElement, index, self) =>
+      index === self.findIndex((t) => (
+        getIdentifierByGraphElement(t) === getIdentifierByGraphElement(graphElement)
+      ))
+    );
+    displayGraphFromGraphElements.call(this, graphElementsToDisplay);
   }
+}
+
+function getIdentifierByGraphElement(graphElement: GraphElement) {
+  if (graphElement == undefined) {
+    return undefined;
+  }
+
+  if (graphElement.type === 'data-source' && graphElement.dataSource != undefined) {
+    return graphElement.dataSource.name;
+  }
+  if (graphElement.type === 'data-source-stack' && graphElement.dataSourceStack != undefined) {
+    return graphElement.dataSourceStack.stackId;
+  }
+  if (graphElement.type === 'pod' && graphElement.pod != undefined) {
+    return graphElement.pod.name;
+  }
+  if (graphElement.type === 'pod-stack' && graphElement.podStack != undefined) {
+    return graphElement.podStack.stackId;
+  }
+  if (graphElement.type === 'step') {
+    return graphElement.step.name;
+  }
+
+  return undefined;
+}
+
+function getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement(graphElement: GraphElement): GraphElement[] {
+  if (graphElement == undefined) {
+    return [];
+  }
+  let graphElements: GraphElement[] = [graphElement];
+
+  if (graphElement.type === 'data-source' && graphElement.dataSource != undefined) {
+    return [...graphElements, ...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement({
+      type: 'pod',
+      pod: graphElement.dataSource.creatorPod
+    })];
+  }
+  if (graphElement.type === 'data-source-stack' && graphElement.dataSourceStack != undefined) {
+    graphElement.dataSourceStack.dataSources.forEach(dataSource => {
+      graphElements = [...graphElements, ...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement({
+        type: 'pod',
+        pod: dataSource.creatorPod
+      })];
+    });
+    return graphElements;
+  }
+  if (graphElement.type === 'pod' && graphElement.pod != undefined) {
+    graphElement.pod.creatorDataSources.forEach(dataSource => {
+      graphElements = [...graphElements, ...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement({
+        type: 'data-source',
+        dataSource: dataSource
+      })];
+    });
+    if (graphElement.pod.hasCreatorStep) {
+      graphElements = [...graphElements, ...[{type: 'step', step: graphElement.pod.creatorStep} as GraphElement]];
+    }
+    return graphElements;
+  }
+  if (graphElement.type === 'pod-stack' && graphElement.podStack != undefined) {
+    graphElement.podStack.pods.forEach(pod => {
+      pod.creatorDataSources.forEach(dataSource => {
+        graphElements = [...graphElements, ...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement({
+          type: 'data-source',
+          dataSource: dataSource
+        })];
+      });
+    });
+    if (graphElement.podStack.hasCreatorStep) {
+      graphElements = [...graphElements, ...[{type: 'step', step: graphElement.podStack.creatorStep} as GraphElement]];
+    }
+    return graphElements;
+  }
+  if (graphElement.type === 'step') {
+    alert('Es kann nicht nach Steps gefiltert werden. Dieser Fall sollte nicht auftreten.')
+    return [];
+  }
+  return [];
+}
+
+function getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphElement: GraphElement, includingArgumentGraphElement: boolean): GraphElement[] {
+  if (graphElement == undefined) {
+    return [];
+  }
+  let graphElements: GraphElement[] = includingArgumentGraphElement ? [graphElement] : [];
+
+  if (graphElement.type === 'data-source' && graphElement.dataSource != undefined) {
+    graphElement.dataSource.createdPods.forEach(createdPod => {
+      graphElements = [...graphElements, ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement({
+        type: 'pod',
+        pod: createdPod
+      }, true)];
+    });
+    return graphElements;
+  }
+  if (graphElement.type === 'data-source-stack' && graphElement.dataSourceStack != undefined) {
+    graphElement.dataSourceStack.dataSources.forEach(dataSource => {
+      dataSource.createdPods.forEach(createdPod => {
+        graphElements = [...graphElements, ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement({
+          type: 'pod',
+          pod: createdPod
+        }, true)];
+      });
+    });
+    return graphElements;
+  }
+  if (graphElement.type === 'pod' && graphElement.pod != undefined) {
+    graphElement.pod.createdDataSources.forEach(dataSource => {
+      graphElements = [...graphElements, ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement({
+        type: 'data-source',
+        dataSource: dataSource
+      }, true)];
+    });
+    if (graphElement.pod.hasCreatorStep) {
+      graphElements = [...graphElements, ...[{type: 'step', step: graphElement.pod.creatorStep} as GraphElement]];
+    }
+    return graphElements;
+  }
+  if (graphElement.type === 'pod-stack' && graphElement.podStack != undefined) {
+    graphElement.podStack.pods.forEach(pod => {
+      pod.createdDataSources.forEach(dataSource => {
+        graphElements = [...graphElements, ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement({
+          type: 'data-source',
+          dataSource: dataSource
+        }, true)];
+      });
+    });
+    if (graphElement.podStack.hasCreatorStep) {
+      graphElements = [...graphElements, ...[{type: 'step', step: graphElement.podStack.creatorStep} as GraphElement]];
+    }
+    return graphElements;
+  }
+  if (graphElement.type === 'step') {
+    alert('Es kann nicht nach Steps gefiltert werden. Dieser Fall sollte nicht auftreten.')
+    return [];
+  }
+  return [];
 }
