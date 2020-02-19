@@ -4,12 +4,15 @@ import {drawSvg} from "../../externalized/util/d3Helper";
 import {
   D3Edge,
   D3Node,
-  DataSource, DataSourceStack,
-  FrontendData, GraphElement,
+  DataSource,
+  DataSourceStack,
+  FrontendData,
+  GraphElement,
   GraphVisualization,
   GraphVisualizationColumn,
   Pod,
-  podMap, PodStack,
+  podMap,
+  PodStack,
   Step
 } from "../../externalized/definitions/definitions";
 import {
@@ -17,11 +20,12 @@ import {
   getPodsAndStepsFromRawDataAndSaveToMap
 } from "../../externalized/functionalities/data-aggregation";
 import {
-  getAllCurrentGraphElements,
   getAllDataSources,
   getAllPods,
-  getAllSteps, getCurrentDataSources,
-  getCurrentPods, getCurrentSteps,
+  getAllSteps,
+  getCurrentDataSources,
+  getCurrentPods,
+  getCurrentSteps,
   getDepthOfGraphElement,
   setCurrentDataSources,
   setCurrentPods,
@@ -32,7 +36,8 @@ import {
   svgHorizontalGap,
   svgNodeHeight,
   svgNodeMargin,
-  svgNodeWidth, svgPodNodeMargin,
+  svgNodeWidth,
+  svgPodNodeMargin,
   svgVerticalGap
 } from "../../externalized/config/config";
 import {uuidv4} from "../../externalized/util/util";
@@ -133,6 +138,22 @@ function getAllCurrentGraphElementsWithStacks(): GraphElement[] {
     }
   });
 
+  let podGraphElementsSmallStacksUndone: GraphElement[] = podGraphElements.map(element => {
+    if (element.type === 'pod-stack' && element.podStack.pods.length <= maxNumberOfSeparateGraphElements && element.podStack.pods.length > 0) {
+      element.podStack.pods[0].creatorStep.podType = 'pod';
+      element.podStack.pods[0].creatorStep.pods = element.podStack.pods;
+      if (element.podStack.pods.length > 1) {
+        for (let i = 1; i < element.podStack.pods.length; i++) {
+          // TODO are pods without step displayed? Check if they are only added to grid if they have a step
+          podGraphElements.push({type: 'pod', pod: element.podStack.pods[i]});
+        }
+      }
+      return {type: 'pod', pod: element.podStack.pods[0]};
+    } else {
+      return element;
+    }
+  });
+
   let dataSourceGraphElements: GraphElement[] = [];
   let currentDataSources: DataSource[] = getCurrentDataSources();
   currentDataSources.forEach(dataSource => {
@@ -163,11 +184,24 @@ function getAllCurrentGraphElementsWithStacks(): GraphElement[] {
     });
   });
 
+  dataSourceGraphElements.map(element => {
+    if (element.type === 'data-source-stack' && element.dataSourceStack.dataSources.length <= maxNumberOfSeparateGraphElements && element.dataSourceStack.dataSources.length > 0) {
+      if (element.dataSourceStack.dataSources.length > 1) {
+        for (let i = 1; i < element.dataSourceStack.dataSources.length; i++) {
+          dataSourceGraphElements.push({type: 'data-source', dataSource: element.dataSourceStack.dataSources[i]});
+        }
+      }
+      return {type: 'data-source', pod: element.dataSourceStack.dataSources[0]};
+    } else {
+      return element;
+    }
+  });
+
   let stepGraphElements: GraphElement[] = getCurrentSteps().map(step => ({type: "step", step}));
 
   return [
     ...dataSourceGraphElements,
-    ...podGraphElements,
+    ...podGraphElementsSmallStacksUndone,
     ...stepGraphElements
   ]
 }
@@ -209,30 +243,6 @@ function getGraphVisualization() {
         graphVisualizationColumn.graphElements.push({type: 'pod-stack', podStack: element.step.podStack});
       }
     }
-
-
-
-
-
-
-    // if (element.type === 'step') {
-    //   graphVisualizationColumn.graphElements.push(element);
-      // let currentPods = getCurrentPods();
-      // let currentPodsInStep = element.step.pods.filter(pod => currentPods.some(currentPod => currentPod.name === pod.name));
-      // if (currentPodsInStep.length <= maxNumberOfSeparateGraphElements) { //TODO wird an einigen Stellen davon ausgegangen, dass es sich um einen Stack handelt?
-      //   currentPodsInStep.forEach(pod => graphVisualizationColumn.graphElements.push({type: 'pod', pod: pod}));
-      // }
-      // else {
-      //   element.step.podType = 'pod-stack';
-      //   graphVisualizationColumn.graphElements.push({type: "pod-stack", podStack: {stackId: uuidv4(), pods: currentPodsInStep}});
-      // }
-    // }
-    // if (element.type === 'data-source') {
-    //   graphVisualizationColumn.graphElements.push(element);
-    // }
-    // if (element.type === 'data-source-stack') {
-    //   graphVisualizationColumn.graphElements.push(element);
-    // }
   });
 
   return graphVisualization;
