@@ -1,5 +1,7 @@
 import {Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {ModalDismissReasons, NgbModal} from "@ng-bootstrap/ng-bootstrap";
+import {GraphElement} from "../../../externalized/definitions/definitions";
+import {getGraphElementByIdentifier} from "../../../externalized/functionalities/quality-of-life-functions";
 
 // function getKubernetesNode(uuid: string | undefined): KubernetesNode | undefined {
 //   if (uuid == undefined) {
@@ -49,42 +51,47 @@ import {ModalDismissReasons, NgbModal} from "@ng-bootstrap/ng-bootstrap";
   styleUrls: ['./config-modal.component.css']
 })
 export class ConfigModalComponent {
-  // @Input() kubernetesGraph: KubernetesNode[][] | undefined;
+  @Input() currentGraphElementsWithStacksMap: Map<string, GraphElement> = new Map();
+  currentGraphElement: GraphElement | undefined;
+  selectedIdentifier: string | undefined;
+  selectedElement = () => getGraphElementByIdentifier(this.selectedIdentifier);
+
   // uuid: string | undefined;
   // kubernetesNode: KubernetesNode | undefined;
   // elementNames: string[] | undefined;
   //
   // selectedElement: string | undefined;
-  //
-  // @ViewChild('content', {static: false}) theModal: ElementRef | undefined;
-  //
-  // closeResult: string | undefined;
-  //
-  // constructor(private modalService: NgbModal) {
-  // }
-  //
-  // openModal(uuid: string) {
-  //   this.selectedElement = undefined;
-  //   this.uuid = uuid;
-  //   this.kubernetesNode = getKubernetesNode(this.uuid);
-  //   this.elementNames = getElementNames(this.kubernetesNode);
-  //
-  //
-  //   this.modalService.open(this.theModal, {ariaLabelledBy: 'modal-basic-title', size: 'lg'}).result.then((result) => {
-  //     this.closeResult = `Closed with: ${result}`;
-  //   }, (reason) => {
-  //     this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
-  //   });
-  // }
-  //
-  // private getDismissReason(reason: any): string {
-  //   if (reason === ModalDismissReasons.ESC) {
-  //     return 'by pressing ESC';
-  //   } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
-  //     return 'by clicking on a backdrop';
-  //   } else {
-  //     return `with: ${reason}`;
-  //   }
-  // }
+
+  @ViewChild('content', {static: false}) theModal: ElementRef | undefined;
+
+  closeResult: string | undefined;
+
+  constructor(private modalService: NgbModal) {
+  }
+
+  openModal(identifier: string) {
+    this.currentGraphElement = getGraphElementByIdentifier(identifier);
+    this.selectedIdentifier = undefined;
+    // this.uuid = uuid;
+    // this.kubernetesNode = getKubernetesNode(this.uuid);
+    // this.elementNames = getElementNames(this.kubernetesNode);
+
+
+    this.modalService.open(this.theModal, {ariaLabelledBy: 'modal-basic-title', size: 'lg'}).result.then((result) => {
+      this.closeResult = `Closed with: ${result}`;
+    }, (reason) => {
+      this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+    });
+  }
+
+  private getDismissReason(reason: any): string {
+    if (reason === ModalDismissReasons.ESC) {
+      return 'by pressing ESC';
+    } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
+      return 'by clicking on a backdrop';
+    } else {
+      return `with: ${reason}`;
+    }
+  }
 
 }

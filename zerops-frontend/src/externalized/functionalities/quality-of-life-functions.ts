@@ -394,3 +394,53 @@ export function setAllCurrentGraphElementsWithStacks() {
     }
   });
 }
+
+export function getGraphElementByIdentifier(identifier: string) {
+  console.log(identifier)
+  let graphElements: GraphElement[] = getAllCurrentGraphElementsWithStacks();
+  for (let i = 0; i < graphElements.length; i++) {
+    let graphElement: GraphElement = graphElements[i];
+    switch (graphElement.type) {
+      case "data-source":
+        if (identifier === graphElement.dataSource.name) {
+          return graphElement;
+        }
+        break;
+      case "data-source-stack":
+        if (identifier === graphElement.dataSourceStack.stackId) {
+          return graphElement;
+        }
+        for (let i = 0; i < graphElement.dataSourceStack.dataSources.length; i++) {
+          let dataSource: DataSource = graphElement.dataSourceStack.dataSources[i];
+          if (identifier === dataSource.name) {
+            return {type: 'data-source', dataSource: dataSource} as GraphElement;
+          }
+        }
+        break;
+      case "pod":
+        if (identifier === graphElement.pod.name) {
+          return graphElement;
+        }
+        break;
+      case "pod-stack":
+        if (identifier === graphElement.podStack.stackId) {
+          return graphElement;
+        }
+        for (let i = 0; i < graphElement.podStack.pods.length; i++) {
+          let pod: Pod = graphElement.podStack.pods[i];
+          if (identifier === pod.name) {
+            return {type: 'pod', pod: pod} as GraphElement;
+          }
+        }
+        break;
+      case "step":
+        if (identifier === graphElement.step.name) {
+          return graphElement;
+        }
+        break;
+      default:
+        continue;
+    }
+  }
+  return undefined;
+}

@@ -1,46 +1,110 @@
-<!--<ng-template #content let-modal>-->
-<!--  <div class="modal-header">-->
-<!--    <h4 class="modal-title" id="modal-basic-title">-->
-<!--      <div *ngIf="kubernetesNode?.step != undefined">Pod configuration</div>-->
-<!--      <div *ngIf="kubernetesNode?.dataSources != undefined">DataSource configuration</div>-->
-<!--    </h4>-->
-<!--    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">-->
-<!--      <span aria-hidden="true">&times;</span>-->
-<!--    </button>-->
-<!--  </div>-->
-<!--  <div class="modal-body">-->
-<!--    <select [(ngModel)]="selectedElement" class="browser-default custom-select">-->
-<!--      <option *ngFor="let elementName of elementNames"-->
-<!--              [value]="elementName">{{elementName}}</option>-->
-<!--    </select>-->
-<!--    <div *ngIf="selectedElement != undefined">-->
-<!--      <br>-->
-<!--      <div *ngIf="kubernetesNode?.dataSources != undefined">-->
-<!--        <div class="container">-->
-<!--          <div class="row">-->
-<!--            <div class="col-12">-->
-<!--              <label for="dataSourceName">Name:</label>-->
-<!--              <input type="text" class="form-control" id="dataSourceName" disabled="disabled" [value]="selectedElement">-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div *ngIf="kubernetesNode?.step != undefined">-->
-<!--        <div class="container">-->
-<!--          <div class="row">-->
-<!--            <div class="col-12">-->
-<!--              <label for="stepName">Name:</label>-->
-<!--              <input type="text" class="form-control" id="stepName" disabled="disabled" [value]="selectedElement">-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--  </div>-->
-<!--  <div class="modal-footer">-->
-<!--    <div *ngIf="selectedElement != undefined">-->
-<!--      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Filter click')">Filter</button>-->
-<!--    </div>-->
-<!--    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>-->
-<!--  </div>-->
-<!--</ng-template>-->
+<ng-template #content let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">
+      <div *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">Pod configuration
+      </div>
+      <div *ngIf="currentGraphElement.type === 'data-source' || currentGraphElement.type === 'data-source-stack'">
+        DataSource configuration
+      </div>
+    </h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div *ngIf="currentGraphElement.type === 'pod-stack' || currentGraphElement.type === 'pod'">
+      <div *ngIf="currentGraphElement.type === 'pod-stack'">
+        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+          <option *ngFor="let pod of currentGraphElement.podStack.pods"
+                  [value]="pod.name">{{pod.name}}</option>
+        </select>
+      </div>
+      <div *ngIf="currentGraphElement.type === 'pod'">
+        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+          <option [value]="currentGraphElement.pod.name">{{currentGraphElement.pod.name}}</option>
+        </select>
+      </div>
+
+      <div *ngIf="selectedIdentifier != undefined">
+        <br>
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <label for="podName">Name:</label>
+              <input type="text" class="form-control" id="podName" disabled="disabled" [value]="selectedIdentifier">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div *ngIf="currentGraphElement.type === 'data-source-stack' || currentGraphElement.type === 'data-source'">
+      <div *ngIf="currentGraphElement.type === 'data-source-stack'">
+        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+          <option *ngFor="let dataSource of currentGraphElement.dataSourceStack.dataSources"
+                  [value]="dataSource.name">{{dataSource.name}}</option>
+          <!-- TODO there are stacks with only one dataSource, why? -->
+        </select>
+      </div>
+      <div *ngIf="currentGraphElement.type === 'data-source'">
+        <select [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+          <option [value]="currentGraphElement.dataSource.name">{{currentGraphElement.dataSource.name}}</option>
+        </select>
+      </div>
+
+      <div *ngIf="selectedIdentifier != undefined">
+        <br>
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <label for="dataSourceName">Name:</label>
+              <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
+                     [value]="selectedIdentifier">
+            </div>
+          </div>
+          <div *ngIf="selectedElement() != undefined && selectedElement().dataSource.hasOutputName">
+            <div class="row">
+              <div class="col-12">
+                <label for="dataSourceOutputName">Output Name:</label>
+                <input type="text" class="form-control" id="dataSourceOutputName" disabled="disabled"
+                       [value]="selectedElement().dataSource.outputName">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!--    <div *ngIf="selectedElement != undefined">-->
+    <!--      <br>-->
+    <!--      <div *ngIf="kubernetesNode?.dataSources != undefined">-->
+    <!--        <div class="container">-->
+    <!--          <div class="row">-->
+    <!--            <div class="col-12">-->
+    <!--              <label for="dataSourceName">Name:</label>-->
+    <!--              <input type="text" class="form-control" id="dataSourceName" disabled="disabled" [value]="selectedElement">-->
+    <!--            </div>-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--      <div *ngIf="kubernetesNode?.step != undefined">-->
+    <!--        <div class="container">-->
+    <!--          <div class="row">-->
+    <!--            <div class="col-12">-->
+    <!--              <label for="stepName">Name:</label>-->
+    <!--              <input type="text" class="form-control" id="stepName" disabled="disabled" [value]="selectedElement">-->
+    <!--            </div>-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
+  </div>
+  <div class="modal-footer">
+    <!--    <div *ngIf="selectedElement != undefined">-->
+    <!--      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Filter click')">Filter</button>-->
+    <!--    </div>-->
+    <!--    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>-->
+  </div>
+</ng-template>
