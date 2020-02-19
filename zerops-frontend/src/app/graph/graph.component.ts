@@ -144,7 +144,6 @@ function getAllCurrentGraphElementsWithStacks(): GraphElement[] {
       element.podStack.pods[0].creatorStep.pods = element.podStack.pods;
       if (element.podStack.pods.length > 1) {
         for (let i = 1; i < element.podStack.pods.length; i++) {
-          // TODO are pods without step displayed? Check if they are only added to grid if they have a step
           podGraphElements.push({type: 'pod', pod: element.podStack.pods[i]});
         }
       }
@@ -228,7 +227,7 @@ function getGraphVisualization() {
     let depth = getDepthOfGraphElement(element);
     let graphVisualizationColumn: GraphVisualizationColumn = graphVisualization.graphColumns[depth];
 
-    if (element.type === 'pod' || element.type === 'pod-stack') {
+    if ((element.type === 'pod' && element.pod.hasCreatorStep) || element.type === 'pod-stack') {
       return;
     }
 
