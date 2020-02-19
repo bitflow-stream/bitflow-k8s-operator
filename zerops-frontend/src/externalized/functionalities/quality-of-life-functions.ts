@@ -1,5 +1,5 @@
 import {
-  currentDataSourcesMap,
+  currentDataSourcesMap, currentGraphElementsWithStacksMap,
   currentPodsMap,
   currentStepsMap,
   DataSource,
@@ -248,7 +248,31 @@ export function getGraphElementIncludingPod(pod: Pod, podGraphElements: GraphEle
   return undefined;
 }
 
-export function getAllCurrentGraphElementsWithStacks(): GraphElement[] {
+export function getGraphElementIncludingDataSource(dataSource: DataSource, dataSourceGraphElements: GraphElement[]) {
+  for (let i = 0; i < dataSourceGraphElements.length; i++) {
+    let dataSourceGraphElement: GraphElement = dataSourceGraphElements[i];
+    if (dataSourceGraphElement.type === 'data-source') {
+      if (dataSource.name === dataSourceGraphElement.dataSource.name) {
+        return dataSourceGraphElement;
+      }
+    }
+    if (dataSourceGraphElement.type === 'data-source-stack') {
+      for (let j = 0; j < dataSourceGraphElement.dataSourceStack.dataSources.length; j++) {
+        let innerDataSource: DataSource = dataSourceGraphElement.dataSourceStack.dataSources[j];
+        if (dataSource.name === innerDataSource.name) {
+          return dataSourceGraphElement;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+export function getAllCurrentGraphElementsWithStacks() {
+  return Array.from(currentGraphElementsWithStacksMap.keys()).map(graphElementKey => <GraphElement>currentGraphElementsWithStacksMap.get(graphElementKey)).filter(graphElement => graphElement != undefined);
+}
+
+export function setAllCurrentGraphElementsWithStacks() {
   let podGraphElements: GraphElement[] = [];
   let currentPods: Pod[] = getCurrentPods();
 
@@ -346,9 +370,27 @@ export function getAllCurrentGraphElementsWithStacks(): GraphElement[] {
 
   let stepGraphElements: GraphElement[] = getCurrentSteps().map(step => ({type: "step", step}));
 
-  return [
-    ...dataSourceGraphElements,
-    ...podGraphElementsSmallStacksUndone,
-    ...stepGraphElements
-  ]
+  dataSourceGraphElements.forEach(element => {
+    if (element.type === 'data-source') {
+      currentGraphElementsWithStacksMap.set(element.dataSource.name, {type: 'data-source', dataSource: element.dataSource});
+    }
+    if (element.type === 'data-source-stack') {
+      currentGraphElementsWithStacksMap.set(element.dataSourceStack.stackId, {type: 'data-source-stack', dataSourceStack: element.dataSourceStack});
+    }
+  });
+
+  podGraphElementsSmallStacksUndone.forEach(element => {
+    if (element.type === 'pod') {
+      currentGraphElementsWithStacksMap.set(element.pod.name, {type: 'pod', pod: element.pod});
+    }
+    if (element.type === 'pod-stack') {
+      currentGraphElementsWithStacksMap.set(element.podStack.stackId, {type: 'pod-stack', podStack: element.podStack});
+    }
+  });
+
+  stepGraphElements.forEach(element => {
+    if (element.type === 'step') {
+      currentGraphElementsWithStacksMap.set(element.step.name, {type: 'step', step: element.step});
+    }
+  });
 }

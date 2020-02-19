@@ -16,10 +16,11 @@ import {
   getAllCurrentGraphElementsWithStacks,
   getAllDataSources,
   getAllPods,
-  getAllSteps,
+  getAllSteps, getCurrentDataSources,
   getCurrentPods,
   getDepthOfGraphElement,
-  initializeMaps,
+  getGraphElementIncludingDataSource,
+  initializeMaps, setAllCurrentGraphElementsWithStacks,
   setCurrentGraphElements
 } from "../../externalized/functionalities/quality-of-life-functions";
 import {
@@ -115,6 +116,17 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
           type: "pod"
         });
         currentHeight += svgNodeHeight + svgVerticalGap;
+
+        graphElement.pod.creatorDataSources.filter(creator => getCurrentDataSources().some(dataSource => dataSource.name === creator.name)).forEach(creator => {
+          let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creator, getAllCurrentGraphElementsWithStacks());
+          if (creatorGraphElement.type === 'data-source') {
+            edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.pod.name});
+          }
+          if (creatorGraphElement.type === 'data-source-stack') {
+            edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.pod.name});
+          }
+        });
+
       }
       if (graphElement.type === 'pod-stack') {
         nodes.push({
@@ -127,6 +139,18 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
           type: "pod-stack"
         });
         currentHeight += svgNodeHeight + svgVerticalGap;
+
+        graphElement.podStack.pods.forEach(pod => {
+          pod.creatorDataSources.forEach(creator => {
+            let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creator, getAllCurrentGraphElementsWithStacks());
+            if (creatorGraphElement.type === 'data-source') {
+              edges.push({start: creatorGraphElement.dataSource.name, stop: graphElement.podStack.stackId}); // TODO remove duplicate edges (and make edges thicker?)
+            }
+            if (creatorGraphElement.type === 'data-source-stack') {
+              edges.push({start: creatorGraphElement.dataSourceStack.stackId, stop: graphElement.podStack.stackId});
+            }
+          });
+        });
       }
       if (graphElement.type === 'step') {
         if (graphElement.step.podType === 'pod') {
@@ -166,6 +190,7 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
 function displayGraph(this: any, dataSources: DataSource[], steps: Step[], pods: Pod[]): void {
   setCurrentGraphElements(dataSources, steps, pods);
 
+  setAllCurrentGraphElementsWithStacks();
   let graphVisualization: GraphVisualization = getGraphVisualization();
   let frontendData: FrontendData = getFrontendDataFromGraphVisualization(graphVisualization);
   drawSvg.call(this, frontendData);

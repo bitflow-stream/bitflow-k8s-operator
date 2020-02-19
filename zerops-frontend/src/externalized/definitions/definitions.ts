@@ -4,8 +4,9 @@ const podMap: Map<string, Pod> = new Map();
 const currentDataSourcesMap: Map<string, DataSource> = new Map();
 const currentStepsMap: Map<string, Step> = new Map();
 const currentPodsMap: Map<string, Pod> = new Map();
+const currentGraphElementsWithStacksMap: Map<string, GraphElement> = new Map();
 
-export {dataSourceMap, stepMap, podMap, currentDataSourcesMap, currentStepsMap, currentPodsMap};
+export {dataSourceMap, stepMap, podMap, currentDataSourcesMap, currentStepsMap, currentPodsMap, currentGraphElementsWithStacksMap};
 
 // FRONTEND
 export interface FrontendData {

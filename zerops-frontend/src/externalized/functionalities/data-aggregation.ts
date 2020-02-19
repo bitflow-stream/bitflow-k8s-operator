@@ -9,7 +9,7 @@ export function getStepsFromRawDataAndSaveToMap() {
       return {
         name: name,
         podType: 'pod',
-        pods: getAllPods().filter(pod => pod.creatorStep?.name === name)
+        pods: getAllPods().filter(pod => pod.creatorStep?.name === name) // TODO fix circular dependency data-aggregation <-> quality-of-life-functions
       } as Step;
     });
   }
