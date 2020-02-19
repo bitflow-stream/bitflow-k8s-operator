@@ -48,11 +48,16 @@ export interface GraphElement {
 
 export interface DataSourceStack {
   stackId: string;
+  hasSourceGraphElement: boolean;
+  sourceGraphElement?: GraphElement;
+  outputName: string;
   dataSources: DataSource[];
 }
 
 export interface PodStack {
   stackId: string;
+  hasCreatorStep: boolean;
+  creatorStep?: Step;
   pods: Pod[];
 }
 

@@ -12,6 +12,7 @@ import {
   Step,
   stepMap
 } from "../definitions/definitions";
+import {uuidv4} from "../util/util";
 
 export function getAllGraphElements(): GraphElement[] {
   return [...getAllDataSources().map(dataSource => ({type: 'data-source', dataSource: dataSource} as GraphElement)),
@@ -20,9 +21,43 @@ export function getAllGraphElements(): GraphElement[] {
 }
 
 export function getAllCurrentGraphElements(): GraphElement[] {
-  return [...getCurrentDataSources().map(dataSource => ({type: 'data-source', dataSource: dataSource} as GraphElement)),
-    ...getCurrentSteps().map(step => ({type: 'step', step: step} as GraphElement)),
-    ...getCurrentPods().map(pod => ({type: 'pod', pod: pod} as GraphElement))];
+  let dataSourceGraphElements: GraphElement[] = getCurrentDataSources().map(dataSource => ({type: "data-source", dataSource: dataSource}));
+  let stepGraphElements: GraphElement[] = getCurrentSteps().map(step => ({type: 'step', step: step}));
+  let podGraphElements: GraphElement[] = getCurrentPods().map(pod => ({type: 'pod', pod: pod}));
+
+  // let dataSourceGraphElements: GraphElement[] = [];
+  // let currentDataSources: DataSource[] = getCurrentDataSources();
+  // currentDataSources.forEach(dataSource => {
+  //   if (!dataSource.hasOutputName) {
+  //     dataSourceGraphElements.push({type: "data-source", dataSource: dataSource});
+  //   }
+  // });
+  // currentDataSources.filter(dataSource => dataSource.hasOutputName).forEach(dataSource => {
+  //   for (let i = 0; i < dataSourceGraphElements.length; i++) {
+  //     let dataSourceGraphElement = dataSourceGraphElements[i];
+  //     if (dataSourceGraphElement.type != "data-source-stack") {
+  //       continue;
+  //     }
+  //     if (dataSourceShouldBeGroupedWithDataSourceStack(dataSource, dataSourceGraphElement.dataSourceStack)) {
+  //       dataSourceGraphElement.dataSourceStack.dataSources.push(dataSource);
+  //       return;
+  //     }
+  //   }
+  //   dataSourceGraphElements.push({
+  //     type: "data-source-stack",
+  //     dataSourceStack: {
+  //       stackId: uuidv4(),
+  //       hasSourceGraphElement: dataSource.hasCreatorPod,
+  //       sourceGraphElement: ,
+  //       outputName: dataSource.outputName,
+  //       dataSources: [dataSource]
+  //     }
+  //   });
+  // });
+
+  return [...dataSourceGraphElements,
+    ...stepGraphElements,
+    ...podGraphElements];
 }
 
 export function getAllDataSources(): DataSource[] {
