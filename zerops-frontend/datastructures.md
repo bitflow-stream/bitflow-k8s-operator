@@ -46,7 +46,6 @@
 
 ```json
 {
-    maxFilledRow: number;
     graphElements: GraphElement[];
 }
 ```
@@ -71,6 +70,9 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
 ```json
 {
     stackId: string;
+    hasSourceGraphElement: boolean;
+    sourceGraphElement?: GraphElement;
+    outputName: string;
     dataSources: DataSource[];
 }
 ```
@@ -80,6 +82,8 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
 ```json
 {
     stackId: string;
+    hasCreatorStep: boolean;
+    creatorStep?: Step;
     pods: Pod[];
 }
 ```
@@ -104,6 +108,7 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
     creatorPod?: Pod;
     hasOutputName: boolean;
     outputName?: string;
+    createdPods: Pod[];
 }
 ```
 
@@ -114,9 +119,15 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
     name: string;
     hasCreatorStep: boolean;
     creatorStep?: Step;
-    hasOutputName: boolean;
-    outputName?: string;
     creatorDataSources: DataSource[];
+	createdDataSources: DataSource[];
 }
 ```
 
+### StepDataSourceMatches
+
+```json
+export interface StepDataSourceMatches {
+  [key: string]: string[]
+}
+```
