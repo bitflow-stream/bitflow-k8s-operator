@@ -149,6 +149,7 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
         });
         currentHeight += svgNodeHeight + svgVerticalGap;
 
+        // noinspection DuplicatedCode
         graphElement.pod.creatorDataSources.filter(creator => getCurrentDataSources().some(dataSource => dataSource.name === creator.name)).forEach(creatorDataSource => {
           let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creatorDataSource, getAllCurrentGraphElementsWithStacks());
           if (creatorGraphElement != undefined) {
@@ -175,6 +176,7 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
         currentHeight += svgNodeHeight + svgVerticalGap;
 
         graphElement.podStack.pods.forEach(pod => {
+          // noinspection DuplicatedCode
           pod.creatorDataSources.forEach(creator => {
             let creatorGraphElement: GraphElement = getGraphElementIncludingDataSource(creator, getAllCurrentGraphElementsWithStacks());
             if (creatorGraphElement != undefined) {
