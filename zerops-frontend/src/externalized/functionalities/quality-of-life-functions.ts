@@ -16,25 +16,6 @@ import {uuidv4} from "../util/util";
 import {getDataSourcesFromRawDataAndSaveToMap, getPodsAndStepsFromRawDataAndSaveToMap} from "./data-aggregation";
 import {maxNumberOfSeparateGraphElements} from "../config/config";
 
-// export function getAllGraphElements(): GraphElement[] {
-//   return [...getAllDataSources().map(dataSource => ({type: 'data-source', dataSource: dataSource} as GraphElement)),
-//     ...getAllSteps().map(step => ({type: 'step', step: step} as GraphElement)),
-//     ...getAllPods().map(pod => ({type: 'pod', pod: pod} as GraphElement))];
-// }
-//
-// export function getAllCurrentGraphElements(): GraphElement[] {
-//   let dataSourceGraphElements: GraphElement[] = getCurrentDataSources().map(dataSource => ({
-//     type: "data-source",
-//     dataSource: dataSource
-//   }));
-//   let stepGraphElements: GraphElement[] = getCurrentSteps().map(step => ({type: 'step', step: step}));
-//   let podGraphElements: GraphElement[] = getCurrentPods().map(pod => ({type: 'pod', pod: pod}));
-//
-//   return [...dataSourceGraphElements,
-//     ...stepGraphElements,
-//     ...podGraphElements];
-// }
-
 export function getAllDataSources(): DataSource[] {
   return Array.from(dataSourceMap.keys()).map(dataSourceKey => <DataSource>dataSourceMap.get(dataSourceKey)).filter(dataSource => dataSource != undefined);
 }
@@ -464,8 +445,6 @@ export function getGraphElementByIdentifier(identifier: string) {
           return graphElement;
         }
         break;
-      default:
-        continue;
     }
   }
   return undefined;
