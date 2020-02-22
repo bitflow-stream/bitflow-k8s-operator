@@ -402,7 +402,6 @@ export function setAllCurrentGraphElementsWithStacks() {
       currentGraphElementsWithStacksMap.set(element.dataSource.name, {type: 'data-source', dataSource: element.dataSource});
     }
     if (element.type === 'data-source-stack') {
-      console.log(element.dataSourceStack.dataSources.length)
       currentGraphElementsWithStacksMap.set(element.dataSourceStack.stackId, {type: 'data-source-stack', dataSourceStack: element.dataSourceStack});
     }
   });
@@ -421,8 +420,6 @@ export function setAllCurrentGraphElementsWithStacks() {
       currentGraphElementsWithStacksMap.set(element.step.name, {type: 'step', step: element.step});
     }
   });
-
-  console.log(getAllCurrentGraphElementsWithStacks())
 }
 
 export function getGraphElementByIdentifier(identifier: string) {
