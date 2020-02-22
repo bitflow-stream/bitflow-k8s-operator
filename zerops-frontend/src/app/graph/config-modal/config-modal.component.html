@@ -1,16 +1,16 @@
 <ng-template #content let-modal>
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">
-      <div *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">Pod configuration
-      </div>
-      <div *ngIf="currentGraphElement.type === 'data-source' || currentGraphElement.type === 'data-source-stack'">
+      <span *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">Pod configuration
+      </span>
+      <span *ngIf="currentGraphElement.type === 'data-source' || currentGraphElement.type === 'data-source-stack'">
         DataSource configuration
-      </div>
-      <div *ngIf="currentGraphElement.type === 'step'">
+      </span>
+      <span *ngIf="currentGraphElement.type === 'step'">
         Step configuration
-      </div>
+      </span>
     </h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
@@ -56,7 +56,7 @@
           <div class="row">
             <div class="col-12">
               <label for="podRawData">Raw Data:</label>
-              <textarea type="text" class="form-control" id="podRawData" rows="8"
+              <textarea class="form-control" id="podRawData" rows="8"
                         [value]="selectedElement().pod?.raw"></textarea>
             </div>
           </div>
@@ -111,7 +111,7 @@
           <div class="row">
             <div class="col-12">
               <label for="dataSourceRawData">Raw Data:</label>
-              <textarea type="text" class="form-control" id="dataSourceRawData" rows="8"
+              <textarea class="form-control" id="dataSourceRawData" rows="8"
                         [value]="selectedElement().dataSource?.raw"></textarea>
             </div>
           </div>
@@ -123,7 +123,7 @@
       <div class="row">
         <div class="col-12">
           <label for="stepRawData">Raw Data:</label>
-          <textarea type="text" class="form-control" id="stepRawData" rows="8"
+          <textarea class="form-control" id="stepRawData" rows="8"
                     [value]="currentGraphElement.step?.raw"></textarea>
         </div>
       </div>
@@ -131,7 +131,9 @@
   </div>
   <div *ngIf="selectedElement() != undefined || currentGraphElement.type === 'step'">
     <div class="modal-footer">
-      <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button> <!-- TODO make filter button work for step -->
+      <div *ngIf="currentGraphElement.type !== 'step'">
+        <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
+      </div>
       <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
     </div>
   </div>
