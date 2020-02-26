@@ -122,6 +122,65 @@
     <div *ngIf="currentGraphElement.type === 'step'">
       <div class="row">
         <div class="col-12">
+          <div *ngFor="let ingest of currentGraphElement.step.ingests; index as i;">
+            <div class="row">
+              <div class="col">
+                <label for="{{'ingest-key-' + i}}">Ingest Key:</label>
+                <input type="text" class="form-control" id="{{'ingest-key-' + i}}"
+                       [value]="ingest.key != undefined ? ingest.key : ''">
+              </div>
+              <div class="col">
+                <label for="{{'ingest-value-' + i}}">Ingest Value:</label>
+                <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
+                       [value]="ingest.value != undefined ? ingest.value : ''">
+              </div>
+              <div class="col">
+                <label for="{{'ingest-check-' + i}}">Ingest Check:</label>
+                <input type="text" class="form-control" id="{{'ingest-check-' + i}}"
+                       [value]="ingest.check != undefined ? ingest.check : ''">
+              </div>
+            </div>
+          </div>
+          <div *ngFor="let output of currentGraphElement.step.outputs; index as i;">
+            <div class="row">
+              <div class="col">
+                <label for="{{'output-name-' + i}}">Output Name:</label>
+                <input type="text" class="form-control" id="{{'output-name-' + i}}"
+                       [value]="output.name != undefined ? output.name : ''">
+              </div>
+              <div class="col">
+                <label for="{{'output-url-' + i}}">Output URL:</label>
+                <input type="text" class="form-control" id="{{'output-url-' + i}}"
+                       [value]="output.url != undefined ? output.url : ''">
+              </div>
+              <div class="col">
+                <div *ngFor="let label of output.labels; index as i;">
+                  <div class="row">
+                    <div class="col">
+                      <label for="{{'output-label-key-' + i}}">Output Label {{i+1}} Key:</label>
+                      <input type="text" class="form-control" id="{{'output-label-key-' + i}}"
+                             [value]="label.key != undefined ? label.key : ''">
+                      <label for="{{'output-label-value-' + i}}">Output Label {{i+1}} Value:</label>
+                      <input type="text" class="form-control" id="{{'output-label-value-' + i}}"
+                             [value]="label.value != undefined ? label.value : ''">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="currentGraphElement.step.validationError != undefined && currentGraphElement.step.validationError !== ''">
+            <div class="row">
+              <div class="col">
+                <label for="step-validation-error">Validation Error:</label>
+                <input type="text" class="form-control" id="step-validation-error" disabled="disabled"
+                       [value]="currentGraphElement.step.validationError">
+              </div>
+            </div>
+          </div>
+          <label for="step-template">Template:</label>
+          <textarea type="text" class="form-control" id="step-template" rows="8"
+                    [value]="currentGraphElement.step?.template"></textarea>
           <label for="stepRawData">Raw Data:</label>
           <textarea class="form-control" id="stepRawData" rows="8"
                     [value]="currentGraphElement.step?.raw"></textarea>

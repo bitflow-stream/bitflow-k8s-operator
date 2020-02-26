@@ -92,10 +92,40 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
 
 ```json
 {
+    name: string,;
+    ingests: Ingest[];
+    outputs: Output[];
+    validationError: string;
+    template: string;
+    podType: 'pod' | 'pod-stack';
+    pods?: Pod[];
+	podStack?: PodStack;
+}
+```
+
+### Ingest
+```json
+{
+  key: string;
+  value?: string;
+  check?: string;
+}
+```
+
+### Output
+```json
+{
     name: string;
-    podType: 'pod' | 'pod-stack'
-    pods?: Pod[]
-	podStack?: PodStack
+    url: string;
+    "labels": Label[];
+}
+```
+
+### Label
+```json
+{
+  key: string;
+  value: string;
 }
 ```
 

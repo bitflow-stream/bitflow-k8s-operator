@@ -64,10 +64,31 @@ export interface PodStack {
 
 export interface Step {
   name: string;
+  ingests: Ingest[];
+  outputs: Output[];
+  validationError: string;
+  template: string;
   podType: 'pod' | 'pod-stack'
   pods?: Pod[]
   podStack?: PodStack
   raw: string;
+}
+
+export interface Ingest {
+  key: string;
+  value?: string;
+  check?: string;
+}
+
+export interface Output {
+  name: string;
+  url: string;
+  "labels": Label[];
+}
+
+export interface Label {
+  key: string;
+  value: string;
 }
 
 export interface DataSource {

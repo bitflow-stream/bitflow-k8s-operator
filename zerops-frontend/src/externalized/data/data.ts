@@ -113,7 +113,7 @@ const stepsRuntime = [
       ]
     },
     "status": {
-      "validationError": ""
+      "validationError": "Es ist ein Fehler aufgetreten."
     }
   },
   {

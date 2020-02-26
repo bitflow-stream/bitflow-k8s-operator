@@ -1,13 +1,29 @@
-import {DataSource, dataSourceMap, Pod, podMap, Step, stepMap} from "../definitions/definitions";
+import {DataSource, dataSourceMap, Ingest, Label, Output, Pod, podMap, Step, stepMap} from "../definitions/definitions";
 import {dataSourcesRuntime, podsRuntime, stepDataSourceMatches, stepsRuntime} from "../data/data";
 import {getAllPods} from "./quality-of-life-functions";
 
 export function getStepsFromRawDataAndSaveToMap() {
   function getStepsFromRawData(): Step[] {
     return stepsRuntime.map(stepRaw => {
-      let name = stepRaw.metadata.name;
+      let name: string = stepRaw.metadata.name;
+      let ingests: Ingest[] = stepRaw.spec.ingest;
+      let outputs: Output[] = stepRaw.spec.outputs?.map(output => {
+        let keys: string[] = Object.keys(output.labels);
+        let labels: Label[] = keys.map(key => ({key: key, value: output.labels[key]}));
+        return {
+          name: output.name,
+          url: output.url,
+          labels: labels
+        }
+      });
+      let validationError: string = stepRaw.status.validationError;
+      let template: string = JSON.stringify(stepRaw.spec.template, null, 2);
       return {
         name: name,
+        ingests: ingests,
+        outputs: outputs,
+        validationError: validationError,
+        template: template,
         podType: 'pod',
         pods: getAllPods().filter(pod => pod.creatorStep?.name === name), // TODO fix circular dependency data-aggregation <-> quality-of-life-functions
         raw: JSON.stringify(stepRaw, null, 2)
