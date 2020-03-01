@@ -152,7 +152,7 @@
           <div class="row">
             <div class="col-12">
               <label for="dataSourceRawData">Raw Data:</label>
-              <textarea class="form-control" id="dataSourceRawData" rows="8"
+              <textarea class="form-control" id="dataSourceRawData" rows="8" disabled="disabled"
                         [value]="selectedElement().dataSource?.raw"></textarea>
             </div>
           </div>
@@ -230,7 +230,7 @@
           <textarea class="form-control" id="step-template" rows="8"
                     [value]="currentGraphElement.step?.template"></textarea>
           <label for="stepRawData">Raw Data:</label>
-          <textarea class="form-control" id="stepRawData" rows="8"
+          <textarea class="form-control" id="stepRawData" rows="8" disabled="disabled"
                     [value]="currentGraphElement.step?.raw"></textarea>
         </div>
       </div>
