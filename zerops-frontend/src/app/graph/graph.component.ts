@@ -283,7 +283,7 @@ export class GraphComponent implements AfterContentInit {
 
   @HostListener('click', ['$event.target']) onClick(target: any) {
     if (target.closest('rect') == undefined) return;
-    this.modal?.openModal(target.id);
+    this.modal?.goto(target.id);
   }
 
   ngAfterContentInit() {

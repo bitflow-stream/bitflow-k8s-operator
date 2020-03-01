@@ -383,6 +383,9 @@ export function setAllCurrentGraphElementsWithStacks() {
       currentGraphElementsWithStacksMap.set(element.dataSource.name, {type: 'data-source', dataSource: element.dataSource});
     }
     if (element.type === 'data-source-stack') {
+      element.dataSourceStack.dataSources.forEach(dataSource => {
+        dataSource.dataSourceStack = element.dataSourceStack;
+      });
       currentGraphElementsWithStacksMap.set(element.dataSourceStack.stackId, {type: 'data-source-stack', dataSourceStack: element.dataSourceStack});
     }
   });
@@ -392,6 +395,9 @@ export function setAllCurrentGraphElementsWithStacks() {
       currentGraphElementsWithStacksMap.set(element.pod.name, {type: 'pod', pod: element.pod});
     }
     if (element.type === 'pod-stack') {
+      element.podStack.pods.forEach(pod => {
+        pod.podStack = element.podStack;
+      });
       currentGraphElementsWithStacksMap.set(element.podStack.stackId, {type: 'pod-stack', podStack: element.podStack});
     }
   });

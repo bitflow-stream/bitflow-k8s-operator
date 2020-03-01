@@ -15,20 +15,13 @@
     </button>
   </div>
   <div class="modal-body">
-    <div *ngIf="currentGraphElement.type === 'pod-stack' || currentGraphElement.type === 'pod'">
-      <div *ngIf="currentGraphElement.type === 'pod-stack'">
-        <label for="pod-stack-select">Pod:</label>
-        <select id="pod-stack-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
-          <option *ngFor="let pod of currentGraphElement.podStack.pods"
-                  [value]="pod.name">{{pod.name}}</option>
-        </select>
-      </div>
-      <div *ngIf="currentGraphElement.type === 'pod'">
-        <label for="pod-select">Pod:</label>
-        <select id="pod-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
-          <option [value]="currentGraphElement.pod.name">{{currentGraphElement.pod.name}}</option>
-        </select>
-      </div>
+    <div *ngIf="currentGraphElement.type === 'pod'">
+      <label for="pod-select">Pod:</label>
+      <select id="pod-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+        <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
+                [value]="pod.name">{{pod.name}}</option>
+        <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
+      </select>
 
       <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
         <br>
@@ -73,20 +66,13 @@
       </div>
     </div>
 
-    <div *ngIf="currentGraphElement.type === 'data-source-stack' || currentGraphElement.type === 'data-source'">
-      <div *ngIf="currentGraphElement.type === 'data-source-stack'">
-        <label for="data-source-stack-select">DataSource:</label>
-        <select id="data-source-stack-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
-          <option *ngFor="let dataSource of currentGraphElement.dataSourceStack.dataSources"
-                  [value]="dataSource.name">{{dataSource.name}}</option>
-        </select>
-      </div>
-      <div *ngIf="currentGraphElement.type === 'data-source'">
-        <label for="data-source-select">DataSource:</label>
-        <select id="data-source-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
-          <option [value]="currentGraphElement.dataSource.name">{{currentGraphElement.dataSource.name}}</option>
-        </select>
-      </div>
+    <div *ngIf="currentGraphElement.type === 'data-source'">
+      <label for="data-source-select">DataSource:</label>
+      <select id="data-source-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
+        <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
+                [value]="dataSource.name">{{dataSource.name}}</option>
+        <option [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
+      </select>
 
       <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
         <br>
@@ -121,7 +107,8 @@
               </div>
             </div>
           </div>
-          <div *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
+          <div
+            *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
             <div class="row">
               <div class="col">
                 <label for="data-source-validation-error">DataSource Validation Error:</label>
@@ -217,7 +204,8 @@
               </div>
             </div>
           </div>
-          <div *ngIf="currentGraphElement.step.validationError != undefined && currentGraphElement.step.validationError !== ''">
+          <div
+            *ngIf="currentGraphElement.step.validationError != undefined && currentGraphElement.step.validationError !== ''">
             <div class="row">
               <div class="col">
                 <label for="step-validation-error">Validation Error:</label>

@@ -101,6 +101,7 @@ export interface DataSource {
   hasOutputName: boolean;
   outputName?: string;
   createdPods: Pod[];
+  dataSourceStack?: DataSourceStack;
   raw: string;
 }
 
@@ -111,6 +112,7 @@ export interface Pod {
   creatorStep?: Step;
   creatorDataSources: DataSource[];
   createdDataSources: DataSource[];
+  podStack?: PodStack;
   raw: string;
 }
 

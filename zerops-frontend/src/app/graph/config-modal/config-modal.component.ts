@@ -46,6 +46,16 @@ export class ConfigModalComponent implements AfterViewInit {
     if (this.currentGraphElement == undefined) {
       return;
     }
+
+    if (this.currentGraphElement.type === 'data-source-stack' && this.currentGraphElement.dataSourceStack.dataSources.length != 0) {
+      this.goto(this.currentGraphElement.dataSourceStack.dataSources[0].name);
+      return;
+    }
+    if (this.currentGraphElement.type === 'pod-stack' && this.currentGraphElement.podStack.pods.length != 0) {
+      this.goto(this.currentGraphElement.podStack.pods[0].name);
+      return;
+    }
+
     this.selectedIdentifier = undefined;
 
     this.modalService.open(this.theModal, {ariaLabelledBy: 'modal-basic-title', size: 'lg'}).result.then((result) => {

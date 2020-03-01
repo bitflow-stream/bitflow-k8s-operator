@@ -141,6 +141,7 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
     creatorPod?: Pod;
     hasOutputName: boolean;
     outputName?: string;
+    dataSourceStack?: DataSourceStack;
     createdPods: Pod[];
 }
 ```
@@ -154,7 +155,9 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
     hasCreatorStep: boolean;
     creatorStep?: Step;
     creatorDataSources: DataSource[];
-	createdDataSources: DataSource[];
+    createdDataSources: DataSource[];
+    podStack?: PodStack;
+    raw: string;
 }
 ```
 
