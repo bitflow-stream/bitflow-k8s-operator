@@ -1,8 +1,10 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {ModalDismissReasons, NgbModal} from "@ng-bootstrap/ng-bootstrap";
 import {GraphElement} from "../../../externalized/definitions/definitions";
 import {getGraphElementByIdentifier} from "../../../externalized/functionalities/quality-of-life-functions";
 import {ActivatedRoute, Router} from "@angular/router";
+import {Location} from '@angular/common';
+import {SharedService} from "../../../shared-service";
 
 @Component({
   selector: 'app-pod-modal',
@@ -11,7 +13,6 @@ import {ActivatedRoute, Router} from "@angular/router";
 })
 export class ConfigModalComponent implements AfterViewInit {
   @Input() currentGraphElementsWithStacksMap: Map<string, GraphElement> = new Map();
-  @Output() updateGraphEvent = new EventEmitter<GraphElement>();
 
   currentGraphElement: GraphElement | undefined;
   selectedIdentifier: string | undefined;
@@ -27,6 +28,8 @@ export class ConfigModalComponent implements AfterViewInit {
     private modalService: NgbModal,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private location: Location,
+    private _sharedService: SharedService
   ) {
   }
 
@@ -37,11 +40,16 @@ export class ConfigModalComponent implements AfterViewInit {
     });
   }
 
+  updateUrl(url: string) {
+    this.location.replaceState(url);
+  }
+
   goto(identifier: string): void {
     this.router.navigate(["id", identifier]);
   }
 
   openModal(identifier: string) {
+    this.modalService.dismissAll();
     this.currentGraphElement = getGraphElementByIdentifier(identifier);
     if (this.currentGraphElement == undefined) {
       return;
@@ -56,11 +64,13 @@ export class ConfigModalComponent implements AfterViewInit {
       return;
     }
 
-    this.selectedIdentifier = undefined;
+    this.selectedIdentifier = identifier;
 
     this.modalService.open(this.theModal, {ariaLabelledBy: 'modal-basic-title', size: 'lg'}).result.then((result) => {
+      this.router.navigate(['']);
       this.closeResult = `Closed with: ${result}`;
     }, (reason) => {
+      this.router.navigate(['']);
       this.closeResult = `Dismissed ${ConfigModalComponent.getDismissReason(reason)}`;
     });
   }
@@ -76,7 +86,7 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   filterGraph(graphElement: GraphElement) {
-    this.updateGraphEvent.next(graphElement)
+    this._sharedService.filterGraph(graphElement);
   }
 
 }

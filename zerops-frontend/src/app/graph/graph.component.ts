@@ -18,7 +18,8 @@ import {
   getAllPods,
   getAllSteps,
   getCurrentDataSources,
-  getCurrentPods, getCurrentSteps,
+  getCurrentPods,
+  getCurrentSteps,
   getDepthOfGraphElement,
   getGraphElementIncludingDataSource,
   getGraphElementIncludingPod,
@@ -34,6 +35,7 @@ import {
   svgPodNodeMargin,
   svgVerticalGap
 } from "../../externalized/config/config";
+import {SharedService} from "../../shared-service";
 
 // TODO Test if all-to-one works as expected
 
@@ -286,6 +288,15 @@ export class GraphComponent implements AfterContentInit {
     this.modal?.goto(target.id);
   }
 
+  constructor(
+    protected _sharedService: SharedService
+  ) {
+    _sharedService.changeEmitted$.subscribe(
+      graphElement => {
+        this.filterGraph(graphElement);
+      });
+  }
+
   ngAfterContentInit() {
     initializeMaps();
 
@@ -309,6 +320,16 @@ export class GraphComponent implements AfterContentInit {
       let identifier = getIdentifierByGraphElement(graphElement);
       return allCurrentIdentifiers.some(currentIdentifier => currentIdentifier === identifier);
     });
+
+    graphElementsToDisplay.forEach(graphElement => {
+      if (graphElement.type === 'pod' && graphElement.pod.podStack != undefined) {
+        graphElement.pod.podStack.pods = graphElement.pod.podStack?.pods.filter(pod => graphElementsToDisplay.some(toDisplay => toDisplay.pod?.name === pod.name));
+      }
+      if (graphElement.type === 'data-source' && graphElement.dataSource.dataSourceStack != undefined) {
+        graphElement.dataSource.dataSourceStack.dataSources = graphElement.dataSource.dataSourceStack?.dataSources.filter(dataSource => graphElementsToDisplay.some(toDisplay => toDisplay.dataSource?.name === dataSource.name));
+      }
+    });
+
     displayGraphFromGraphElements.call(this, graphElementsToDisplay);
   }
 }

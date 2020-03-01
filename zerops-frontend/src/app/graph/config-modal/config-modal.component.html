@@ -16,12 +16,26 @@
   </div>
   <div class="modal-body">
     <div *ngIf="currentGraphElement.type === 'pod'">
-      <label for="pod-select">Pod:</label>
-      <select id="pod-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
-        <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
-                [value]="pod.name">{{pod.name}}</option>
-        <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
-      </select>
+      <div *ngIf="currentGraphElement.pod.podStack != undefined; else singlePod;">
+        <label for="pod-select">Pod:</label>
+        <select id="pod-select"
+                [(ngModel)]="selectedIdentifier"
+                class="browser-default custom-select"
+                (change)="updateUrl('/id/' + $event.target.value)">
+          <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
+                  [value]="pod.name">{{pod.name}}</option>
+        </select>
+      </div>
+      <ng-template #singlePod>
+        <label for="pod-select-single">Pod:</label>
+        <select id="pod-select-single"
+                [(ngModel)]="selectedIdentifier"
+                class="browser-default custom-select"
+                (change)="updateUrl('/id/' + $event.target.value)">
+          <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
+        </select>
+      </ng-template>
+
 
       <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
         <br>
@@ -48,7 +62,7 @@
                 <label for="podCreatorDataSources">Creator Data Sources:</label>
                 <table id="podCreatorDataSources" class="table">
                   <tr *ngFor="let creatorDataSource of selectedElement().pod.creatorDataSources">
-                    <td>{{creatorDataSource.name}}</td>
+                    <td (click)="goto(creatorDataSource.name)">{{creatorDataSource.name}}</td>
                   </tr>
                 </table>
               </div>
@@ -67,12 +81,25 @@
     </div>
 
     <div *ngIf="currentGraphElement.type === 'data-source'">
-      <label for="data-source-select">DataSource:</label>
-      <select id="data-source-select" [(ngModel)]="selectedIdentifier" class="browser-default custom-select">
-        <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
-                [value]="dataSource.name">{{dataSource.name}}</option>
-        <option [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
-      </select>
+      <div *ngIf="currentGraphElement.dataSource.dataSourceStack != undefined; else singleDataSource;">
+        <label for="data-source-select">DataSource:</label>
+        <select id="data-source-select"
+                [(ngModel)]="selectedIdentifier"
+                class="browser-default custom-select"
+                (change)="updateUrl('/id/' + $event.target.value)">
+          <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
+                  [value]="dataSource.name">{{dataSource.name}}</option>
+        </select>
+      </div>
+      <ng-template #singleDataSource>
+        <label for="data-source-select-single">DataSource:</label>
+        <select id="data-source-select-single"
+                [(ngModel)]="selectedIdentifier"
+                class="browser-default custom-select"
+                (change)="updateUrl('/id/' + $event.target.value)">
+          <option [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
+        </select>
+      </ng-template>
 
       <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
         <br>
