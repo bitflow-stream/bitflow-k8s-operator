@@ -162,6 +162,13 @@
 
     <div *ngIf="currentGraphElement.type === 'step'">
       <div class="row">
+        <div class="col">
+          <label for="step-name">Name:</label>
+          <input type="text" class="form-control" id="step-name" disabled="disabled"
+                 [value]="currentGraphElement.step.name">
+        </div>
+      </div>
+      <div class="row">
         <div class="col-12">
           <div *ngFor="let ingest of currentGraphElement.step.ingests; index as i;">
             <div class="row">
@@ -220,7 +227,7 @@
             </div>
           </div>
           <label for="step-template">Template:</label>
-          <textarea type="text" class="form-control" id="step-template" rows="8"
+          <textarea class="form-control" id="step-template" rows="8"
                     [value]="currentGraphElement.step?.template"></textarea>
           <label for="stepRawData">Raw Data:</label>
           <textarea class="form-control" id="stepRawData" rows="8"
