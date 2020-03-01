@@ -578,7 +578,7 @@ const dataSourcesRuntime = [
       "url": "http://130.149.249.188:8050/wally178"
     },
     "status": {
-      "validationError": ""
+      "validationError": "Example Error"
     }
   },
   {

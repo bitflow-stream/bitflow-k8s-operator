@@ -38,6 +38,9 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
   function getDataSourcesFromRawData(): DataSource[] {
     return <DataSource[]>dataSourcesRuntime.map(dataSourceRaw => {
       let name = dataSourceRaw.metadata.name;
+      let labels: Label[] = Object.keys(dataSourceRaw.metadata.labels).map(key => ({key: key, value: dataSourceRaw.metadata.labels[key]}));
+      let specUrl: string = dataSourceRaw.spec.url;
+      let validationError: string = dataSourceRaw.status.validationError;
       let creatorPodName = dataSourceRaw.metadata.labels['zerops-pod'];
       let hasCreatorPod = false;
       if (creatorPodName != undefined) {
@@ -47,6 +50,9 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
       let hasOutputName = outputName != undefined;
       return {
         name: name,
+        labels: labels,
+        specUrl: specUrl,
+        validationError: validationError,
         hasCreatorPod: hasCreatorPod,
         creatorPod: hasCreatorPod ? {name: creatorPodName, hasCreatorStep: true} : undefined,
         hasOutputName: hasOutputName,
@@ -65,6 +71,7 @@ export function getPodsAndStepsFromRawDataAndSaveToMap() {
     return podsRuntime
       .map(podRaw => {
         let name: string = podRaw.metadata.name;
+        let phase: string = podRaw.status.phase;
         let creatorStepName = podRaw.metadata.labels['zerops-analysis-step'];
 
         let hasCreatorStep = creatorStepName != undefined;
@@ -82,6 +89,7 @@ export function getPodsAndStepsFromRawDataAndSaveToMap() {
 
         return {
           name: name,
+          phase: phase,
           hasCreatorStep: hasCreatorStep,
           creatorStep: {name: creatorStepName, podType: 'pod'},
           creatorDataSources: creatorDataSources,

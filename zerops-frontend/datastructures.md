@@ -99,7 +99,7 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
     template: string;
     podType: 'pod' | 'pod-stack';
     pods?: Pod[];
-	podStack?: PodStack;
+    podStack?: PodStack;
 }
 ```
 
@@ -134,6 +134,9 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
 ```json
 {
     name: string;
+    labels: Label[];
+    specUrl: string;
+    validationError: string;
     hasCreatorPod: boolean;
     creatorPod?: Pod;
     hasOutputName: boolean;
@@ -147,6 +150,7 @@ Pods in Steps werden wie folgt dargestellt: `[Step1, Pod1_1, Pod1_2, Step2, Pod2
 ```json
 {
     name: string;
+    phase: string;
     hasCreatorStep: boolean;
     creatorStep?: Step;
     creatorDataSources: DataSource[];

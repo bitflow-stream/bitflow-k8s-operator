@@ -93,6 +93,9 @@ export interface Label {
 
 export interface DataSource {
   name: string;
+  labels: Label[];
+  specUrl: string;
+  validationError: string;
   hasCreatorPod: boolean;
   creatorPod?: Pod;
   hasOutputName: boolean;
@@ -103,6 +106,7 @@ export interface DataSource {
 
 export interface Pod {
   name: string;
+  phase: string;
   hasCreatorStep: boolean;
   creatorStep?: Step;
   creatorDataSources: DataSource[];

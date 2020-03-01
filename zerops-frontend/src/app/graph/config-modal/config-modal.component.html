@@ -39,6 +39,15 @@
               <input type="text" class="form-control" id="podName" disabled="disabled" [value]="selectedIdentifier">
             </div>
           </div>
+          <div *ngIf="selectedElement().pod.phase != undefined && selectedElement().pod.phase !== ''">
+            <div class="row">
+              <div class="col">
+                <label for="pod-phase">Phase:</label>
+                <input type="text" class="form-control" id="pod-phase" disabled="disabled"
+                       [value]="selectedElement().pod.phase">
+              </div>
+            </div>
+          </div>
           <div *ngIf="selectedElement().pod.creatorDataSources.length > 0">
             <br>
             <div class="row">
@@ -87,6 +96,38 @@
               <label for="dataSourceName">Name:</label>
               <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
                      [value]="selectedIdentifier">
+            </div>
+          </div>
+          <div *ngFor="let label of selectedElement().dataSource.labels; index as i;">
+            <div class="row">
+              <div class="col">
+                <label for="{{'data-source-label-key-' + i}}">DataSource Label {{i + 1}} Key:</label>
+                <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
+                       [value]="label.key != undefined ? label.key : ''">
+              </div>
+              <div class="col">
+                <label for="{{'data-source-label-value-' + i}}">DataSource Label {{i + 1}} Value:</label>
+                <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                       [value]="label.value != undefined ? label.value : ''">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="selectedElement().dataSource.specUrl != undefined && selectedElement().dataSource.specUrl !== ''">
+            <div class="row">
+              <div class="col">
+                <label for="data-source-spec-url">DataSource Spec URL:</label>
+                <input type="text" class="form-control" id="data-source-spec-url"
+                       [value]="selectedElement().dataSource.specUrl">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
+            <div class="row">
+              <div class="col">
+                <label for="data-source-validation-error">DataSource Validation Error:</label>
+                <input type="text" class="form-control" id="data-source-validation-error" disabled="disabled"
+                       [value]="selectedElement().dataSource.validationError">
+              </div>
             </div>
           </div>
           <div *ngIf="selectedElement().dataSource.hasOutputName">
@@ -157,10 +198,10 @@
                 <div *ngFor="let label of output.labels; index as i;">
                   <div class="row">
                     <div class="col">
-                      <label for="{{'output-label-key-' + i}}">Output Label {{i+1}} Key:</label>
+                      <label for="{{'output-label-key-' + i}}">Output Label {{i + 1}} Key:</label>
                       <input type="text" class="form-control" id="{{'output-label-key-' + i}}"
                              [value]="label.key != undefined ? label.key : ''">
-                      <label for="{{'output-label-value-' + i}}">Output Label {{i+1}} Value:</label>
+                      <label for="{{'output-label-value-' + i}}">Output Label {{i + 1}} Value:</label>
                       <input type="text" class="form-control" id="{{'output-label-value-' + i}}"
                              [value]="label.value != undefined ? label.value : ''">
                     </div>
