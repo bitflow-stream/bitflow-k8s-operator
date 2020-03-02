@@ -48,7 +48,7 @@ export class ConfigModalComponent implements AfterViewInit {
     this.router.navigate(["id", identifier]);
   }
 
-  openModal(identifier: string) {
+  openModal(identifier: string) { // TODO When following links, url is not updated
     this.modalService.dismissAll();
     this.currentGraphElement = getGraphElementByIdentifier(identifier);
     if (this.currentGraphElement == undefined) {
