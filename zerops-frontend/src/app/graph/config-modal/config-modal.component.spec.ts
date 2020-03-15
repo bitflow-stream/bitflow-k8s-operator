@@ -1,14 +1,26 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { ConfigModalComponent } from './config-modal.component';
+import {ConfigModalComponent} from './config-modal.component';
+import {FormsModule} from "@angular/forms";
+import {SharedService} from "../../../shared-service";
+import {AppRoutingModule} from "../../app-routing.module";
 
-describe('PodModalComponent', () => {
+describe('ConfigModalComponent', () => {
   let component: ConfigModalComponent;
   let fixture: ComponentFixture<ConfigModalComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ConfigModalComponent ]
+      imports: [
+        AppRoutingModule,
+        FormsModule
+      ],
+      providers: [
+        SharedService
+      ],
+      declarations: [
+        ConfigModalComponent
+      ]
     })
     .compileComponents();
   }));

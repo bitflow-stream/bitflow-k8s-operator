@@ -13,7 +13,6 @@ import {SharedService} from "../shared-service";
   declarations: [
     AppComponent,
     GraphComponent,
-    AppComponent,
     ConfigModalComponent
   ],
   imports: [

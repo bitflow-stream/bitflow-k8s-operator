@@ -7,7 +7,7 @@ import {Location} from '@angular/common';
 import {SharedService} from "../../../shared-service";
 
 @Component({
-  selector: 'app-pod-modal',
+  selector: 'app-config-modal',
   templateUrl: './config-modal.component.html',
   styleUrls: ['./config-modal.component.css']
 })
