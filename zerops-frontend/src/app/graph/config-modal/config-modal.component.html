@@ -62,7 +62,7 @@
                 <label for="podCreatorDataSources">Creator Data Sources:</label>
                 <table id="podCreatorDataSources" class="table">
                   <tr *ngFor="let creatorDataSource of selectedElement().pod.creatorDataSources">
-                    <td (click)="goto(creatorDataSource.name)">{{creatorDataSource.name}}</td>
+                    <td><a href="/id/{{creatorDataSource.name}}">{{creatorDataSource.name}}</a></td>
                   </tr>
                 </table>
               </div>
