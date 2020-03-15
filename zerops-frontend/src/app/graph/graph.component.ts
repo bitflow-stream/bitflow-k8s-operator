@@ -39,7 +39,7 @@ import {SharedService} from "../../shared-service";
 
 // TODO Test if all-to-one works as expected
 
-function getGraphVisualization() {
+export function getGraphVisualization() {
   let maxColumnId = getAllCurrentGraphElementsWithStacks().map(element => {
     return getDepthOfGraphElement(element);
   }).reduce((p, c) => {
@@ -275,65 +275,6 @@ function displayGraphFromGraphElements(this: any, graphElements: GraphElement[])
   displayGraph.call(this, dataSources, steps, pods);
 }
 
-@Component({
-  selector: 'app-graph',
-  templateUrl: './graph.component.html',
-  styleUrls: ['./graph.component.css']
-})
-export class GraphComponent implements AfterContentInit {
-  @ViewChild(ConfigModalComponent, {static: false}) modal: ConfigModalComponent | undefined;
-
-  @HostListener('click', ['$event.target']) onClick(target: any) {
-    if (target.closest('rect') == undefined) return;
-    this.modal?.goto(target.id);
-  }
-
-  constructor(
-    protected _sharedService: SharedService
-  ) {
-    _sharedService.changeEmitted$.subscribe(
-      graphElement => {
-        this.filterGraph(graphElement);
-      });
-  }
-
-  ngAfterContentInit() {
-    initializeMaps();
-
-    displayGraph.call(this, getAllDataSources(), getAllSteps(), getAllPods());
-  }
-
-  filterGraph(graphElement: GraphElement) {
-    let graphElementsToDisplay: GraphElement[] = [...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement(graphElement), ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphElement, false)];
-    graphElementsToDisplay = graphElementsToDisplay.filter((graphElement, index, self) =>
-      index === self.findIndex((t) => (
-        getIdentifierByGraphElement(t) === getIdentifierByGraphElement(graphElement)
-      ))
-    );
-    let allCurrentIdentifiers = [
-      ...getCurrentDataSources().map(dataSource => ({type: 'data-source', dataSource: dataSource} as GraphElement)),
-      ...getCurrentPods().map(pod => ({type: 'pod', pod: pod} as GraphElement)),
-      ...getCurrentSteps().map(step => ({type: 'step', step: step} as GraphElement))
-    ].map(graphElement => getIdentifierByGraphElement(graphElement));
-
-    graphElementsToDisplay = graphElementsToDisplay.filter(graphElement => {
-      let identifier = getIdentifierByGraphElement(graphElement);
-      return allCurrentIdentifiers.some(currentIdentifier => currentIdentifier === identifier);
-    });
-
-    graphElementsToDisplay.forEach(graphElement => {
-      if (graphElement.type === 'pod' && graphElement.pod.podStack != undefined) {
-        graphElement.pod.podStack.pods = graphElement.pod.podStack?.pods.filter(pod => graphElementsToDisplay.some(toDisplay => toDisplay.pod?.name === pod.name));
-      }
-      if (graphElement.type === 'data-source' && graphElement.dataSource.dataSourceStack != undefined) {
-        graphElement.dataSource.dataSourceStack.dataSources = graphElement.dataSource.dataSourceStack?.dataSources.filter(dataSource => graphElementsToDisplay.some(toDisplay => toDisplay.dataSource?.name === dataSource.name));
-      }
-    });
-
-    displayGraphFromGraphElements.call(this, graphElementsToDisplay);
-  }
-}
-
 function getIdentifierByGraphElement(graphElement: GraphElement) {
   if (graphElement == undefined) {
     return undefined;
@@ -469,4 +410,63 @@ function getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphEl
     return [];
   }
   return [];
+}
+
+@Component({
+  selector: 'app-graph',
+  templateUrl: './graph.component.html',
+  styleUrls: ['./graph.component.css']
+})
+export class GraphComponent implements AfterContentInit {
+  @ViewChild(ConfigModalComponent, {static: false}) modal: ConfigModalComponent | undefined;
+
+  @HostListener('click', ['$event.target']) onClick(target: any) {
+    if (target.closest('rect') == undefined) return;
+    this.modal?.goto(target.id);
+  }
+
+  constructor(
+    protected _sharedService: SharedService
+  ) {
+    _sharedService.changeEmitted$.subscribe(
+      graphElement => {
+        this.filterGraph(graphElement);
+      });
+  }
+
+  ngAfterContentInit() {
+    initializeMaps();
+
+    displayGraph.call(this, getAllDataSources(), getAllSteps(), getAllPods());
+  }
+
+  filterGraph(graphElement: GraphElement) {
+    let graphElementsToDisplay: GraphElement[] = [...getGraphElementsLeftOfGraphElementIncludingCurrentGraphElement(graphElement), ...getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphElement, false)];
+    graphElementsToDisplay = graphElementsToDisplay.filter((graphElement, index, self) =>
+      index === self.findIndex((t) => (
+        getIdentifierByGraphElement(t) === getIdentifierByGraphElement(graphElement)
+      ))
+    );
+    let allCurrentIdentifiers = [
+      ...getCurrentDataSources().map(dataSource => ({type: 'data-source', dataSource: dataSource} as GraphElement)),
+      ...getCurrentPods().map(pod => ({type: 'pod', pod: pod} as GraphElement)),
+      ...getCurrentSteps().map(step => ({type: 'step', step: step} as GraphElement))
+    ].map(graphElement => getIdentifierByGraphElement(graphElement));
+
+    graphElementsToDisplay = graphElementsToDisplay.filter(graphElement => {
+      let identifier = getIdentifierByGraphElement(graphElement);
+      return allCurrentIdentifiers.some(currentIdentifier => currentIdentifier === identifier);
+    });
+
+    graphElementsToDisplay.forEach(graphElement => {
+      if (graphElement.type === 'pod' && graphElement.pod.podStack != undefined) {
+        graphElement.pod.podStack.pods = graphElement.pod.podStack?.pods.filter(pod => graphElementsToDisplay.some(toDisplay => toDisplay.pod?.name === pod.name));
+      }
+      if (graphElement.type === 'data-source' && graphElement.dataSource.dataSourceStack != undefined) {
+        graphElement.dataSource.dataSourceStack.dataSources = graphElement.dataSource.dataSourceStack?.dataSources.filter(dataSource => graphElementsToDisplay.some(toDisplay => toDisplay.dataSource?.name === dataSource.name));
+      }
+    });
+
+    displayGraphFromGraphElements.call(this, graphElementsToDisplay);
+  }
 }

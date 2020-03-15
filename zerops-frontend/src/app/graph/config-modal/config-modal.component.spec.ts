@@ -31,7 +31,7 @@ describe('ConfigModalComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create config modal component', () => {
     expect(component).toBeTruthy();
   });
 });
