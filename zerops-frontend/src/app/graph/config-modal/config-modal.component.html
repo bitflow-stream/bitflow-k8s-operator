@@ -16,66 +16,116 @@
     </button>
   </div>
   <div class="modal-body">
+
     <!-- POD MODAL CONTENT -->
     <div *ngIf="currentGraphElement.type === 'pod'">
-      <div *ngIf="currentGraphElement.pod.podStack != undefined; else singlePod;">
-        <label for="pod-select">Pod:</label>
-        <select id="pod-select"
-                [(ngModel)]="selectedIdentifier"
-                class="browser-default custom-select"
-                (change)="updateUrl('/id/' + $event.target.value)">
-          <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
-                  [value]="pod.name">{{pod.name}}</option>
-        </select>
-      </div>
-      <ng-template #singlePod>
-        <label for="pod-select-single">Pod:</label>
-        <select id="pod-select-single"
-                [(ngModel)]="selectedIdentifier"
-                class="browser-default custom-select"
-                (change)="updateUrl('/id/' + $event.target.value)">
-          <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
-        </select>
-      </ng-template>
-
-
-      <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
-        <br>
-        <div class="container">
-          <div class="row">
-            <div class="col-12">
-              <label for="podName">Name:</label>
-              <input type="text" class="form-control" id="podName" disabled="disabled" [value]="selectedIdentifier">
-            </div>
-          </div>
-          <div *ngIf="selectedElement().pod.phase != undefined && selectedElement().pod.phase !== ''">
-            <div class="row">
-              <div class="col">
-                <label for="pod-phase">Phase:</label>
-                <input type="text" class="form-control" id="pod-phase" disabled="disabled"
-                       [value]="selectedElement().pod.phase">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div *ngIf="currentGraphElement.pod.podStack != undefined; else singlePod;">
+              <div class="card">
+                <div class="card-header">
+                  Pod
+                </div>
+                <div class="card-body">
+                  <select id="pod-select"
+                          [(ngModel)]="selectedIdentifier"
+                          class="browser-default custom-select"
+                          (change)="updateUrl('/id/' + $event.target.value)">
+                    <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
+                            [value]="pod.name">{{pod.name}}</option>
+                  </select>
+                </div>
               </div>
             </div>
+
+            <ng-template #singlePod>
+              <div class="card">
+                <div class="card-header">
+                  Pod
+                </div>
+                <div class="card-body">
+                  <select id="pod-select-single"
+                          [(ngModel)]="selectedIdentifier"
+                          class="browser-default custom-select"
+                          (change)="updateUrl('/id/' + $event.target.value)">
+                    <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
+                  </select>
+                </div>
+              </div>
+            </ng-template>
           </div>
-          <div *ngIf="selectedElement().pod.creatorDataSources.length > 0">
-            <br>
-            <div class="row">
-              <div class="col-12">
-                <label for="podCreatorDataSources">Creator Data Sources:</label>
-                <table id="podCreatorDataSources" class="table">
-                  <tr *ngFor="let creatorDataSource of selectedElement().pod.creatorDataSources">
-                    <td><a href="/id/{{creatorDataSource.name}}">{{creatorDataSource.name}}</a></td>
-                  </tr>
-                </table>
+        </div>
+
+
+        <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
+          <br>
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  Name
+                </div>
+                <div class="card-body">
+                  <input type="text" class="form-control" id="podName" disabled="disabled" [value]="selectedIdentifier">
+                </div>
               </div>
             </div>
           </div>
           <br>
+
+
+          <div *ngIf="selectedElement().pod.phase != undefined && selectedElement().pod.phase !== ''">
+            <div class="row">
+              <div class="col">
+                <div class="card">
+                  <div class="card-header">
+                    Phase
+                  </div>
+                  <div class="card-body">
+                    <input type="text" class="form-control" id="pod-phase" disabled="disabled"
+                           [value]="selectedElement().pod.phase">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <br>
+
+
+          <div *ngIf="selectedElement().pod.creatorDataSources.length > 0">
+            <div class="row">
+              <div class="col">
+
+                <div class="card">
+                  <div class="card-header">
+                    Creator Data Sources
+                  </div>
+                  <div class="card-body">
+                    <table id="podCreatorDataSources" class="table">
+                      <tr *ngFor="let creatorDataSource of selectedElement().pod.creatorDataSources">
+                        <td><a href="/id/{{creatorDataSource.name}}">{{creatorDataSource.name}}</a></td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <br>
+
+
           <div class="row">
-            <div class="col-12">
-              <label for="podRawData">Raw Data:</label>
-              <textarea class="form-control" id="podRawData" rows="8"
-                        [value]="selectedElement().pod?.raw"></textarea>
+            <div class="col">
+              <div class="card">
+                <div class="card-header">
+                  Raw Data
+                </div>
+                <div class="card-body">
+                  <textarea class="form-control" id="podRawData" rows="8"
+                            [value]="selectedElement().pod?.raw"></textarea>
+                </div>
+              </div>
             </div>
           </div>
         </div>
