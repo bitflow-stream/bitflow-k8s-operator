@@ -1,7 +1,8 @@
 <ng-template #content let-modal>
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">
-      <span *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">Pod configuration
+      <span *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">
+        Pod configuration
       </span>
       <span *ngIf="currentGraphElement.type === 'data-source' || currentGraphElement.type === 'data-source-stack'">
         DataSource configuration
@@ -15,6 +16,7 @@
     </button>
   </div>
   <div class="modal-body">
+    <!-- POD MODAL CONTENT -->
     <div *ngIf="currentGraphElement.type === 'pod'">
       <div *ngIf="currentGraphElement.pod.podStack != undefined; else singlePod;">
         <label for="pod-select">Pod:</label>
@@ -80,100 +82,187 @@
       </div>
     </div>
 
+    <!--  DATA SOURCE MODAL CONTENT  -->
     <div *ngIf="currentGraphElement.type === 'data-source'">
-      <div *ngIf="currentGraphElement.dataSource.dataSourceStack != undefined; else singleDataSource;">
-        <label for="data-source-select">DataSource:</label>
-        <select id="data-source-select"
-                [(ngModel)]="selectedIdentifier"
-                class="browser-default custom-select"
-                (change)="updateUrl('/id/' + $event.target.value)">
-          <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
-                  [value]="dataSource.name">{{dataSource.name}}</option>
-        </select>
-      </div>
-      <ng-template #singleDataSource>
-        <label for="data-source-select-single">DataSource:</label>
-        <select id="data-source-select-single"
-                [(ngModel)]="selectedIdentifier"
-                class="browser-default custom-select"
-                (change)="updateUrl('/id/' + $event.target.value)">
-          <option [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
-        </select>
-      </ng-template>
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div *ngIf="currentGraphElement.dataSource.dataSourceStack != undefined; else singleDataSource;">
+              <div class="card">
+                <div class="card-header">
+                  Data Source
+                </div>
+                <div class="card-body">
+                  <select id="data-source-select"
+                          [(ngModel)]="selectedIdentifier"
+                          class="browser-default custom-select"
+                          (change)="updateUrl('/id/' + $event.target.value)">
+                    <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
+                            [value]="dataSource.name">{{dataSource.name}}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
-      <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
+            <ng-template #singleDataSource>
+              <div class="card">
+                <div class="card-header">
+                  Data Source
+                </div>
+                <div class="card-body">
+                  <select id="data-source-select-single"
+                          [(ngModel)]="selectedIdentifier"
+                          class="browser-default custom-select"
+                          (change)="updateUrl('/id/' + $event.target.value)">
+                    <option
+                      [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
+                  </select>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
         <br>
-        <div class="container">
+
+
+        <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
           <div class="row">
-            <div class="col-12">
-              <label for="dataSourceName">Name:</label>
-              <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
-                     [value]="selectedIdentifier">
-            </div>
-          </div>
-          <div *ngFor="let label of selectedElement().dataSource.labels; index as i;">
-            <div class="row">
-              <div class="col">
-                <label for="{{'data-source-label-key-' + i}}">DataSource Label {{i + 1}} Key:</label>
-                <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
-                       [value]="label.key != undefined ? label.key : ''">
-              </div>
-              <div class="col">
-                <label for="{{'data-source-label-value-' + i}}">DataSource Label {{i + 1}} Value:</label>
-                <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
-                       [value]="label.value != undefined ? label.value : ''">
-              </div>
-            </div>
-          </div>
-          <div *ngIf="selectedElement().dataSource.specUrl != undefined && selectedElement().dataSource.specUrl !== ''">
-            <div class="row">
-              <div class="col">
-                <label for="data-source-spec-url">DataSource Spec URL:</label>
-                <input type="text" class="form-control" id="data-source-spec-url"
-                       [value]="selectedElement().dataSource.specUrl">
-              </div>
-            </div>
-          </div>
-          <div
-            *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
-            <div class="row">
-              <div class="col">
-                <label for="data-source-validation-error">DataSource Validation Error:</label>
-                <input type="text" class="form-control" id="data-source-validation-error" disabled="disabled"
-                       [value]="selectedElement().dataSource.validationError">
-              </div>
-            </div>
-          </div>
-          <div *ngIf="selectedElement().dataSource.hasOutputName">
-            <div class="row">
-              <div class="col-12">
-                <label for="dataSourceOutputName">Output Name:</label>
-                <input type="text" class="form-control" id="dataSourceOutputName" disabled="disabled"
-                       [value]="selectedElement().dataSource.outputName">
-              </div>
-            </div>
-          </div>
-          <div *ngIf="selectedElement().dataSource.hasCreatorPod">
-            <div class="row">
-              <div class="col-12">
-                <label for="dataSourceCreatorPodName">Creator Pod Name:</label>
-                <input type="text" class="form-control" id="dataSourceCreatorPodName" disabled="disabled"
-                       [value]="selectedElement().dataSource.creatorPod.name">
+            <div class="col">
+              <div class="card">
+                <div class="card-header">
+                  Name
+                </div>
+                <div class="card-body">
+                  <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
+                         [value]="selectedIdentifier">
+                </div>
               </div>
             </div>
           </div>
           <br>
+
+
+          <div
+            *ngIf="selectedElement().dataSource.labels != undefined && selectedElement().dataSource.labels.length !== 0">
+            <div class="card">
+              <div class="card-header">
+                Labels
+              </div>
+              <div class="card-body">
+                <div *ngFor="let label of selectedElement().dataSource.labels; index as i;">
+                  <div class="row">
+                    <div class="col">
+                      <label for="{{'data-source-label-key-' + i}}">Label {{i + 1}} Key:</label>
+                      <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
+                             [value]="label.key != undefined ? label.key : ''">
+                    </div>
+                    <div class="col">
+                      <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
+                      <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                             [value]="label.value != undefined ? label.value : ''">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+          </div>
+
+
+          <div *ngIf="selectedElement().dataSource.specUrl != undefined && selectedElement().dataSource.specUrl !== ''">
+            <div class="row">
+              <div class="col">
+                <div class="card">
+                  <div class="card-header">
+                    Spec URL:
+                  </div>
+                  <div class="card-body">
+                    <input type="text" class="form-control" id="data-source-spec-url"
+                           [value]="selectedElement().dataSource.specUrl">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+          </div>
+
+
+          <div
+            *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
+            <div class="row">
+              <div class="col">
+
+                <div class="card">
+                  <div class="card-header">
+                    Validation Error
+                  </div>
+                  <div class="card-body">
+                    <input type="text" class="form-control" id="data-source-validation-error" disabled="disabled"
+                           [value]="selectedElement().dataSource.validationError">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+          </div>
+
+
+          <div *ngIf="selectedElement().dataSource.hasOutputName">
+            <div class="row">
+              <div class="col">
+                <div class="card">
+                  <div class="card-header">
+                    Output Name
+                  </div>
+                  <div class="card-body">
+                    <input type="text" class="form-control" id="dataSourceOutputName" disabled="disabled"
+                           [value]="selectedElement().dataSource.outputName">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+          </div>
+
+
+          <div *ngIf="selectedElement().dataSource.hasCreatorPod">
+            <div class="row">
+              <div class="col">
+
+                <div class="card">
+                  <div class="card-header">
+                    Creator Pod Name
+                  </div>
+                  <div class="card-body">
+                    <input type="text" class="form-control" id="dataSourceCreatorPodName" disabled="disabled"
+                           [value]="selectedElement().dataSource.creatorPod.name">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <br>
+
+
           <div class="row">
-            <div class="col-12">
-              <label for="dataSourceRawData">Raw Data:</label>
-              <textarea class="form-control" id="dataSourceRawData" rows="8" disabled="disabled"
-                        [value]="selectedElement().dataSource?.raw"></textarea>
+            <div class="col">
+              <div class="card">
+                <div class="card-header">
+                  Raw Data
+                </div>
+                <div class="card-body">
+                  <textarea class="form-control" id="dataSourceRawData" rows="8"
+                            disabled="disabled"
+                            [value]="selectedElement().dataSource?.raw"></textarea>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!--  STEP MODAL CONTENT  -->
     <div *ngIf="currentGraphElement.type === 'step'">
       <div class="row">
         <div class="col">
