@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitflow-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: bitflow-controller
+  template:
+    metadata:
+      labels:
+        name: bitflow-controller
+    spec:
+      serviceAccountName: bitflow
+      containers:
+        - name: bitflow-controller
+          image: teambitflow/bitflow-controller
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: CONTROLLER_NAME
+              value: "bitflow-controller"
+            - name: CONFIG_MAP
+              value: "bitflow-config"
+            - name: API_LISTEN_PORT
+              value: "8888"
+            - name: POD_ID_LABELS
+              value: "controller=bitflow,operator=bitflow"
+            - name: CONCURRENT_RECONCILE
+              value: "3"
+            - name: RECORD_STATISTICS
+              value: "true"

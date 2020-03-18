@@ -1,0 +1,67 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: bitflow-sources.bitflow.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.url
+    name: URL
+    type: string
+  - JSONPath: .status.validationError
+    name: ValidationError
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
+  group: bitflow.com
+  names:
+    kind: BitflowSource
+    listKind: BitflowSourceList
+    plural: bitflow-sources
+    shortNames:
+    - bso
+    - bfso
+    singular: bitflow-source
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: BitflowSource is the Schema for the BitflowSource API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: BitflowSourceSpec defines the desired state of BitflowSource
+          properties:
+            url:
+              minLength: 1
+              type: string
+          required:
+          - url
+          type: object
+        status:
+          description: BitflowValidationStatus defines the validation status of a
+            Bitflow object
+          properties:
+            validationError:
+              type: string
+          required:
+          - validationError
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true

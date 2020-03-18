@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bitflow-api-proxy-service
+spec:
+  type: NodePort
+  selector:
+    run: bitflow-api-proxy
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: bitflow-api-proxy
+  name: bitflow-api-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: bitflow-api-proxy
+  template:
+    metadata:
+      labels:
+        run: bitflow-api-proxy
+    spec:
+      serviceAccountName: bitflow-controller
+      containers:
+        - image: teambitflow/bitflow-api-proxy
+          name: bitflow-api-proxy
+          args: [ "-l", ":8080" ]
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30

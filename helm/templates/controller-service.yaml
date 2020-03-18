@@ -1,0 +1,21 @@
+{{- if .Values.controller.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.controller.service.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "chart" . }}
+spec:
+  type: {{ .Values.controller.service.type }}
+  ports:
+    - port: {{ .Values.controller.service.port }}
+      targetPort: rest-api
+      protocol: TCP
+      name: rest-api
+  selector:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bitflow-config
+data:
+  external.source.node.label: "nodename"
+  resource.buffer.init: "2"
+  resource.buffer.factor: "2"
+  resource.limit: "0.1"
+  resource.limit.annotation: "bitflow-resource-limit"
+  extra.env: "HELLO=WORLD,CONTROLLER=BITFLOW"
+  delete.grace.period: "30s"
+  state.validation.period: "30s"
+  state.validation.heartbeat: "60s"
+  schedulers: "sourceAffinity,first"
