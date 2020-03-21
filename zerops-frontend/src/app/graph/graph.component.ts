@@ -200,9 +200,9 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
             id: graphElement.step.name,
             text: graphElement.step.name,
             x: columnId * (svgNodeWidth + svgHorizontalGap) - svgPodNodeMargin + svgNodeMargin,
-            y: currentHeight - svgPodNodeMargin + svgNodeMargin,
+            y: currentHeight - svgPodNodeMargin + svgNodeMargin + svgVerticalGap / 4,
             width: svgNodeWidth + 2 * svgPodNodeMargin,
-            height: Math.max(1, currentPodsInStep.length) * (svgNodeHeight + svgVerticalGap),
+            height: Math.max(1, currentPodsInStep.length) * (svgNodeHeight + svgVerticalGap * (2 / 3)),
             type: 'step'
           });
           if (currentPodsInStep.length === 0) {
@@ -214,9 +214,9 @@ function getFrontendDataFromGraphVisualization(graphVisualization: GraphVisualiz
             id: graphElement.step.name,
             text: graphElement.step.name,
             x: columnId * (svgNodeWidth + svgHorizontalGap) - svgPodNodeMargin + svgNodeMargin,
-            y: currentHeight - svgPodNodeMargin + svgNodeMargin,
+            y: currentHeight - svgPodNodeMargin + svgNodeMargin + svgVerticalGap / 4,
             width: svgNodeWidth + 2 * svgPodNodeMargin,
-            height: svgNodeHeight + svgVerticalGap,
+            height: svgNodeHeight + svgVerticalGap * (2 / 3),
             type: 'step'
           });
         }

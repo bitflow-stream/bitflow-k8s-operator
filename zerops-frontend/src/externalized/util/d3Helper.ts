@@ -1,9 +1,9 @@
 import {FrontendData} from "../definitions/definitions";
-import {svgNodeWidth} from "../config/config";
+import {maxNodeTextLength, svgNodeMargin, svgNodeWidth} from "../config/config";
 import * as d3 from "d3-selection";
 
 export function drawSvg(this: any, visualization: FrontendData) {
-  let svg = document.getElementById('mysvg');
+  let svg = document.getElementById('graph-svg');
   if (svg != undefined) {
     svg.innerHTML = '';
   }
@@ -29,7 +29,7 @@ export function drawSvg(this: any, visualization: FrontendData) {
     }
   };
 
-  let g = d3.select('#mysvg')
+  let g = d3.select('#graph-svg')
     .selectAll('g')
     .data(graph.nodes)
     .enter()
@@ -41,6 +41,8 @@ export function drawSvg(this: any, visualization: FrontendData) {
       return 'translate(' + d.x + ',' + d.y + ')';
     });
   g.append('rect')
+    .attr("rx", 4)
+    .attr("ry", 4)
     .attr('id', function (d: any) {
       return d.id;
     })
@@ -71,7 +73,7 @@ export function drawSvg(this: any, visualization: FrontendData) {
     })
     .attr('pointer-events', 'visible');
 
-  d3.select('#mysvg')
+  d3.select('#graph-svg')
     .selectAll('line')
     .data(graph.edges)
     .enter()
@@ -102,9 +104,27 @@ export function drawSvg(this: any, visualization: FrontendData) {
     .attr('dy', '.35em')
     .attr('font-size', 'smaller')
     .text(function (d: any) {
+
+      if (d.text.length > maxNodeTextLength) {
+        return d.text.slice(0, maxNodeTextLength) + ' ..';
+      }
       return d.text;
     });
 
-  document.getElementById('mysvg')?.setAttribute('width', '20000');
-  document.getElementById('mysvg')?.setAttribute('height', '20000');
+  let graphWidth = visualization.nodes.map(node => node.x + node.width).reduce((p, c) => {
+    if (c == undefined) {
+      return p;
+    }
+    return Math.max(p, c)
+  }) + svgNodeMargin;
+
+  let graphHeight = visualization.nodes.map(node => node.y + node.height).reduce((p, c) => {
+    if (c == undefined) {
+      return p;
+    }
+    return Math.max(p, c)
+  }) + svgNodeMargin;
+
+  document.getElementById('graph-svg')?.setAttribute('width', graphWidth.toString());
+  document.getElementById('graph-svg')?.setAttribute('height', graphHeight.toString());
 }

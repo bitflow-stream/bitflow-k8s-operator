@@ -5,4 +5,14 @@ const svgVerticalGap: number = 50;
 const svgPodNodeMargin: number = 20;
 const svgNodeMargin: number = 30;
 const maxNumberOfSeparateGraphElements: number = 3;
-export {svgNodeWidth, svgNodeHeight, svgHorizontalGap, svgVerticalGap, svgPodNodeMargin, svgNodeMargin, maxNumberOfSeparateGraphElements};
+const maxNodeTextLength: number = 23;
+export {
+  svgNodeWidth,
+  svgNodeHeight,
+  svgHorizontalGap,
+  svgVerticalGap,
+  svgPodNodeMargin,
+  svgNodeMargin,
+  maxNumberOfSeparateGraphElements,
+  maxNodeTextLength
+};
