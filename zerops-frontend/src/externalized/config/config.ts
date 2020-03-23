@@ -1,18 +1,12 @@
-const svgNodeWidth: number = 200;
-const svgNodeHeight: number = 100;
-const svgHorizontalGap: number = 100;
-const svgVerticalGap: number = 50;
-const svgPodNodeMargin: number = 20;
-const svgNodeMargin: number = 30;
-const maxNumberOfSeparateGraphElements: number = 3;
-const maxNodeTextLength: number = 23;
-export {
-  svgNodeWidth,
-  svgNodeHeight,
-  svgHorizontalGap,
-  svgVerticalGap,
-  svgPodNodeMargin,
-  svgNodeMargin,
-  maxNumberOfSeparateGraphElements,
-  maxNodeTextLength
-};
+// Proxy config
+export const dataSourcesLink = 'http://localhost:8080/datasources';
+
+// Graph config
+export const svgNodeWidth: number = 200;
+export const svgNodeHeight: number = 100;
+export const svgHorizontalGap: number = 100;
+export const svgVerticalGap: number = 50;
+export const svgPodNodeMargin: number = 20;
+export const svgNodeMargin: number = 30;
+export const maxNumberOfSeparateGraphElements: number = 3;
+export const maxNodeTextLength: number = 23;

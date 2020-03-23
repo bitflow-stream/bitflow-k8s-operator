@@ -1,5 +1,6 @@
 import {
-  currentDataSourcesMap, currentGraphElementsWithStacksMap,
+  currentDataSourcesMap,
+  currentGraphElementsWithStacksMap,
   currentPodsMap,
   currentStepsMap,
   DataSource,
@@ -202,8 +203,8 @@ function addCreatedDataSourcesToPods() {
   });
 }
 
-export function initializeMaps() {
-  getDataSourcesFromRawDataAndSaveToMap();
+export async function initializeMaps() {
+  await getDataSourcesFromRawDataAndSaveToMap();
   getPodsAndStepsFromRawDataAndSaveToMap();
   addCreatorPodsToDataSources();
   addCreatedPodsToDataSources();

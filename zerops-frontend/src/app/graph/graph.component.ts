@@ -412,6 +412,12 @@ function getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphEl
   return [];
 }
 
+async function init() {
+  await initializeMaps();
+
+  displayGraph.call(this, getAllDataSources(), getAllSteps(), getAllPods());
+}
+
 @Component({
   selector: 'app-graph',
   templateUrl: './graph.component.html',
@@ -435,9 +441,7 @@ export class GraphComponent implements AfterContentInit {
   }
 
   ngAfterContentInit() {
-    initializeMaps();
-
-    displayGraph.call(this, getAllDataSources(), getAllSteps(), getAllPods());
+    init();
   }
 
   filterGraph(graphElement: GraphElement) {

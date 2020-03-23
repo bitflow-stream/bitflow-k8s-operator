@@ -1,6 +1,7 @@
 import {DataSource, dataSourceMap, Ingest, Label, Output, Pod, podMap, Step, stepMap} from "../definitions/definitions";
-import {dataSourcesRuntime, podsRuntime, stepDataSourceMatches, stepsRuntime} from "../data/data";
+import {podsRuntime, stepDataSourceMatches, stepsRuntime} from "../data/data";
 import {getAllPods} from "./quality-of-life-functions";
+import {dataSourcesLink} from "../config/config";
 
 export function getStepsFromRawDataAndSaveToMap() {
   function getStepsFromRawData(): Step[] {
@@ -34,11 +35,23 @@ export function getStepsFromRawDataAndSaveToMap() {
   getStepsFromRawData().forEach(step => stepMap.set(step.name, step));
 }
 
-export function getDataSourcesFromRawDataAndSaveToMap() {
-  function getDataSourcesFromRawData(): DataSource[] {
-    return <DataSource[]>dataSourcesRuntime.map(dataSourceRaw => {
+export async function getDataSourcesFromRawDataAndSaveToMap() {
+  async function getRawDataSourcesFromProxy(): Promise<any> {
+    return await fetch(dataSourcesLink)
+      .then(function (response) {
+        return response.json();
+      });
+  }
+
+  async function getDataSourcesFromRawData(): Promise<DataSource[]> {
+    let dataSourcesRaw = await getRawDataSourcesFromProxy();
+
+    return <DataSource[]>dataSourcesRaw.map(dataSourceRaw => {
       let name = dataSourceRaw.metadata.name;
-      let labels: Label[] = Object.keys(dataSourceRaw.metadata.labels).map(key => ({key: key, value: dataSourceRaw.metadata.labels[key]}));
+      let labels: Label[] = Object.keys(dataSourceRaw.metadata.labels).map(key => ({
+        key: key,
+        value: dataSourceRaw.metadata.labels[key]
+      }));
       let specUrl: string = dataSourceRaw.spec.url;
       let validationError: string = dataSourceRaw.status.validationError;
       let creatorPodName = dataSourceRaw.metadata.labels['zerops-pod'];
@@ -63,7 +76,7 @@ export function getDataSourcesFromRawDataAndSaveToMap() {
     });
   }
 
-  getDataSourcesFromRawData().forEach(dataSource => dataSourceMap.set(dataSource.name, dataSource));
+  (await getDataSourcesFromRawData()).forEach(dataSource => dataSourceMap.set(dataSource.name, dataSource));
 }
 
 export function getPodsAndStepsFromRawDataAndSaveToMap() {
