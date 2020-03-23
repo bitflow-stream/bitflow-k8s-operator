@@ -1,3 +1,9 @@
+// Flags
+export const offlineMode = true;
+export const useLocalDataSources = offlineMode || false;
+export const useLocalSteps = offlineMode || false;
+export const useLocalPods = offlineMode || false;
+
 // Proxy config
 export const dataSourcesLink = 'http://localhost:8080/datasources';
 export const podsLink = 'http://localhost:8080/pods';

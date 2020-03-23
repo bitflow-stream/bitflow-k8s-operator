@@ -1,10 +1,13 @@
 import {DataSource, dataSourceMap, Ingest, Label, Output, Pod, podMap, Step, stepMap} from "../definitions/definitions";
-import {stepDataSourceMatches} from "../data/data";
+import {dataSourcesRuntime, podsRuntime, stepDataSourceMatches, stepsRuntime} from "../data/data";
 import {getAllPods} from "./quality-of-life-functions";
-import {dataSourcesLink, podsLink, stepsLink} from "../config/config";
+import {dataSourcesLink, podsLink, stepsLink, useLocalDataSources, useLocalPods, useLocalSteps} from "../config/config";
 
 export async function getStepsFromRawDataAndSaveToMap() {
   async function getRawStepsFromProxy(): Promise<any> {
+    if (useLocalSteps) {
+      return stepsRuntime;
+    }
     return await fetch(stepsLink)
       .then(function (response) {
         return response.json();
@@ -46,6 +49,9 @@ export async function getStepsFromRawDataAndSaveToMap() {
 
 export async function getDataSourcesFromRawDataAndSaveToMap() {
   async function getRawDataSourcesFromProxy(): Promise<any> {
+    if (useLocalDataSources) {
+      return dataSourcesRuntime;
+    }
     return await fetch(dataSourcesLink)
       .then(function (response) {
         return response.json();
@@ -90,6 +96,9 @@ export async function getDataSourcesFromRawDataAndSaveToMap() {
 
 export async function getPodsAndStepsFromRawDataAndSaveToMap() {
   async function getRawPodsFromProxy(): Promise<any> {
+    if (useLocalPods) {
+      return podsRuntime;
+    }
     return await fetch(podsLink)
       .then(function (response) {
         return response.json();
