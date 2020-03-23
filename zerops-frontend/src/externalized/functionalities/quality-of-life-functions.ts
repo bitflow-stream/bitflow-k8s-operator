@@ -205,7 +205,7 @@ function addCreatedDataSourcesToPods() {
 
 export async function initializeMaps() {
   await getDataSourcesFromRawDataAndSaveToMap();
-  getPodsAndStepsFromRawDataAndSaveToMap();
+  await getPodsAndStepsFromRawDataAndSaveToMap();
   addCreatorPodsToDataSources();
   addCreatedPodsToDataSources();
   addCreatedDataSourcesToPods();

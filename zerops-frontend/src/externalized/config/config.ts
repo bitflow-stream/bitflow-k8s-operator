@@ -1,5 +1,7 @@
 // Proxy config
 export const dataSourcesLink = 'http://localhost:8080/datasources';
+export const podsLink = 'http://localhost:8080/pods';
+export const stepsLink = 'http://localhost:8080/steps';
 
 // Graph config
 export const svgNodeWidth: number = 200;

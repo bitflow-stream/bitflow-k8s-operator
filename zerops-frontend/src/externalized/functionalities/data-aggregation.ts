@@ -1,11 +1,20 @@
 import {DataSource, dataSourceMap, Ingest, Label, Output, Pod, podMap, Step, stepMap} from "../definitions/definitions";
-import {podsRuntime, stepDataSourceMatches, stepsRuntime} from "../data/data";
+import {stepDataSourceMatches} from "../data/data";
 import {getAllPods} from "./quality-of-life-functions";
-import {dataSourcesLink} from "../config/config";
+import {dataSourcesLink, podsLink, stepsLink} from "../config/config";
 
-export function getStepsFromRawDataAndSaveToMap() {
-  function getStepsFromRawData(): Step[] {
-    return stepsRuntime.map(stepRaw => {
+export async function getStepsFromRawDataAndSaveToMap() {
+  async function getRawStepsFromProxy(): Promise<any> {
+    return await fetch(stepsLink)
+      .then(function (response) {
+        return response.json();
+      });
+  }
+
+  async function getStepsFromRawData(): Promise<Step[]> {
+    let stepsRaw = await getRawStepsFromProxy();
+
+    return stepsRaw.map(stepRaw => {
       let name: string = stepRaw.metadata.name;
       let ingests: Ingest[] = stepRaw.spec.ingest;
       let outputs: Output[] = stepRaw.spec.outputs?.map(output => {
@@ -32,7 +41,7 @@ export function getStepsFromRawDataAndSaveToMap() {
     });
   }
 
-  getStepsFromRawData().forEach(step => stepMap.set(step.name, step));
+  (await getStepsFromRawData()).forEach(step => stepMap.set(step.name, step));
 }
 
 export async function getDataSourcesFromRawDataAndSaveToMap() {
@@ -79,9 +88,18 @@ export async function getDataSourcesFromRawDataAndSaveToMap() {
   (await getDataSourcesFromRawData()).forEach(dataSource => dataSourceMap.set(dataSource.name, dataSource));
 }
 
-export function getPodsAndStepsFromRawDataAndSaveToMap() {
-  function getPodsFromRawData(): Pod[] {
-    return podsRuntime
+export async function getPodsAndStepsFromRawDataAndSaveToMap() {
+  async function getRawPodsFromProxy(): Promise<any> {
+    return await fetch(podsLink)
+      .then(function (response) {
+        return response.json();
+      });
+  }
+
+  async function getPodsFromRawData(): Promise<Pod[]> {
+    let podsRaw = await getRawPodsFromProxy();
+
+    return podsRaw
       .map(podRaw => {
         let name: string = podRaw.metadata.name;
         let phase: string = podRaw.status.phase;
@@ -112,9 +130,9 @@ export function getPodsAndStepsFromRawDataAndSaveToMap() {
       });
   }
 
-  getPodsFromRawData().forEach(pod => podMap.set(pod.name, pod));
+  (await getPodsFromRawData()).forEach(pod => podMap.set(pod.name, pod));
 
-  getStepsFromRawDataAndSaveToMap();
+  await getStepsFromRawDataAndSaveToMap();
 
   getAllPods().forEach(pod => {
     if (pod.hasCreatorStep) {
