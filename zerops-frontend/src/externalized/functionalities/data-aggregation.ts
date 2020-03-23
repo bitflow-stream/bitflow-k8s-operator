@@ -1,7 +1,16 @@
 import {DataSource, dataSourceMap, Ingest, Label, Output, Pod, podMap, Step, stepMap} from "../definitions/definitions";
 import {dataSourcesRuntime, podsRuntime, stepDataSourceMatches, stepsRuntime} from "../data/data";
 import {getAllPods} from "./quality-of-life-functions";
-import {dataSourcesLink, podsLink, stepsLink, useLocalDataSources, useLocalPods, useLocalSteps} from "../config/config";
+import {
+  dataSourcesLink,
+  matchingSourcesLink,
+  podsLink,
+  stepsLink,
+  useLocalDataSources,
+  useLocalMatchingSources,
+  useLocalPods,
+  useLocalSteps
+} from "../config/config";
 
 export async function getStepsFromRawDataAndSaveToMap() {
   async function getRawStepsFromProxy(): Promise<any> {
@@ -105,8 +114,20 @@ export async function getPodsAndStepsFromRawDataAndSaveToMap() {
       });
   }
 
+  async function getMatchingSourcesFromProxy(): Promise<any> {
+    if (useLocalMatchingSources) {
+      return stepDataSourceMatches;
+    }
+    return await fetch(matchingSourcesLink)
+      .then(function (response) {
+        return response.json();
+      });
+  }
+
   async function getPodsFromRawData(): Promise<Pod[]> {
     let podsRaw = await getRawPodsFromProxy();
+
+    let matchingSources = await getMatchingSourcesFromProxy();
 
     return podsRaw
       .map(podRaw => {
@@ -121,7 +142,7 @@ export async function getPodsAndStepsFromRawDataAndSaveToMap() {
         if (creatorDataSourceName != undefined) {
           creatorDataSourceNames = [creatorDataSourceName];
         } else if (creatorStepName != undefined) {
-          creatorDataSourceNames = stepDataSourceMatches[creatorStepName].filter(name => name != undefined);
+          creatorDataSourceNames = matchingSources[creatorStepName].filter(name => name != undefined);
         } else {
           creatorDataSourceNames = [];
         }
