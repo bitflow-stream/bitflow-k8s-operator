@@ -72,7 +72,7 @@ pipeline {
                     def scannerHome = tool 'sonar-scanner-linux'
                     withSonarQubeEnv('CIT SonarQube') {
                         sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-controller -Dsonar.branch.name=$BRANCH_NAME \
+                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-controller \
                                 -Dsonar.sources=bitflow-controller -Dsonar.tests=bitflow-controller \
                                 -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
                                 -Dsonar.go.golint.reportPath=bitflow-controller/reports/lint.txt \
@@ -83,7 +83,7 @@ pipeline {
                     }
                     withSonarQubeEnv('CIT SonarQube') {
                         sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-api-proxy -Dsonar.branch.name=$BRANCH_NAME \
+                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-api-proxy \
                                 -Dsonar.sources=bitflow-api-proxy -Dsonar.tests=bitflow-api-proxy \
                                 -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
                                 -Dsonar.go.golint.reportPath=bitflow-api-proxy/reports/lint.txt \
