@@ -1,5 +1,5 @@
 # teambitflow/bitflow-api-proxy
-# Build from parent directory: 'docker build --tag=teambitflow/bitflow-api-proxy -f bitflow-api-proxy/Dockerfile .'
+# Build from repository root directory: 'docker build --tag=teambitflow/bitflow-api-proxy -f bitflow-api-proxy/build/Dockerfile .'
 FROM golang:1.12-alpine as build
 ENV GO111MODULE=on
 RUN apk --no-cache add git gcc g++ musl-dev openssh-client mercurial

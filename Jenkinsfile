@@ -52,6 +52,7 @@ pipeline {
                     sh 'rm -f go.sum'
                     sh 'go clean -i -v ./...'
                     sh 'go install -v ./...'
+                    sh 'go build -v -o ./build/_output/bin/bitflow-api-proxy .'
                     sh 'rm -rf reports && mkdir -p reports'
                     sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
                     sh 'go vet ./... &> reports/vet.txt || true'
@@ -102,7 +103,7 @@ pipeline {
             steps {
                 script {
                     controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/Dockerfile bitflow-controller'
-                    proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/Dockerfile .'
+                    proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/cached.Dockerfile bitflow-api-proxy'
                 }
             }
         }
