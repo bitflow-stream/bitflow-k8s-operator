@@ -73,7 +73,7 @@ pipeline {
                     def scannerHome = tool 'sonar-scanner-linux'
                     withSonarQubeEnv('CIT SonarQube') {
                         sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-controller \
+                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-controller -Dsonar.branch.name=$BRANCH_NAME \
                                 -Dsonar.sources=bitflow-controller -Dsonar.tests=bitflow-controller \
                                 -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
                                 -Dsonar.go.golint.reportPath=bitflow-controller/reports/lint.txt \
@@ -84,7 +84,7 @@ pipeline {
                     }
                     withSonarQubeEnv('CIT SonarQube') {
                         sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-api-proxy \
+                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-api-proxy -Dsonar.branch.name=$BRANCH_NAME \
                                 -Dsonar.sources=bitflow-api-proxy -Dsonar.tests=bitflow-api-proxy \
                                 -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
                                 -Dsonar.go.golint.reportPath=bitflow-api-proxy/reports/lint.txt \
@@ -114,37 +114,11 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', registryCredential) {
-                        aggregatorImage.push("build-$BUILD_NUMBER")
-                        aggregatorImage.push("latest")
                         controllerImage.push("build-$BUILD_NUMBER")
                         controllerImage.push("latest")
-                        collectorImage.push("build-$BUILD_NUMBER")
-                        collectorImage.push("latest-amd64")
-                        collectorImageARM32.push("build-$BUILD_NUMBER-arm32v7")
-                        collectorImageARM32.push("latest-arm32v7")
-                        collectorImageARM64.push("build-$BUILD_NUMBER-arm64v8")
-                        collectorImageARM64.push("latest-arm64v8")
                         proxyImage.push("build-$BUILD_NUMBER")
                         proxyImage.push("latest")
                     }
-                }
-                withCredentials([
-                  [   
-                    $class: 'UsernamePasswordMultiBinding',
-                    credentialsId: 'dockerhub',
-                    usernameVariable: 'DOCKERUSER',
-                    passwordVariable: 'DOCKERPASS'
-                  ]   
-                ]) {
-                    // Dockerhub Login
-                    sh '''#! /bin/bash
-                    echo $DOCKERPASS | docker login -u $DOCKERUSER --password-stdin
-                    ''' 
-                    
-                    sh "docker manifest create ${registryCollector}:latest ${registryCollector}:latest-amd64 ${registryCollector}:latest-arm32v7 ${registryCollector}:latest-arm64v8"
-                    sh "docker manifest annotate ${registryCollector}:latest ${registryCollector}:latest-arm32v7 --os=linux --arch=arm --variant=v7"                                                                                 
-                    sh "docker manifest annotate ${registryCollector}:latest ${registryCollector}:latest-arm64v8 --os=linux --arch=arm64 --variant=v8"
-                    sh "docker manifest push --purge ${registryCollector}:latest"
                 }
             }
         }
