@@ -13,6 +13,7 @@ import {
   Step
 } from "../../externalized/definitions/definitions";
 import {
+  addCreatorPodsToDataSources,
   getAllCurrentGraphElementsWithStacks,
   getAllDataSources,
   getAllPods,
@@ -23,7 +24,6 @@ import {
   getDepthOfGraphElement,
   getGraphElementIncludingDataSource,
   getGraphElementIncludingPod,
-  initializeMaps,
   setAllCurrentGraphElementsWithStacks,
   setCurrentGraphElements
 } from "../../externalized/functionalities/quality-of-life-functions";
@@ -36,6 +36,10 @@ import {
   svgVerticalGap
 } from "../../externalized/config/config";
 import {SharedService} from "../../shared-service";
+import {
+  getDataSourcesFromRawDataAndSaveToMap,
+  getPodsAndStepsFromRawDataAndSaveToMap
+} from "../../externalized/functionalities/data-aggregation";
 
 // TODO Test if all-to-one works as expected
 
@@ -410,6 +414,35 @@ function getGraphElementsRightOfGraphElementIncludingCurrentGraphElement(graphEl
     return [];
   }
   return [];
+}
+
+async function initializeMaps() {
+
+  function addCreatedPodsToDataSources() {
+    getAllDataSources().forEach(dataSource => {
+      getAllPods().forEach(pod => {
+        if (pod.creatorDataSources.some(creatorDataSource => creatorDataSource.name === dataSource.name)) {
+          dataSource.createdPods.push(pod);
+        }
+      });
+    });
+  }
+
+  function addCreatedDataSourcesToPods() {
+    getAllPods().forEach(pod => {
+      getAllDataSources().forEach(dataSource => {
+        if (dataSource.creatorPod != undefined && dataSource.creatorPod.name === pod.name) {
+          pod.createdDataSources.push(dataSource);
+        }
+      });
+    });
+  }
+
+  await getDataSourcesFromRawDataAndSaveToMap();
+  await getPodsAndStepsFromRawDataAndSaveToMap();
+  addCreatorPodsToDataSources();
+  addCreatedPodsToDataSources();
+  addCreatedDataSourcesToPods();
 }
 
 async function init() {

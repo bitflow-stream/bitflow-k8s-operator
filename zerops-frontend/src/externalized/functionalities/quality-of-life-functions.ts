@@ -14,7 +14,6 @@ import {
   stepMap
 } from "../definitions/definitions";
 import {uuidv4} from "../util/util";
-import {getDataSourcesFromRawDataAndSaveToMap, getPodsAndStepsFromRawDataAndSaveToMap} from "./data-aggregation";
 import {maxNumberOfSeparateGraphElements} from "../config/config";
 
 export function getAllDataSources(): DataSource[] {
@@ -181,34 +180,6 @@ export function addCreatorPodsToDataSources() {
       dataSource.creatorPod = podMap.get(dataSource.creatorPod.name);
     }
   });
-}
-
-function addCreatedPodsToDataSources() {
-  getAllDataSources().forEach(dataSource => {
-    getAllPods().forEach(pod => {
-      if (pod.creatorDataSources.some(creatorDataSource => creatorDataSource.name === dataSource.name)) {
-        dataSource.createdPods.push(pod);
-      }
-    });
-  });
-}
-
-function addCreatedDataSourcesToPods() {
-  getAllPods().forEach(pod => {
-    getAllDataSources().forEach(dataSource => {
-      if (dataSource.creatorPod != undefined && dataSource.creatorPod.name === pod.name) {
-        pod.createdDataSources.push(dataSource);
-      }
-    });
-  });
-}
-
-export async function initializeMaps() {
-  await getDataSourcesFromRawDataAndSaveToMap();
-  await getPodsAndStepsFromRawDataAndSaveToMap();
-  addCreatorPodsToDataSources();
-  addCreatedPodsToDataSources();
-  addCreatedDataSourcesToPods();
 }
 
 export function setCurrentGraphElements(dataSources, steps, pods) {

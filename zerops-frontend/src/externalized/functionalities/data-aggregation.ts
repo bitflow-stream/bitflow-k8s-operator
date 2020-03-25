@@ -47,7 +47,7 @@ export async function getStepsFromRawDataAndSaveToMap() {
         validationError: validationError,
         template: template,
         podType: 'pod',
-        pods: getAllPods().filter(pod => pod.creatorStep?.name === name), // TODO fix circular dependency data-aggregation <-> quality-of-life-functions
+        pods: getAllPods().filter(pod => pod.creatorStep?.name === name),
         raw: JSON.stringify(stepRaw, null, 2)
       } as Step;
     });
