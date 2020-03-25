@@ -44,6 +44,7 @@ export class ConfigModalComponent implements AfterViewInit {
   selectedElement = () => getGraphElementByIdentifier(this.selectedIdentifier);
 
   ngAfterViewInit(): void {
+    // TODO URL params don't open modals since commit 24c2f58b8aaa8b591b10101fcdc4c0938bee8279, probably has something to do with async functions
     this.route.paramMap.subscribe(params => {
       let idParam = params.get('id');
       if (idParam == null) {
