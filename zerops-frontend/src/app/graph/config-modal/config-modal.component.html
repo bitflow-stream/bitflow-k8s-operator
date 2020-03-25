@@ -28,10 +28,11 @@
                   Pod
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <select id="pod-select"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrl('/id/' + $event.target.value)">
+                          (change)="updateUrlBySelectElement($event.target)">
                     <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
                             [value]="pod.name">{{pod.name}}</option>
                   </select>
@@ -45,10 +46,11 @@
                   Pod
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <select id="pod-select-single"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrl('/id/' + $event.target.value)">
+                          (change)="updateUrlBySelectElement($event.target)">
                     <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
                   </select>
                 </div>
@@ -67,6 +69,7 @@
                   Name
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel, HtmlFormInputWithoutLabel -->
                   <input type="text" class="form-control" id="podName" disabled="disabled" [value]="selectedIdentifier">
                 </div>
               </div>
@@ -83,6 +86,7 @@
                     Phase
                   </div>
                   <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="pod-phase" disabled="disabled"
                            [value]="selectedElement().pod.phase">
                   </div>
@@ -122,6 +126,7 @@
                   Raw Data
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <textarea class="form-control" id="podRawData" rows="8"
                             [value]="selectedElement().pod?.raw"></textarea>
                 </div>
@@ -143,10 +148,11 @@
                   Data Source
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <select id="data-source-select"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrl('/id/' + $event.target.value)">
+                          (change)="updateUrlBySelectElement($event.target)">
                     <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
                             [value]="dataSource.name">{{dataSource.name}}</option>
                   </select>
@@ -160,10 +166,11 @@
                   Data Source
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <select id="data-source-select-single"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrl('/id/' + $event.target.value)">
+                          (change)="updateUrlBySelectElement($event.target)">
                     <option
                       [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
                   </select>
@@ -183,6 +190,7 @@
                   Name
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
                          [value]="selectedIdentifier">
                 </div>
@@ -227,6 +235,7 @@
                     Spec URL:
                   </div>
                   <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="data-source-spec-url"
                            [value]="selectedElement().dataSource.specUrl">
                   </div>
@@ -247,6 +256,7 @@
                     Validation Error
                   </div>
                   <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="data-source-validation-error" disabled="disabled"
                            [value]="selectedElement().dataSource.validationError">
                   </div>
@@ -265,6 +275,7 @@
                     Output Name
                   </div>
                   <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="dataSourceOutputName" disabled="disabled"
                            [value]="selectedElement().dataSource.outputName">
                   </div>
@@ -284,6 +295,7 @@
                     Creator Pod Name
                   </div>
                   <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="dataSourceCreatorPodName" disabled="disabled"
                            [value]="selectedElement().dataSource.creatorPod.name">
                   </div>
@@ -301,6 +313,7 @@
                   Raw Data
                 </div>
                 <div class="card-body">
+                  <!--suppress HtmlFormInputWithoutLabel -->
                   <textarea class="form-control" id="dataSourceRawData" rows="8"
                             disabled="disabled"
                             [value]="selectedElement().dataSource?.raw"></textarea>
@@ -321,6 +334,7 @@
               Name
             </div>
             <div class="card-body">
+              <!--suppress HtmlFormInputWithoutLabel -->
               <input type="text" class="form-control" disabled="disabled"
                      [value]="currentGraphElement.step.name">
             </div>
@@ -422,6 +436,7 @@
               <div class="card-body">
                 <div class="row">
                   <div class="col">
+                    <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="step-validation-error" disabled="disabled"
                            [value]="currentGraphElement.step.validationError">
                   </div>
@@ -441,6 +456,7 @@
               Template
             </div>
             <div class="card-body">
+              <!--suppress HtmlFormInputWithoutLabel -->
               <textarea class="form-control" id="step-template" rows="8"
                         [value]="currentGraphElement.step?.template"></textarea>
             </div>
@@ -457,8 +473,9 @@
               Raw Data
             </div>
             <div class="card-body">
-          <textarea class="form-control" id="stepRawData" rows="8" disabled="disabled"
-                    [value]="currentGraphElement.step?.raw"></textarea>
+              <!--suppress HtmlFormInputWithoutLabel -->
+              <textarea class="form-control" id="stepRawData" rows="8" disabled="disabled"
+                        [value]="currentGraphElement.step?.raw"></textarea>
             </div>
           </div>
         </div>

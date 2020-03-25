@@ -440,8 +440,8 @@ export class GraphComponent implements AfterContentInit {
       });
   }
 
-  ngAfterContentInit() {
-    init();
+  async ngAfterContentInit() {
+    await init();
   }
 
   filterGraph(graphElement: GraphElement) {
