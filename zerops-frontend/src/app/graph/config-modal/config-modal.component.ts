@@ -31,8 +31,6 @@ export class ConfigModalComponent implements AfterViewInit {
 
   closeResult: string | undefined;
 
-  idParam = undefined;
-
   private static getDismissReason(reason: any): string {
     if (reason === ModalDismissReasons.ESC) {
       return 'by pressing ESC';
@@ -47,8 +45,11 @@ export class ConfigModalComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.route.paramMap.subscribe(params => {
-      this.idParam = params.get('id');
-      this.openModal(this.idParam);
+      let idParam = params.get('id');
+      if (idParam == null) {
+        return;
+      }
+      this.openModal(idParam);
     });
   }
 
@@ -65,7 +66,7 @@ export class ConfigModalComponent implements AfterViewInit {
     });
   }
 
-  openModal(identifier: string) { // TODO When following links, url is not updated
+  openModal(identifier: string) {
     this.modalService.dismissAll();
     this.currentGraphElement = getGraphElementByIdentifier(identifier);
     if (this.currentGraphElement === undefined || this.currentGraphElement === null) {
