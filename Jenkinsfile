@@ -14,8 +14,8 @@ pipeline {
         stage('Build & test') {
             agent {
                 docker {
-                    image 'teambitflow/golang-build:docker'
-                    args '-v /root/.goroot:/go'
+                    image 'teambitflow/golang-build:alpine'
+                    args '-v /tmp/go-mod-cache/alpine:/go'
                 }
             }
             stages {
@@ -106,7 +106,7 @@ pipeline {
             agent {
                 docker {
                     // TODO the container used here should have the same base as native-prebuilt.Dockerfile, used below
-                    image 'teambitflow/golang-build:docker'
+                    image 'teambitflow/golang-build:alpine'
                     args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
@@ -138,7 +138,7 @@ pipeline {
             agent {
                 docker {
                     // TODO the container used here should have the same base as native-prebuilt.Dockerfile, used below
-                    image 'teambitflow/golang-build:docker'
+                    image 'teambitflow/golang-build:alpine'
                     args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
