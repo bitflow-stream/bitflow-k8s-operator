@@ -5,7 +5,7 @@ metadata:
   labels:
     app: bitflow-controller-frontend
 spec:
-  serviceAccount: zerops-admin
+  serviceAccount: bitflow-controller
   restartPolicy: Always
   containers:
   - image: teambitflow/bitflow-controller-frontend:v1
