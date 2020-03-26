@@ -20,6 +20,11 @@ build_args="$@"
 # Build inside the container, but mount relevant directories to get access to the build results.
 docker run -v "$mod_cache_dir:/go" -v "$root:/build/src" "$BUILD_IMAGE" \
   sh -c "
+    echo PWD
+    pwd
+    echo LISTING
+    ls
+
     # Copy entire source-tree in order to make changes to go.mod/go.sum
     cp -r src build
     cd build
