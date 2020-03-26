@@ -32,7 +32,6 @@ pipeline {
                     sh 'rm -f go.sum'
                     sh 'go clean -i -v ./...'
                     sh 'go install -v ./...'
-                    sh './build/alpine-build.sh /tmp/go-mod-cache'
                     sh 'rm -rf reports && mkdir -p reports'
                     sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
                     sh 'go vet ./... &> reports/vet.txt || true'
@@ -52,7 +51,6 @@ pipeline {
                     sh 'rm -f go.sum'
                     sh 'go clean -i -v ./...'
                     sh 'go install -v ./...'
-                    sh './build/alpine-build.sh /tmp/go-mod-cache'
                     sh 'rm -rf reports && mkdir -p reports'
                     sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
                     sh 'go vet ./... &> reports/vet.txt || true'
@@ -97,6 +95,12 @@ pipeline {
                 timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+        stage('Prepare Docker build') {
+            steps {
+                sh 'bitflow-api-proxy/build/alpine-build.sh /tmp/go-mod-cache'
+                sh 'bitflow-controller/build/alpine-build.sh /tmp/go-mod-cache'
             }
         }
         stage('Docker build') {
