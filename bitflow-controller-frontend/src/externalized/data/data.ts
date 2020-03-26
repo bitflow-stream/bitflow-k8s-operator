@@ -11,12 +11,12 @@ const stepDataSourceMatches: StepDataSourceMatches = {
 
 const stepsRuntime = [
   {
-    "kind": "ZerOpsStep",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowStep",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "a-ad-opt",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-steps/a-ad-opt",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-steps/a-ad-opt",
       "uid": "3bf0b6f9-15ec-416f-8452-79bd83685751",
       "resourceVersion": "225664",
       "generation": 1,
@@ -29,7 +29,7 @@ const stepsRuntime = [
           "value": "pre-processing"
         },
         {
-          "key": "zerops-pipeline-depth",
+          "key": "bitflow-pipeline-depth",
           "check": "present"
         },
         {
@@ -41,7 +41,7 @@ const stepsRuntime = [
         "metadata": {
           "creationTimestamp": null,
           "labels": {
-            "app": "zerops-ad-opt"
+            "app": "bitflow-ad-opt"
           }
         },
         "spec": {
@@ -56,11 +56,11 @@ const stepsRuntime = [
           "containers": [
             {
               "name": "ad-opt",
-              "image": "teambitflow/zerops-analysis",
+              "image": "teambitflow/bitflow-analysis",
               "command": [
                 "sh",
                 "-c",
-                "/bitflow-pipeline '\"{ZEROPS_DATA_SOURCE}\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e detect-anomalies-with-optima(sampleOffset = 30, enableMessages = true)\n    -\u003e multiplex-distributor() {\n        \"1\" -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\");\n        \"2\" -\u003e -\n    }\n}\n' |\\\n\\\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+                "/bitflow-pipeline '\"{BITFLOW_DATA_SOURCE}\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e detect-anomalies-with-optima(sampleOffset = 30, enableMessages = true)\n    -\u003e multiplex-distributor() {\n        \"1\" -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\");\n        \"2\" -\u003e -\n    }\n}\n' |\\\n\\\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
               ],
               "ports": [
                 {
@@ -117,12 +117,12 @@ const stepsRuntime = [
     }
   },
   {
-    "kind": "ZerOpsStep",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowStep",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "a-anomaly-detector",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-steps/a-anomaly-detector",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-steps/a-anomaly-detector",
       "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
       "resourceVersion": "489784",
       "generation": 1,
@@ -135,7 +135,7 @@ const stepsRuntime = [
           "value": "pre-processing"
         },
         {
-          "key": "zerops-pipeline-depth",
+          "key": "bitflow-pipeline-depth",
           "check": "present"
         }
       ],
@@ -143,7 +143,7 @@ const stepsRuntime = [
         "metadata": {
           "creationTimestamp": null,
           "labels": {
-            "app": "zerops-anomaly-detector"
+            "app": "bitflow-anomaly-detector"
           }
         },
         "spec": {
@@ -158,11 +158,11 @@ const stepsRuntime = [
           "containers": [
             {
               "name": "anomaly-detector",
-              "image": "teambitflow/zerops-analysis",
+              "image": "teambitflow/bitflow-analysis",
               "command": [
                 "sh",
                 "-c",
-                "/bitflow-pipeline '\"{ZEROPS_DATA_SOURCE}\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+                "/bitflow-pipeline '\"{BITFLOW_DATA_SOURCE}\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
               ],
               "ports": [
                 {
@@ -219,12 +219,12 @@ const stepsRuntime = [
     }
   },
   {
-    "kind": "ZerOpsStep",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowStep",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "a-brain",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-steps/a-brain",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-steps/a-brain",
       "uid": "4948a42f-0f3f-4a7b-a517-cdb6e94dfcbb",
       "resourceVersion": "225459",
       "generation": 1,
@@ -242,7 +242,7 @@ const stepsRuntime = [
         "metadata": {
           "creationTimestamp": null,
           "labels": {
-            "app": "zerops-brain"
+            "app": "bitflow-brain"
           }
         },
         "spec": {
@@ -262,11 +262,11 @@ const stepsRuntime = [
           ],
           "containers": [
             {
-              "name": "zerops-brain",
-              "image": "teambitflow/zerops-brain",
+              "name": "bitflow-brain",
+              "image": "teambitflow/bitflow-brain",
               "args": [
                 "--eventLog",
-                "/zerops/brain-logs/events.csv",
+                "/bitflow/brain-logs/events.csv",
                 "--injectorPort",
                 "7888",
                 "-c",
@@ -287,7 +287,7 @@ const stepsRuntime = [
                 },
                 {
                   "name": "logs",
-                  "mountPath": "/zerops/brain-logs"
+                  "mountPath": "/bitflow/brain-logs"
                 }
               ],
               "imagePullPolicy": "Always"
@@ -302,12 +302,12 @@ const stepsRuntime = [
     }
   },
   {
-    "kind": "ZerOpsStep",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowStep",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "a-influxdb-writer",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-steps/a-influxdb-writer",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-steps/a-influxdb-writer",
       "uid": "2aed9168-054c-4aaf-9180-d6a252d3950b",
       "resourceVersion": "226289",
       "generation": 1,
@@ -321,7 +321,7 @@ const stepsRuntime = [
           "value": "pre-processing"
         },
         {
-          "key": "zerops-pipeline-depth",
+          "key": "bitflow-pipeline-depth",
           "check": "present"
         }
       ],
@@ -329,7 +329,7 @@ const stepsRuntime = [
         "metadata": {
           "creationTimestamp": null,
           "labels": {
-            "app": "zerops-influxdb-writer"
+            "app": "bitflow-influxdb-writer"
           }
         },
         "spec": {
@@ -344,11 +344,11 @@ const stepsRuntime = [
           "containers": [
             {
               "name": "influxdb-writer",
-              "image": "teambitflow/zerops-analysis",
+              "image": "teambitflow/bitflow-analysis",
               "command": [
                 "sh",
                 "-c",
-                "/bitflow-pipeline '\"{ZEROPS_DATA_SOURCE}\" -\u003e csv://-' |\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n    -s '- -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")'\n"
+                "/bitflow-pipeline '\"{BITFLOW_DATA_SOURCE}\" -\u003e csv://-' |\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n    -s '- -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")'\n"
               ],
               "resources": {},
               "volumeMounts": [
@@ -374,12 +374,12 @@ const stepsRuntime = [
     }
   },
   {
-    "kind": "ZerOpsStep",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowStep",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "a-influxdb-writer-aapy",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-steps/a-influxdb-writer-aapy",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-steps/a-influxdb-writer-aapy",
       "uid": "055d57f3-9afc-4c0c-8fc6-7dae1d685a28",
       "resourceVersion": "225549",
       "generation": 1,
@@ -393,7 +393,7 @@ const stepsRuntime = [
           "value": "aapy"
         },
         {
-          "key": "zerops-pipeline-depth",
+          "key": "bitflow-pipeline-depth",
           "check": "present"
         }
       ],
@@ -401,7 +401,7 @@ const stepsRuntime = [
         "metadata": {
           "creationTimestamp": null,
           "labels": {
-            "app": "zerops-influxdb-writer-aapy"
+            "app": "bitflow-influxdb-writer-aapy"
           }
         },
         "spec": {
@@ -416,11 +416,11 @@ const stepsRuntime = [
           "containers": [
             {
               "name": "influxdb-writer-aapy",
-              "image": "teambitflow/zerops-analysis",
+              "image": "teambitflow/bitflow-analysis",
               "command": [
                 "sh",
                 "-c",
-                "/bitflow-pipeline '\"{ZEROPS_DATA_SOURCE}\" -\u003e csv://-' |\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n    -s '- -\u003e \n        fork-tag(tag = \"aa-result\") {\n            \"aa-anomaly-classification\"\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n}'\n"
+                "/bitflow-pipeline '\"{BITFLOW_DATA_SOURCE}\" -\u003e csv://-' |\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n    -s '- -\u003e \n        fork-tag(tag = \"aa-result\") {\n            \"aa-anomaly-classification\"\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n}'\n"
               ],
               "resources": {},
               "volumeMounts": [
@@ -446,12 +446,12 @@ const stepsRuntime = [
     }
   },
   {
-    "kind": "ZerOpsStep",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowStep",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "a-pre-proc",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-steps/a-pre-proc",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-steps/a-pre-proc",
       "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
       "resourceVersion": "461094",
       "generation": 1,
@@ -464,7 +464,7 @@ const stepsRuntime = [
           "value": "bitflow*"
         },
         {
-          "key": "zerops-pipeline-depth",
+          "key": "bitflow-pipeline-depth",
           "check": "absent"
         },
         {
@@ -477,7 +477,7 @@ const stepsRuntime = [
         "metadata": {
           "creationTimestamp": null,
           "labels": {
-            "app": "zerops-pre-processing"
+            "app": "bitflow-pre-processing"
           }
         },
         "spec": {
@@ -492,11 +492,11 @@ const stepsRuntime = [
           "containers": [
             {
               "name": "pre-processing",
-              "image": "teambitflow/zerops-analysis",
+              "image": "teambitflow/bitflow-analysis",
               "command": [
                 "sh",
                 "-c",
-                "/bitflow-pipeline '\"{ZEROPS_DATA_SOURCE}\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+                "/bitflow-pipeline '\"{BITFLOW_DATA_SOURCE}\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
               ],
               "ports": [
                 {
@@ -556,18 +556,18 @@ const stepsRuntime = [
 
 const dataSourcesRuntime = [
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-c8519d82",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-c8519d82",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-c8519d82",
       "uid": "381933c6-8549-44f4-87b6-94700497441d",
       "resourceVersion": "197700",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",
@@ -582,18 +582,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-instance-000002fb-5b80e441",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-instance-000002fb-5b80e441",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-instance-000002fb-5b80e441",
       "uid": "967f39ed-dfa1-4942-b459-24268ce9fe4b",
       "resourceVersion": "197707",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-000002fb",
         "layer": "virtual",
@@ -609,18 +609,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-instance-00000301-012b9942",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-instance-00000301-012b9942",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-instance-00000301-012b9942",
       "uid": "004011e1-2dcc-4917-9627-938369d15496",
       "resourceVersion": "197715",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally178-instance-00000301",
         "layer": "virtual",
@@ -636,18 +636,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-instance-0000030a-a78439a1",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-instance-0000030a-a78439a1",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-instance-0000030a-a78439a1",
       "uid": "52b4df8e-950c-4fae-9c85-4653204ee13f",
       "resourceVersion": "197726",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000030a",
         "layer": "virtual",
@@ -663,18 +663,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-instance-0000030b-0e6e357a",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-instance-0000030b-0e6e357a",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-instance-0000030b-0e6e357a",
       "uid": "b201cb12-811f-4b18-ac80-6eb7dd41a558",
       "resourceVersion": "197739",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000030b",
         "layer": "virtual",
@@ -690,18 +690,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-instance-0000031d-75a47182",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-instance-0000031d-75a47182",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-instance-0000031d-75a47182",
       "uid": "c1f5af20-063e-415a-9c65-b5594e576213",
       "resourceVersion": "197750",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000031d",
         "layer": "virtual",
@@ -717,18 +717,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally178-instance-0000031e-aa2e1e92",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally178-instance-0000031e-aa2e1e92",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally178-instance-0000031e-aa2e1e92",
       "uid": "3989c9ec-26e5-43c7-9b28-462468a028c0",
       "resourceVersion": "197756",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000031e",
         "layer": "virtual",
@@ -744,18 +744,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally179-03579292",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally179-03579292",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally179-03579292",
       "uid": "a4cd364e-7bb7-4949-b988-969fa796b578",
       "resourceVersion": "197702",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179",
         "layer": "physical",
@@ -770,18 +770,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally179-instance-000002ff-a57a8bb1",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally179-instance-000002ff-a57a8bb1",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally179-instance-000002ff-a57a8bb1",
       "uid": "f80b3f19-0186-46fd-b86d-03fba93bd331",
       "resourceVersion": "197711",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-000002ff",
         "layer": "virtual",
@@ -797,18 +797,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally179-instance-00000311-cd7521da",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally179-instance-00000311-cd7521da",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally179-instance-00000311-cd7521da",
       "uid": "425b9d14-e474-4cde-9f43-dd57495fbb1c",
       "resourceVersion": "197718",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-00000311",
         "layer": "virtual",
@@ -824,18 +824,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally179-instance-0000031b-65babeb6",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally179-instance-0000031b-65babeb6",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally179-instance-0000031b-65babeb6",
       "uid": "af5974f8-3c30-4ae2-8ce1-41671c0f07fe",
       "resourceVersion": "197734",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-0000031b",
         "layer": "virtual",
@@ -851,18 +851,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally179-instance-00000322-705c39d0",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally179-instance-00000322-705c39d0",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally179-instance-00000322-705c39d0",
       "uid": "c1c324fd-4c5c-4b17-9583-72de69b4af2b",
       "resourceVersion": "197743",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-00000322",
         "layer": "virtual",
@@ -878,18 +878,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-3fd25937",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-3fd25937",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-3fd25937",
       "uid": "940704e0-1363-4217-8185-d03988315aac",
       "resourceVersion": "197712",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180",
         "layer": "physical",
@@ -904,18 +904,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-instance-000002f8-361affb8",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-instance-000002f8-361affb8",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-instance-000002f8-361affb8",
       "uid": "45156342-25fc-4c8f-ace7-dba897237b05",
       "resourceVersion": "197722",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002f8",
         "layer": "virtual",
@@ -931,18 +931,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-instance-000002fe-f38aba87",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-instance-000002fe-f38aba87",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-instance-000002fe-f38aba87",
       "uid": "f086661e-ea3b-4cc9-bc4a-19547318396f",
       "resourceVersion": "197731",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
@@ -958,18 +958,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-instance-00000310-ca57b521",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-instance-00000310-ca57b521",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-instance-00000310-ca57b521",
       "uid": "d334ab96-136e-4a52-ba7d-16a9ca132d06",
       "resourceVersion": "197741",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000310",
         "layer": "virtual",
@@ -985,18 +985,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-instance-00000316-61caf816",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-instance-00000316-61caf816",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-instance-00000316-61caf816",
       "uid": "2cf0c443-0dfb-4cd1-a1bc-44a9a5827dc9",
       "resourceVersion": "197752",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000316",
         "layer": "virtual",
@@ -1012,18 +1012,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-instance-00000317-fb20f985",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-instance-00000317-fb20f985",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-instance-00000317-fb20f985",
       "uid": "2459aeb1-00e0-420a-9d20-2b12386c1f74",
       "resourceVersion": "197761",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000317",
         "layer": "virtual",
@@ -1039,18 +1039,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally180-instance-0000032f-4d7af88a",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally180-instance-0000032f-4d7af88a",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally180-instance-0000032f-4d7af88a",
       "uid": "cd46d1ad-5145-4484-a0ce-8ff31679af36",
       "resourceVersion": "197764",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-0000032f",
         "layer": "virtual",
@@ -1066,18 +1066,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally192-d902e029",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally192-d902e029",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally192-d902e029",
       "uid": "6e627a2f-1a54-49ae-a353-1867fc27a0ba",
       "resourceVersion": "197698",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally192",
         "layer": "physical",
@@ -1092,18 +1092,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally192-instance-00000329-5b27a37b",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally192-instance-00000329-5b27a37b",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally192-instance-00000329-5b27a37b",
       "uid": "b15c2815-2e16-4e31-8ee5-7935b9c68d7f",
       "resourceVersion": "197701",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally192-instance-00000329",
         "layer": "virtual",
@@ -1119,18 +1119,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally192-instance-0000032a-7e16a92c",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally192-instance-0000032a-7e16a92c",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally192-instance-0000032a-7e16a92c",
       "uid": "f53f44a5-be60-42c5-b4a2-991d18b40fcc",
       "resourceVersion": "197708",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally192-instance-0000032a",
         "layer": "virtual",
@@ -1146,18 +1146,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally193-4cd17737",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally193-4cd17737",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally193-4cd17737",
       "uid": "f282ff0f-8a55-45a7-b592-1897c5d025dc",
       "resourceVersion": "197704",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193",
         "layer": "physical",
@@ -1172,18 +1172,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally193-instance-000002fc-88d29e8d",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally193-instance-000002fc-88d29e8d",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally193-instance-000002fc-88d29e8d",
       "uid": "0519657a-2137-4e50-8f1f-25118ec87a80",
       "resourceVersion": "197714",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-000002fc",
         "layer": "virtual",
@@ -1199,18 +1199,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally193-instance-0000030c-0905b849",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally193-instance-0000030c-0905b849",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally193-instance-0000030c-0905b849",
       "uid": "d16478e1-1c2d-472d-b330-f62752e1d896",
       "resourceVersion": "197729",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-0000030c",
         "layer": "virtual",
@@ -1226,18 +1226,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally193-instance-00000313-16f400fe",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally193-instance-00000313-16f400fe",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally193-instance-00000313-16f400fe",
       "uid": "682c15ee-0944-44ab-83d4-96270b3f83a7",
       "resourceVersion": "197736",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-00000313",
         "layer": "virtual",
@@ -1253,18 +1253,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally193-instance-00000321-5f753ddb",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally193-instance-00000321-5f753ddb",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally193-instance-00000321-5f753ddb",
       "uid": "c8499757-94d8-4092-9ca0-7bf5baa31e1f",
       "resourceVersion": "197747",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-00000321",
         "layer": "virtual",
@@ -1280,18 +1280,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally193-instance-0000032e-de1c8a28",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally193-instance-0000032e-de1c8a28",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally193-instance-0000032e-de1c8a28",
       "uid": "700a2448-0fd9-4db2-870a-7f7909716c8f",
       "resourceVersion": "197757",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-0000032e",
         "layer": "virtual",
@@ -1307,18 +1307,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally194-71d2bbbf",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally194-71d2bbbf",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally194-71d2bbbf",
       "uid": "f33a441e-d20c-469e-85f4-94190545a835",
       "resourceVersion": "197765",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194",
         "layer": "physical",
@@ -1333,18 +1333,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally194-instance-000002f6-9e38a90b",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally194-instance-000002f6-9e38a90b",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally194-instance-000002f6-9e38a90b",
       "uid": "84c603ba-fd2f-48bb-8d47-4b38b2e7d314",
       "resourceVersion": "197766",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-000002f6",
         "layer": "virtual",
@@ -1360,18 +1360,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally194-instance-00000314-a9271b59",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally194-instance-00000314-a9271b59",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally194-instance-00000314-a9271b59",
       "uid": "23068cee-ac4f-43e6-b17a-60f880761e8d",
       "resourceVersion": "197767",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000314",
         "layer": "virtual",
@@ -1387,18 +1387,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally194-instance-00000318-77daf71b",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally194-instance-00000318-77daf71b",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally194-instance-00000318-77daf71b",
       "uid": "1d298cfd-86fb-442c-bee0-780f18b34400",
       "resourceVersion": "197768",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000318",
         "layer": "virtual",
@@ -1414,18 +1414,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally194-instance-00000320-15ec6aea",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally194-instance-00000320-15ec6aea",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally194-instance-00000320-15ec6aea",
       "uid": "6c622199-d13e-4599-9e31-9b8e7bc8fce9",
       "resourceVersion": "197769",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000320",
         "layer": "virtual",
@@ -1441,18 +1441,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally194-instance-00000325-c9bb637a",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally194-instance-00000325-c9bb637a",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally194-instance-00000325-c9bb637a",
       "uid": "1c5b8ef6-2358-4a90-90b4-1cb95e71c45c",
       "resourceVersion": "197770",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000325",
         "layer": "virtual",
@@ -1468,18 +1468,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally195-e129e821",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally195-e129e821",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally195-e129e821",
       "uid": "0e2e54be-bcd5-4205-bd06-e25f62e1f26b",
       "resourceVersion": "197709",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195",
         "layer": "physical",
@@ -1494,18 +1494,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally195-instance-000002f9-36c57637",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally195-instance-000002f9-36c57637",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally195-instance-000002f9-36c57637",
       "uid": "dcf74319-e170-4bbd-83b2-1ce137a985e7",
       "resourceVersion": "197721",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-000002f9",
         "layer": "virtual",
@@ -1521,18 +1521,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally195-instance-00000312-a16dc388",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally195-instance-00000312-a16dc388",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally195-instance-00000312-a16dc388",
       "uid": "17836a56-65b6-4a51-89ca-7ca7e46ddb82",
       "resourceVersion": "197732",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000312",
         "layer": "virtual",
@@ -1548,18 +1548,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally195-instance-0000031c-205c56c2",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally195-instance-0000031c-205c56c2",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally195-instance-0000031c-205c56c2",
       "uid": "9e6dda36-f08a-4dcf-97ed-774dbb7ae833",
       "resourceVersion": "197742",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-0000031c",
         "layer": "virtual",
@@ -1575,18 +1575,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally195-instance-00000323-6c5b7b35",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally195-instance-00000323-6c5b7b35",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally195-instance-00000323-6c5b7b35",
       "uid": "6c1d2c8d-14d2-4f7c-9083-e07190f852f6",
       "resourceVersion": "197751",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
@@ -1602,18 +1602,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally195-instance-00000324-d985e9da",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally195-instance-00000324-d985e9da",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally195-instance-00000324-d985e9da",
       "uid": "1ca6f91a-2f73-442d-bad3-c7c41d250d36",
       "resourceVersion": "197759",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000324",
         "layer": "virtual",
@@ -1629,18 +1629,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally196-d58f4aba",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally196-d58f4aba",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally196-d58f4aba",
       "uid": "3e4a4c8c-f16a-4303-9665-3133c90491e1",
       "resourceVersion": "197699",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally196",
         "layer": "physical",
@@ -1655,18 +1655,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally196-instance-000002fa-2bb67ac6",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally196-instance-000002fa-2bb67ac6",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally196-instance-000002fa-2bb67ac6",
       "uid": "a3b48018-667a-4f59-9d42-b257b270f33d",
       "resourceVersion": "197706",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-000002fa",
         "layer": "virtual",
@@ -1682,18 +1682,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally196-instance-0000030e-30363ade",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally196-instance-0000030e-30363ade",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally196-instance-0000030e-30363ade",
       "uid": "5db130c1-8c75-4436-a689-6ed44c853af3",
       "resourceVersion": "197716",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-0000030e",
         "layer": "virtual",
@@ -1709,18 +1709,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally196-instance-00000319-38b38f2d",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally196-instance-00000319-38b38f2d",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally196-instance-00000319-38b38f2d",
       "uid": "60c473f8-bef6-4b48-a134-6b327600087b",
       "resourceVersion": "197730",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
@@ -1736,18 +1736,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally196-instance-0000031a-29ea632f",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally196-instance-0000031a-29ea632f",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally196-instance-0000031a-29ea632f",
       "uid": "304914f2-5c2c-4817-9876-2d793119ed24",
       "resourceVersion": "197738",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally196-instance-0000031a",
         "layer": "virtual",
@@ -1763,18 +1763,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally196-instance-00000328-384b9fea",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally196-instance-00000328-384b9fea",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally196-instance-00000328-384b9fea",
       "uid": "21b37773-49f6-476b-882f-da6a517e6340",
       "resourceVersion": "197745",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally196-instance-00000328",
         "layer": "virtual",
@@ -1790,18 +1790,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-12e90cb3",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-12e90cb3",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-12e90cb3",
       "uid": "d8590513-1232-442e-9eb8-4f5dcbe7fca4",
       "resourceVersion": "197703",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197",
         "layer": "physical",
@@ -1816,18 +1816,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-instance-00000124-550e478e",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-instance-00000124-550e478e",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-instance-00000124-550e478e",
       "uid": "7a85aeb6-fd46-458a-9db3-05f6ca4256bc",
       "resourceVersion": "197710",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000124",
         "layer": "virtual",
@@ -1843,18 +1843,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-instance-000002fd-a6e2ff8c",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-instance-000002fd-a6e2ff8c",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-instance-000002fd-a6e2ff8c",
       "uid": "58a9c95d-c66e-49d5-890b-6edd785e8746",
       "resourceVersion": "197719",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-000002fd",
         "layer": "virtual",
@@ -1870,18 +1870,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-instance-0000030f-82a501e5",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-instance-0000030f-82a501e5",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-instance-0000030f-82a501e5",
       "uid": "578e82b6-5ffd-4046-88aa-b294f34f2ab7",
       "resourceVersion": "197733",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-0000030f",
         "layer": "virtual",
@@ -1897,18 +1897,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-instance-00000315-8246f65e",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-instance-00000315-8246f65e",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-instance-00000315-8246f65e",
       "uid": "83a5d8fd-14dc-476d-8423-86fdcc382af9",
       "resourceVersion": "197746",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000315",
         "layer": "virtual",
@@ -1924,18 +1924,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-instance-00000326-bb09180e",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-instance-00000326-bb09180e",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-instance-00000326-bb09180e",
       "uid": "64c2ec9e-d898-4c8a-876e-6108b8d660b4",
       "resourceVersion": "197754",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000326",
         "layer": "virtual",
@@ -1951,18 +1951,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally197-instance-0000032b-478df7a2",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally197-instance-0000032b-478df7a2",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally197-instance-0000032b-478df7a2",
       "uid": "111fc683-0e36-45bd-b3d7-4ea56effe116",
       "resourceVersion": "197762",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-0000032b",
         "layer": "virtual",
@@ -1978,18 +1978,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-04424b21",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-04424b21",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-04424b21",
       "uid": "d31af010-61cb-48d6-8fa1-6615f8bdbc02",
       "resourceVersion": "197705",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198",
         "layer": "physical",
@@ -2004,18 +2004,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-instance-000002f7-60885c08",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-instance-000002f7-60885c08",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-instance-000002f7-60885c08",
       "uid": "9d218ff3-1a32-4c63-9890-e1e2efe1112d",
       "resourceVersion": "197713",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
@@ -2031,18 +2031,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-instance-00000300-ebd34c70",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-instance-00000300-ebd34c70",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-instance-00000300-ebd34c70",
       "uid": "0e7dc3c8-de9e-4ab1-bd9b-bd4386cc4edc",
       "resourceVersion": "197728",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-00000300",
         "layer": "virtual",
@@ -2058,18 +2058,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-instance-0000030d-92cbc8df",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-instance-0000030d-92cbc8df",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-instance-0000030d-92cbc8df",
       "uid": "edc6f370-424f-4f0f-bce3-65b0601dad13",
       "resourceVersion": "197740",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-0000030d",
         "layer": "virtual",
@@ -2085,18 +2085,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-instance-0000031f-6423ca0f",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-instance-0000031f-6423ca0f",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-instance-0000031f-6423ca0f",
       "uid": "fd4a46ac-adf3-4814-ba12-2677b3071bab",
       "resourceVersion": "197749",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-0000031f",
         "layer": "virtual",
@@ -2112,18 +2112,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-instance-00000327-537962af",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-instance-00000327-537962af",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-instance-00000327-537962af",
       "uid": "1884e175-a510-4164-b884-5b861845ec41",
       "resourceVersion": "197758",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-00000327",
         "layer": "virtual",
@@ -2139,18 +2139,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally198-instance-00000330-78643dfb",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally198-instance-00000330-78643dfb",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally198-instance-00000330-78643dfb",
       "uid": "0f994fb0-a6a5-49b5-9ea1-7eef892c916b",
       "resourceVersion": "197763",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-00000330",
         "layer": "virtual",
@@ -2166,18 +2166,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally199-5720613d",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally199-5720613d",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally199-5720613d",
       "uid": "42aa387e-8905-4599-a42b-18ae366d05ec",
       "resourceVersion": "197717",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally199",
         "layer": "physical",
@@ -2192,18 +2192,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally199-instance-00000302-28152fd6",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally199-instance-00000302-28152fd6",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally199-instance-00000302-28152fd6",
       "uid": "a35780ca-6701-4139-85e3-ef1fd6c1d747",
       "resourceVersion": "197727",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000302",
         "layer": "virtual",
@@ -2219,18 +2219,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally199-instance-00000304-3fa10f3c",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally199-instance-00000304-3fa10f3c",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally199-instance-00000304-3fa10f3c",
       "uid": "ff3da28a-1334-43c9-92ab-c4c262625ed1",
       "resourceVersion": "197737",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000304",
         "layer": "virtual",
@@ -2246,18 +2246,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally199-instance-00000307-df3e033f",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally199-instance-00000307-df3e033f",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally199-instance-00000307-df3e033f",
       "uid": "9057a5a0-719d-408f-a5d5-8b28c7baf326",
       "resourceVersion": "197748",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000307",
         "layer": "virtual",
@@ -2273,18 +2273,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally199-instance-00000309-c2874ad2",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally199-instance-00000309-c2874ad2",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally199-instance-00000309-c2874ad2",
       "uid": "eb7ed1e7-d215-4b38-8a0c-058bad2a000b",
       "resourceVersion": "197755",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000309",
         "layer": "virtual",
@@ -2300,18 +2300,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally200-402a816f",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally200-402a816f",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally200-402a816f",
       "uid": "0c8ee92c-6a64-4cdd-8f77-040e92227e73",
       "resourceVersion": "197720",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally200",
         "layer": "physical",
@@ -2326,18 +2326,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally200-instance-00000303-0134cffd",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally200-instance-00000303-0134cffd",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally200-instance-00000303-0134cffd",
       "uid": "32b62f72-2796-4525-bb56-46df1d9a0563",
       "resourceVersion": "197735",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000303",
         "layer": "virtual",
@@ -2353,18 +2353,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally200-instance-00000305-91c79da3",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally200-instance-00000305-91c79da3",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally200-instance-00000305-91c79da3",
       "uid": "dc2651ce-d5b0-40b4-af2b-974ad75e4b89",
       "resourceVersion": "197744",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000305",
         "layer": "virtual",
@@ -2380,18 +2380,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally200-instance-00000306-e7f7f41d",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally200-instance-00000306-e7f7f41d",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally200-instance-00000306-e7f7f41d",
       "uid": "22b9826a-4b81-4bbb-9897-3d310bc5d7ba",
       "resourceVersion": "197753",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000306",
         "layer": "virtual",
@@ -2407,18 +2407,18 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "bitflow-collector-wally200-instance-00000308-859c7f05",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/bitflow-collector-wally200-instance-00000308-859c7f05",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/bitflow-collector-wally200-instance-00000308-859c7f05",
       "uid": "faa5bc20-4100-47b7-ba86-9336ca9c9faf",
       "resourceVersion": "197760",
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000308",
         "layer": "virtual",
@@ -2434,35 +2434,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-ad-opt-pod-142c5cc4.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-ad-opt-pod-142c5cc4.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-ad-opt-pod-142c5cc4.results",
       "uid": "1baad212-2f5f-4df6-bc72-f8d42cd3bde3",
       "resourceVersion": "462014",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:15Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
         "node": "wally195",
         "type": "ad-opt",
         "vm": "instance-00000323",
-        "zerops-analysis-step": "a-ad-opt",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-ad-opt",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-ad-opt-pod-142c5cc4"
+        "bitflow-analysis-step": "a-ad-opt",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-ad-opt",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-ad-opt-pod-142c5cc4"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-ad-opt",
           "uid": "3bf0b6f9-15ec-416f-8452-79bd83685751",
           "controller": true,
@@ -2478,35 +2478,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-265e0adc.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-265e0adc.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-265e0adc.results",
       "uid": "9fc1b681-3938-4a4e-b1bf-6a040382d8fd",
       "resourceVersion": "489981",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:54Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-000002fd",
         "layer": "virtual",
         "node": "wally197",
         "type": "anomaly-detection",
         "vm": "instance-000002fd",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-265e0adc"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-265e0adc"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2522,35 +2522,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-270362a0.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-270362a0.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-270362a0.results",
       "uid": "f1dfc37e-882d-4de1-9fc0-fd6e310fdede",
       "resourceVersion": "490064",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally194-instance-00000314",
         "layer": "virtual",
         "node": "wally194",
         "type": "anomaly-detection",
         "vm": "instance-00000314",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-270362a0"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-270362a0"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2566,35 +2566,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-37dbfa4e.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-37dbfa4e.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-37dbfa4e.results",
       "uid": "0b301f0c-a52e-4db9-9b6f-f5d8363f0f3f",
       "resourceVersion": "490025",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:56Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally180-instance-00000317",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-00000317",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-37dbfa4e"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-37dbfa4e"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2610,35 +2610,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-3c13486b.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-3c13486b.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-3c13486b.results",
       "uid": "7a6ead02-2435-48d6-9387-b17414d4fb43",
       "resourceVersion": "490036",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally180-instance-00000310",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-00000310",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-3c13486b"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-3c13486b"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2654,34 +2654,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-580e331f.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-580e331f.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-580e331f.results",
       "uid": "9ff44d2e-9ba7-462f-aa24-becc2eff6ea0",
       "resourceVersion": "490059",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally193",
         "layer": "physical",
         "node": "wally193",
         "type": "anomaly-detection",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-580e331f"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-580e331f"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2697,35 +2697,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-6d3f5a4b.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-6d3f5a4b.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-6d3f5a4b.results",
       "uid": "a8050d7b-666a-4c1b-bb56-ae17455ac5d1",
       "resourceVersion": "490041",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally179-instance-00000322",
         "layer": "virtual",
         "node": "wally179",
         "type": "anomaly-detection",
         "vm": "instance-00000322",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-6d3f5a4b"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-6d3f5a4b"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2741,35 +2741,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-77baa0a4.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-77baa0a4.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-77baa0a4.results",
       "uid": "b6f22da2-5baa-4e9f-8c3b-e9f3631416cb",
       "resourceVersion": "490049",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000326",
         "layer": "virtual",
         "node": "wally197",
         "type": "anomaly-detection",
         "vm": "instance-00000326",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-77baa0a4"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-77baa0a4"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2785,35 +2785,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-7c935d42.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-7c935d42.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-7c935d42.results",
       "uid": "f37dfaf3-be7d-4f0a-8ba1-5a1c0cf63a00",
       "resourceVersion": "490075",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:00Z",
       "labels": {
-        "zerops-output": "D",
+        "bitflow-output": "D",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
         "node": "wally196",
         "type": "anomaly-detection",
         "vm": "instance-00000319",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-7c935d42"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-7c935d42"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2829,35 +2829,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-9ec4b1c6.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-9ec4b1c6.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-9ec4b1c6.results",
       "uid": "25fc7fb3-a71c-4f32-9f31-c5ef82ba76b0",
       "resourceVersion": "490044",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "zerops-output": "D",
+        "bitflow-output": "D",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
         "node": "wally198",
         "type": "anomaly-detection",
         "vm": "instance-000002f7",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-9ec4b1c6"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-9ec4b1c6"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2873,35 +2873,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-b2975acf.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-b2975acf.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-b2975acf.results",
       "uid": "a43f6e6b-4c41-47ff-8933-9e86e00c4a1e",
       "resourceVersion": "490056",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:58Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-000002fe",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-b2975acf"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-b2975acf"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2917,34 +2917,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-b6f052e7.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-b6f052e7.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-b6f052e7.results",
       "uid": "73177e67-5a0e-4dfa-a48c-5c9893b25c42",
       "resourceVersion": "489995",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:55Z",
       "labels": {
-        "zerops-output": "D",
+        "bitflow-output": "D",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",
         "node": "wally178",
         "type": "anomaly-detection",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-b6f052e7"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-b6f052e7"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -2960,35 +2960,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-bfdb1a0c.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-bfdb1a0c.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-bfdb1a0c.results",
       "uid": "18907ba6-bc98-45e7-ab0d-858c71b1c236",
       "resourceVersion": "490073",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:00Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally179-instance-000002ff",
         "layer": "virtual",
         "node": "wally179",
         "type": "anomaly-detection",
         "vm": "instance-000002ff",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-bfdb1a0c"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-bfdb1a0c"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3004,35 +3004,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-c04a0a4a.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-c04a0a4a.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-c04a0a4a.results",
       "uid": "93f10cdf-07fc-4959-a23c-53b5fd83b70e",
       "resourceVersion": "490066",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally178-instance-0000031d",
         "layer": "virtual",
         "node": "wally178",
         "type": "anomaly-detection",
         "vm": "instance-0000031d",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-c04a0a4a"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-c04a0a4a"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3048,35 +3048,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-c6d8617e.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-c6d8617e.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-c6d8617e.results",
       "uid": "c655f890-0ef0-41a2-b292-f51d53badd93",
       "resourceVersion": "490009",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:56Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally196-instance-000002fa",
         "layer": "virtual",
         "node": "wally196",
         "type": "anomaly-detection",
         "vm": "instance-000002fa",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-c6d8617e"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-c6d8617e"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3092,35 +3092,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-c76c3dc9.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-c76c3dc9.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-c76c3dc9.results",
       "uid": "1355d697-6d6c-42eb-8a6a-938f6e0c2d63",
       "resourceVersion": "490080",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:01Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally193-instance-00000313",
         "layer": "virtual",
         "node": "wally193",
         "type": "anomaly-detection",
         "vm": "instance-00000313",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-c76c3dc9"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-c76c3dc9"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3136,35 +3136,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-ca7926bd.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-ca7926bd.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-ca7926bd.results",
       "uid": "41f32e51-eae0-4740-b034-03d5d2bfdefa",
       "resourceVersion": "490052",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:58Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
         "node": "wally195",
         "type": "anomaly-detection",
         "vm": "instance-00000323",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-ca7926bd"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-ca7926bd"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3180,35 +3180,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-e1a2884c.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-e1a2884c.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-e1a2884c.results",
       "uid": "6224114a-7da2-45a2-8b47-fbe832d270db",
       "resourceVersion": "490067",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally180-instance-000002f8",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-000002f8",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-e1a2884c"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-e1a2884c"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3224,35 +3224,35 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-anomaly-detector-pod-e41a84ff.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-anomaly-detector-pod-e41a84ff.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-anomaly-detector-pod-e41a84ff.results",
       "uid": "7df0b586-42e5-4f60-a4aa-5efe08bba3f4",
       "resourceVersion": "490016",
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:56Z",
       "labels": {
-        "zerops-output": "B",
+        "bitflow-output": "B",
         "collector": "bitflow",
         "component": "wally194-instance-00000325",
         "layer": "virtual",
         "node": "wally194",
         "type": "anomaly-detection",
         "vm": "instance-00000325",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-2": "a-anomaly-detector",
-        "zerops-pipeline-depth": "2",
-        "zerops-pod": "a-anomaly-detector-pod-e41a84ff"
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-2": "a-anomaly-detector",
+        "bitflow-pipeline-depth": "2",
+        "bitflow-pod": "a-anomaly-detector-pod-e41a84ff"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-anomaly-detector",
           "uid": "8dbf1315-bceb-40c1-bdc2-477a9e197062",
           "controller": true,
@@ -3268,34 +3268,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-1de052f4.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-1de052f4.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-1de052f4.results",
       "uid": "bebe4b77-0733-4ffa-93a4-97c91b521e6f",
       "resourceVersion": "461595",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:52Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000325",
         "layer": "virtual",
         "node": "wally194",
         "type": "pre-processing",
         "vm": "instance-00000325",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-1de052f4"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-1de052f4"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3311,33 +3311,33 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-2b6b0164.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-2b6b0164.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-2b6b0164.results",
       "uid": "b0b7d1d3-9856-4bb8-9071-fdb29a1cedf1",
       "resourceVersion": "463387",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:42:58Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193",
         "layer": "physical",
         "node": "wally193",
         "type": "pre-processing",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-2b6b0164"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-2b6b0164"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3353,34 +3353,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-3d51ff4f.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-3d51ff4f.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-3d51ff4f.results",
       "uid": "dca7f9e5-05c5-4767-9d29-a694d2ebdb6f",
       "resourceVersion": "461757",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:00Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000317",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-00000317",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-3d51ff4f"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-3d51ff4f"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3396,34 +3396,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-58eaf87b.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-58eaf87b.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-58eaf87b.results",
       "uid": "0b79ae15-7877-489d-a31f-aa98b0d87bca",
       "resourceVersion": "463409",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:43:01Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
         "node": "wally196",
         "type": "pre-processing",
         "vm": "instance-00000319",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-58eaf87b"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-58eaf87b"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3439,34 +3439,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-5ab6e825.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-5ab6e825.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-5ab6e825.results",
       "uid": "6c2366f3-ad11-47df-b412-53c829f8e87b",
       "resourceVersion": "461695",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:58Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally197-instance-000002fd",
         "layer": "virtual",
         "node": "wally197",
         "type": "pre-processing",
         "vm": "instance-000002fd",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-5ab6e825"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-5ab6e825"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3482,33 +3482,33 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-7097b24b.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-7097b24b.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-7097b24b.results",
       "uid": "7c365e95-35c0-4ab2-a9ee-ea7b28fcaaf6",
       "resourceVersion": "461618",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:54Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",
         "node": "wally178",
         "type": "pre-processing",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-7097b24b"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-7097b24b"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3524,34 +3524,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-70fb342f.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-70fb342f.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-70fb342f.results",
       "uid": "fe05181a-ff96-497d-a660-b6d99cd51c27",
       "resourceVersion": "461624",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:54Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000310",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-00000310",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-70fb342f"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-70fb342f"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3567,34 +3567,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-778a7588.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-778a7588.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-778a7588.results",
       "uid": "ea1ef9bf-a52d-4900-a812-cdf95b42633e",
       "resourceVersion": "463419",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:43:03Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000314",
         "layer": "virtual",
         "node": "wally194",
         "type": "pre-processing",
         "vm": "instance-00000314",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-778a7588"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-778a7588"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3610,34 +3610,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-8490377c.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-8490377c.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-8490377c.results",
       "uid": "62f90a26-ed68-4ee3-bf84-339cfa1388fc",
       "resourceVersion": "463394",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:42:58Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-000002ff",
         "layer": "virtual",
         "node": "wally179",
         "type": "pre-processing",
         "vm": "instance-000002ff",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-8490377c"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-8490377c"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3653,34 +3653,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-8ed76f37.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-8ed76f37.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-8ed76f37.results",
       "uid": "108010a3-6b49-4a2e-a5ad-c2741c669794",
       "resourceVersion": "461656",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:56Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-000002fe",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-8ed76f37"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-8ed76f37"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3696,34 +3696,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-90efac01.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-90efac01.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-90efac01.results",
       "uid": "01edaee9-98a0-4cb8-9d05-dbeadcb3aab7",
       "resourceVersion": "463391",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:42:58Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally197-instance-00000326",
         "layer": "virtual",
         "node": "wally197",
         "type": "pre-processing",
         "vm": "instance-00000326",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-90efac01"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-90efac01"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3739,34 +3739,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-b6034bac.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-b6034bac.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-b6034bac.results",
       "uid": "740c25fc-233c-4bb0-a35d-a1fa5a3090f1",
       "resourceVersion": "461866",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:06Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
         "node": "wally195",
         "type": "pre-processing",
         "vm": "instance-00000323",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-b6034bac"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-b6034bac"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3782,34 +3782,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-bb454774.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-bb454774.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-bb454774.results",
       "uid": "44587ea8-dd5f-4b2d-9d4c-7c8e8f790000",
       "resourceVersion": "462450",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:40:25Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002f8",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-000002f8",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-bb454774"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-bb454774"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3825,34 +3825,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-be7d3b58.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-be7d3b58.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-be7d3b58.results",
       "uid": "c0558ebc-eb7c-4e55-92a5-86e46ce52492",
       "resourceVersion": "461974",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:12Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
         "node": "wally198",
         "type": "pre-processing",
         "vm": "instance-000002f7",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-be7d3b58"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-be7d3b58"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3868,34 +3868,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-e1b57e20.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-e1b57e20.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-e1b57e20.results",
       "uid": "1620209b-2b5b-45b6-b22f-1bb7ebbe059b",
       "resourceVersion": "462562",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:40:33Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-00000313",
         "layer": "virtual",
         "node": "wally193",
         "type": "pre-processing",
         "vm": "instance-00000313",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-e1b57e20"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-e1b57e20"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3911,34 +3911,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-ed34aae5.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-ed34aae5.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-ed34aae5.results",
       "uid": "98184d77-a471-4c01-af4c-aa91ca8bbf30",
       "resourceVersion": "461685",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:57Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000031d",
         "layer": "virtual",
         "node": "wally178",
         "type": "pre-processing",
         "vm": "instance-0000031d",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-ed34aae5"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-ed34aae5"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3954,34 +3954,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-ef439502.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-ef439502.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-ef439502.results",
       "uid": "43ae148f-d3a5-4779-8e84-2eb5954bd487",
       "resourceVersion": "461721",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:59Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-00000322",
         "layer": "virtual",
         "node": "wally179",
         "type": "pre-processing",
         "vm": "instance-00000322",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-ef439502"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-ef439502"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -3997,34 +3997,34 @@ const dataSourcesRuntime = [
     }
   },
   {
-    "kind": "ZerOpsDataSource",
-    "apiVersion": "zerops.com/v1",
+    "kind": "BitflowDataSource",
+    "apiVersion": "bitflow.com/v1",
     "metadata": {
       "name": "output.a-pre-proc-pod-f7ce31fb.results",
       "namespace": "default",
-      "selfLink": "/apis/zerops.com/v1/namespaces/default/zerops-data-sources/output.a-pre-proc-pod-f7ce31fb.results",
+      "selfLink": "/apis/bitflow.com/v1/namespaces/default/bitflow-data-sources/output.a-pre-proc-pod-f7ce31fb.results",
       "uid": "88d149d5-c4c2-449c-976a-ae947ed9b096",
       "resourceVersion": "461749",
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:00Z",
       "labels": {
-        "zerops-output": "A",
+        "bitflow-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-000002fa",
         "layer": "virtual",
         "node": "wally196",
         "type": "pre-processing",
         "vm": "instance-000002fa",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-pipeline-1": "a-pre-proc",
-        "zerops-pipeline-depth": "1",
-        "zerops-pod": "a-pre-proc-pod-f7ce31fb"
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-pipeline-1": "a-pre-proc",
+        "bitflow-pipeline-depth": "1",
+        "bitflow-pod": "a-pre-proc-pod-f7ce31fb"
       },
       "ownerReferences": [
         {
-          "apiVersion": "zerops.com/v1",
-          "kind": "ZerOpsStep",
+          "apiVersion": "bitflow.com/v1",
+          "kind": "BitflowStep",
           "name": "a-pre-proc",
           "uid": "8e56d4ea-9f6d-439d-9c8c-a4c1cb55145c",
           "controller": true,
@@ -4051,11 +4051,11 @@ const podsRuntime = [
       "resourceVersion": "462243",
       "creationTimestamp": "2020-01-17T11:39:06Z",
       "labels": {
-        "app": "zerops-ad-opt",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-ad-opt",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-b6034bac.results"
+        "app": "bitflow-ad-opt",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-ad-opt",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-b6034bac.results"
       }
     },
     "spec": {
@@ -4078,11 +4078,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "ad-opt",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-ad-opt-pod-142c5cc4\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e detect-anomalies-with-optima(sampleOffset = 30, enableMessages = true)\n    -\u003e multiplex-distributor() {\n        \"1\" -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\");\n        \"2\" -\u003e -\n    }\n}\n' |\\\n\\\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-ad-opt-pod-142c5cc4\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e detect-anomalies-with-optima(sampleOffset = 30, enableMessages = true)\n    -\u003e multiplex-distributor() {\n        \"1\" -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\");\n        \"2\" -\u003e -\n    }\n}\n' |\\\n\\\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -4093,52 +4093,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-ad-opt-pod-142c5cc4"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-ad-opt-pod-142c5cc4"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.125.26:9000"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-ad-opt"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-b6034bac.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "collector=bitflow, component=wally195-instance-00000323, node=wally195, type=pre-processing, zerops-pod=a-pre-proc-pod-b6034bac, zerops-analysis-step=a-pre-proc, zerops-pipeline-depth=1, layer=virtual, vm=instance-00000323, zerops-pipeline-1=a-pre-proc, zerops-analysis-type=one-to-one"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "collector=bitflow, component=wally195-instance-00000323, node=wally195, type=pre-processing, bitflow-pod=a-pre-proc-pod-b6034bac, bitflow-analysis-step=a-pre-proc, bitflow-pipeline-depth=1, layer=virtual, vm=instance-00000323, bitflow-pipeline-1=a-pre-proc, bitflow-analysis-type=one-to-one"
             }
           ],
           "resources": {
@@ -4278,8 +4278,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://47dbcb0592c083046732068b13667ba284b2a097480198877141649573d656a8"
         }
       ],
@@ -4295,11 +4295,11 @@ const podsRuntime = [
       "resourceVersion": "490154",
       "creationTimestamp": "2020-01-17T14:06:42Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-5ab6e825.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-5ab6e825.results"
       }
     },
     "spec": {
@@ -4322,11 +4322,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-265e0adc\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-265e0adc\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -4337,52 +4337,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "layer=virtual, zerops-pipeline-depth=1, zerops-pipeline-1=a-pre-proc, type=pre-processing, vm=instance-000002fd, zerops-analysis-step=a-pre-proc, zerops-pod=a-pre-proc-pod-5ab6e825, zerops-analysis-type=one-to-one, collector=bitflow, component=wally197-instance-000002fd, node=wally197"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "layer=virtual, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, type=pre-processing, vm=instance-000002fd, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-5ab6e825, bitflow-analysis-type=one-to-one, collector=bitflow, component=wally197-instance-000002fd, node=wally197"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-265e0adc"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-265e0adc"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-5ab6e825.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.123.23:9000"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             }
           ],
           "resources": {
@@ -4522,8 +4522,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://889bb0ab72023b4832612b574ba36c97aabae9003660b8458d1882e9ed27b485"
         }
       ],
@@ -4539,11 +4539,11 @@ const podsRuntime = [
       "resourceVersion": "490185",
       "creationTimestamp": "2020-01-17T14:06:40Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-778a7588.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-778a7588.results"
       }
     },
     "spec": {
@@ -4566,11 +4566,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-270362a0\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-270362a0\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -4581,52 +4581,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.84.80:9000"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-pipeline-1=a-pre-proc, zerops-analysis-type=one-to-one, zerops-pipeline-depth=1, collector=bitflow, node=wally194, component=wally194-instance-00000314, layer=virtual, zerops-pod=a-pre-proc-pod-778a7588, type=pre-processing, vm=instance-00000314, zerops-analysis-step=a-pre-proc"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-pipeline-1=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, node=wally194, component=wally194-instance-00000314, layer=virtual, bitflow-pod=a-pre-proc-pod-778a7588, type=pre-processing, vm=instance-00000314, bitflow-analysis-step=a-pre-proc"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-778a7588.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-270362a0"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-270362a0"
             }
           ],
           "resources": {
@@ -4766,8 +4766,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://4c2644a9c29589299498fc594fc49ae26a207d3d48dda3e136a5345d0402f5bb"
         }
       ],
@@ -4783,11 +4783,11 @@ const podsRuntime = [
       "resourceVersion": "490151",
       "creationTimestamp": "2020-01-17T14:06:39Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-3d51ff4f.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-3d51ff4f.results"
       }
     },
     "spec": {
@@ -4810,11 +4810,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-37dbfa4e\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-37dbfa4e\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -4825,52 +4825,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-37dbfa4e"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-37dbfa4e"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-3d51ff4f.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.81.36:9000"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-analysis-type=one-to-one, zerops-pipeline-depth=1, component=wally180-instance-00000317, type=pre-processing, node=wally180, zerops-pipeline-1=a-pre-proc, collector=bitflow, vm=instance-00000317, zerops-analysis-step=a-pre-proc, zerops-pod=a-pre-proc-pod-3d51ff4f, layer=virtual"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, component=wally180-instance-00000317, type=pre-processing, node=wally180, bitflow-pipeline-1=a-pre-proc, collector=bitflow, vm=instance-00000317, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-3d51ff4f, layer=virtual"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             }
           ],
           "resources": {
@@ -5010,8 +5010,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://bdf6faa7f7fe02a29e5df06e3536447e7586ff5bb3ae32fb48be7e43e1f1923e"
         }
       ],
@@ -5027,11 +5027,11 @@ const podsRuntime = [
       "resourceVersion": "490210",
       "creationTimestamp": "2020-01-17T14:06:40Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-70fb342f.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-70fb342f.results"
       }
     },
     "spec": {
@@ -5054,11 +5054,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-3c13486b\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-3c13486b\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -5069,52 +5069,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-70fb342f.results"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-3c13486b"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-3c13486b"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "vm=instance-00000310, zerops-analysis-step=a-pre-proc, node=wally180, component=wally180-instance-00000310, zerops-analysis-type=one-to-one, collector=bitflow, type=pre-processing, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1, zerops-pod=a-pre-proc-pod-70fb342f, layer=virtual"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "vm=instance-00000310, bitflow-analysis-step=a-pre-proc, node=wally180, component=wally180-instance-00000310, bitflow-analysis-type=one-to-one, collector=bitflow, type=pre-processing, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-70fb342f, layer=virtual"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.124.50:9000"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             }
           ],
           "resources": {
@@ -5254,8 +5254,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://5a4fecfff7ed02a7179901509c373966b923fb53ae41e9986cdd6c3dca803914"
         }
       ],
@@ -5271,11 +5271,11 @@ const podsRuntime = [
       "resourceVersion": "490224",
       "creationTimestamp": "2020-01-17T14:06:40Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-2b6b0164.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-2b6b0164.results"
       }
     },
     "spec": {
@@ -5298,11 +5298,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-580e331f\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-580e331f\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -5313,52 +5313,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-2b6b0164.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "layer=physical, zerops-analysis-step=a-pre-proc, type=pre-processing, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1, zerops-pod=a-pre-proc-pod-2b6b0164, collector=bitflow, component=wally193, node=wally193, zerops-analysis-type=one-to-one"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "layer=physical, bitflow-analysis-step=a-pre-proc, type=pre-processing, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-2b6b0164, collector=bitflow, component=wally193, node=wally193, bitflow-analysis-type=one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.84.77:9000"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-580e331f"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-580e331f"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             }
           ],
           "resources": {
@@ -5498,8 +5498,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://63298ba179c02d2441ad8870705ca8028d6b63b28c4b5d7b575d2f248d265d62"
         }
       ],
@@ -5515,11 +5515,11 @@ const podsRuntime = [
       "resourceVersion": "490221",
       "creationTimestamp": "2020-01-17T14:06:41Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-ef439502.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-ef439502.results"
       }
     },
     "spec": {
@@ -5542,11 +5542,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-6d3f5a4b\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-6d3f5a4b\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -5557,52 +5557,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-6d3f5a4b"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-6d3f5a4b"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.81.37:9000"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "layer=virtual, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1, zerops-analysis-type=one-to-one, zerops-pod=a-pre-proc-pod-ef439502, collector=bitflow, component=wally179-instance-00000322, node=wally179, type=pre-processing, zerops-analysis-step=a-pre-proc, vm=instance-00000322"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "layer=virtual, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-analysis-type=one-to-one, bitflow-pod=a-pre-proc-pod-ef439502, collector=bitflow, component=wally179-instance-00000322, node=wally179, type=pre-processing, bitflow-analysis-step=a-pre-proc, vm=instance-00000322"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-ef439502.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             }
           ],
           "resources": {
@@ -5742,8 +5742,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://2ea318c190ab9200375e343cdde71dc685283634605f000f3e9753d46cf82345"
         }
       ],
@@ -5759,11 +5759,11 @@ const podsRuntime = [
       "resourceVersion": "490150",
       "creationTimestamp": "2020-01-17T14:06:43Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-90efac01.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-90efac01.results"
       }
     },
     "spec": {
@@ -5786,11 +5786,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-77baa0a4\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-77baa0a4\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -5801,52 +5801,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.108.37:9000"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-77baa0a4"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-77baa0a4"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-90efac01.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-pipeline-depth=1, type=pre-processing, zerops-pod=a-pre-proc-pod-90efac01, collector=bitflow, layer=virtual, vm=instance-00000326, zerops-analysis-type=one-to-one, zerops-pipeline-1=a-pre-proc, component=wally197-instance-00000326, node=wally197, zerops-analysis-step=a-pre-proc"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-pipeline-depth=1, type=pre-processing, bitflow-pod=a-pre-proc-pod-90efac01, collector=bitflow, layer=virtual, vm=instance-00000326, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, component=wally197-instance-00000326, node=wally197, bitflow-analysis-step=a-pre-proc"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             }
           ],
           "resources": {
@@ -5986,8 +5986,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://7ba8330c594ff9c513ad2882cea105b6e20e2f6d9492ee8e8c9222b8a8ba6255"
         }
       ],
@@ -6003,11 +6003,11 @@ const podsRuntime = [
       "resourceVersion": "490139",
       "creationTimestamp": "2020-01-17T14:06:44Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-58eaf87b.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-58eaf87b.results"
       }
     },
     "spec": {
@@ -6030,11 +6030,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-7c935d42\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-7c935d42\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -6045,52 +6045,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "component=wally196-instance-00000319, vm=instance-00000319, zerops-analysis-type=one-to-one, zerops-analysis-step=a-pre-proc, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1, type=pre-processing, layer=virtual, node=wally196, zerops-pod=a-pre-proc-pod-58eaf87b, collector=bitflow"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "component=wally196-instance-00000319, vm=instance-00000319, bitflow-analysis-type=one-to-one, bitflow-analysis-step=a-pre-proc, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, type=pre-processing, layer=virtual, node=wally196, bitflow-pod=a-pre-proc-pod-58eaf87b, collector=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-58eaf87b.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-7c935d42"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-7c935d42"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.84.79:9000"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             }
           ],
           "resources": {
@@ -6230,8 +6230,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://3cc000355e68c56ede2a49525c5415857638fc39ed46917791750c48da6b78e2"
         }
       ],
@@ -6247,11 +6247,11 @@ const podsRuntime = [
       "resourceVersion": "490209",
       "creationTimestamp": "2020-01-17T14:06:45Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-be7d3b58.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-be7d3b58.results"
       }
     },
     "spec": {
@@ -6274,11 +6274,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-9ec4b1c6\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-9ec4b1c6\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -6289,51 +6289,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-9ec4b1c6"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-9ec4b1c6"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-pipeline-depth=1, vm=instance-000002f7, zerops-analysis-type=one-to-one, zerops-pipeline-1=a-pre-proc, collector=bitflow, node=wally198, type=pre-processing, zerops-analysis-step=a-pre-proc, zerops-pod=a-pre-proc-pod-be7d3b58, layer=virtual, component=wally198-instance-000002f7"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-pipeline-depth=1, vm=instance-000002f7, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, collector=bitflow, node=wally198, type=pre-processing, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-be7d3b58, layer=virtual, component=wally198-instance-000002f7"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-be7d3b58.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.125.27:9000"
             }
           ],
@@ -6474,8 +6474,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://98a7c6ca4b1454d448f6e847e356fe00247e4efefd49025e795222f328c194be"
         }
       ],
@@ -6491,11 +6491,11 @@ const podsRuntime = [
       "resourceVersion": "490203",
       "creationTimestamp": "2020-01-17T14:06:46Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-8ed76f37.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-8ed76f37.results"
       }
     },
     "spec": {
@@ -6518,11 +6518,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-b2975acf\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-b2975acf\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -6533,52 +6533,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-b2975acf"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-b2975acf"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-8ed76f37.results"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.108.34:9000"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "layer=virtual, zerops-analysis-type=one-to-one, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1, node=wally180, type=pre-processing, zerops-pod=a-pre-proc-pod-8ed76f37, collector=bitflow, component=wally180-instance-000002fe, vm=instance-000002fe, zerops-analysis-step=a-pre-proc"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "layer=virtual, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, node=wally180, type=pre-processing, bitflow-pod=a-pre-proc-pod-8ed76f37, collector=bitflow, component=wally180-instance-000002fe, vm=instance-000002fe, bitflow-analysis-step=a-pre-proc"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             }
           ],
           "resources": {
@@ -6718,8 +6718,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://83e3dcb975f27e2da87d62cc530bf6036c717abc3e533fdb704142cea43d75ab"
         }
       ],
@@ -6735,11 +6735,11 @@ const podsRuntime = [
       "resourceVersion": "490287",
       "creationTimestamp": "2020-01-17T14:06:44Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-7097b24b.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-7097b24b.results"
       }
     },
     "spec": {
@@ -6762,11 +6762,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-b6f052e7\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-b6f052e7\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -6777,52 +6777,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-7097b24b.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.123.22:9000"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-b6f052e7"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-b6f052e7"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "collector=bitflow, zerops-analysis-step=a-pre-proc, component=wally178, node=wally178, zerops-analysis-type=one-to-one, type=pre-processing, zerops-pod=a-pre-proc-pod-7097b24b, layer=physical, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "collector=bitflow, bitflow-analysis-step=a-pre-proc, component=wally178, node=wally178, bitflow-analysis-type=one-to-one, type=pre-processing, bitflow-pod=a-pre-proc-pod-7097b24b, layer=physical, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             }
           ],
           "resources": {
@@ -6962,8 +6962,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://bce8e5de48e383f613617eafa13345644c8036df4eb55e6c784f5caf2ed4e771"
         }
       ],
@@ -6979,11 +6979,11 @@ const podsRuntime = [
       "resourceVersion": "490273",
       "creationTimestamp": "2020-01-17T14:06:43Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-8490377c.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-8490377c.results"
       }
     },
     "spec": {
@@ -7006,11 +7006,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-bfdb1a0c\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-bfdb1a0c\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -7021,52 +7021,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.84.78:9000"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-bfdb1a0c"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-bfdb1a0c"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-pod=a-pre-proc-pod-8490377c, node=wally179, type=pre-processing, zerops-pipeline-1=a-pre-proc, component=wally179-instance-000002ff, vm=instance-000002ff, zerops-analysis-step=a-pre-proc, zerops-analysis-type=one-to-one, zerops-pipeline-depth=1, collector=bitflow, layer=virtual"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-pod=a-pre-proc-pod-8490377c, node=wally179, type=pre-processing, bitflow-pipeline-1=a-pre-proc, component=wally179-instance-000002ff, vm=instance-000002ff, bitflow-analysis-step=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, layer=virtual"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-8490377c.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             }
           ],
           "resources": {
@@ -7206,8 +7206,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://417aef372e95019706458b0f4ae4e1605b20307ae91eb52be6aff6f376a1bf94"
         }
       ],
@@ -7223,11 +7223,11 @@ const podsRuntime = [
       "resourceVersion": "490156",
       "creationTimestamp": "2020-01-17T14:06:41Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-ed34aae5.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-ed34aae5.results"
       }
     },
     "spec": {
@@ -7250,11 +7250,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-c04a0a4a\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-c04a0a4a\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -7265,52 +7265,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-c04a0a4a"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-c04a0a4a"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.75.38:9000"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-ed34aae5.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-pod=a-pre-proc-pod-ed34aae5, zerops-analysis-type=one-to-one, vm=instance-0000031d, zerops-analysis-step=a-pre-proc, layer=virtual, type=pre-processing, zerops-pipeline-depth=1, zerops-pipeline-1=a-pre-proc, node=wally178, collector=bitflow, component=wally178-instance-0000031d"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-pod=a-pre-proc-pod-ed34aae5, bitflow-analysis-type=one-to-one, vm=instance-0000031d, bitflow-analysis-step=a-pre-proc, layer=virtual, type=pre-processing, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, node=wally178, collector=bitflow, component=wally178-instance-0000031d"
             }
           ],
           "resources": {
@@ -7450,8 +7450,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://c5f2defb34f7309fbecc9ed46c21dee902349d190fd5472c791ae1cb2425aa7e"
         }
       ],
@@ -7467,11 +7467,11 @@ const podsRuntime = [
       "resourceVersion": "490127",
       "creationTimestamp": "2020-01-17T14:06:39Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-f7ce31fb.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-f7ce31fb.results"
       }
     },
     "spec": {
@@ -7494,11 +7494,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-c6d8617e\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-c6d8617e\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -7509,51 +7509,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-c6d8617e"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-c6d8617e"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.81.35:9000"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-f7ce31fb.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "zerops-analysis-type=one-to-one, node=wally196, zerops-analysis-step=a-pre-proc, vm=instance-000002fa, zerops-pipeline-depth=1, zerops-pod=a-pre-proc-pod-f7ce31fb, zerops-pipeline-1=a-pre-proc, collector=bitflow, layer=virtual, type=pre-processing, component=wally196-instance-000002fa"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "bitflow-analysis-type=one-to-one, node=wally196, bitflow-analysis-step=a-pre-proc, vm=instance-000002fa, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-f7ce31fb, bitflow-pipeline-1=a-pre-proc, collector=bitflow, layer=virtual, type=pre-processing, component=wally196-instance-000002fa"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             }
           ],
@@ -7694,8 +7694,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://ef9cb41e97432bdf6536c4338231fbf8a503912d5fd2b9de148c5b3ba49c7f36"
         }
       ],
@@ -7711,11 +7711,11 @@ const podsRuntime = [
       "resourceVersion": "490306",
       "creationTimestamp": "2020-01-17T14:06:43Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-e1b57e20.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-e1b57e20.results"
       }
     },
     "spec": {
@@ -7738,11 +7738,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-c76c3dc9\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-c76c3dc9\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -7753,52 +7753,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-e1b57e20.results"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.75.41:9000"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-c76c3dc9"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-c76c3dc9"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "collector=bitflow, component=wally193-instance-00000313, zerops-pipeline-1=a-pre-proc, zerops-analysis-step=a-pre-proc, zerops-pod=a-pre-proc-pod-e1b57e20, type=pre-processing, vm=instance-00000313, zerops-pipeline-depth=1, node=wally193, zerops-analysis-type=one-to-one, layer=virtual"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "collector=bitflow, component=wally193-instance-00000313, bitflow-pipeline-1=a-pre-proc, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-e1b57e20, type=pre-processing, vm=instance-00000313, bitflow-pipeline-depth=1, node=wally193, bitflow-analysis-type=one-to-one, layer=virtual"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             }
           ],
           "resources": {
@@ -7938,8 +7938,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://5e5e7e06305bb24c4417a9772ce377cf3e6bbe8917fb3f5e580028efe2ff9608"
         }
       ],
@@ -7955,11 +7955,11 @@ const podsRuntime = [
       "resourceVersion": "490231",
       "creationTimestamp": "2020-01-17T14:06:44Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-b6034bac.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-b6034bac.results"
       }
     },
     "spec": {
@@ -7982,11 +7982,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-ca7926bd\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-ca7926bd\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -7997,51 +7997,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-ca7926bd"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-ca7926bd"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "vm=instance-00000323, zerops-pipeline-1=a-pre-proc, layer=virtual, zerops-analysis-step=a-pre-proc, zerops-analysis-type=one-to-one, zerops-pipeline-depth=1, collector=bitflow, component=wally195-instance-00000323, zerops-pod=a-pre-proc-pod-b6034bac, node=wally195, type=pre-processing"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "vm=instance-00000323, bitflow-pipeline-1=a-pre-proc, layer=virtual, bitflow-analysis-step=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, component=wally195-instance-00000323, bitflow-pod=a-pre-proc-pod-b6034bac, node=wally195, type=pre-processing"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-b6034bac.results"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.125.26:9000"
             }
           ],
@@ -8182,8 +8182,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://b1e0c38e111f0d96e36d7e7919287bd1a548b3cb5dc3cba305ab7c4a98cf2f01"
         }
       ],
@@ -8199,11 +8199,11 @@ const podsRuntime = [
       "resourceVersion": "490190",
       "creationTimestamp": "2020-01-17T14:06:44Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-bb454774.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-bb454774.results"
       }
     },
     "spec": {
@@ -8226,11 +8226,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-e1a2884c\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-e1a2884c\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -8241,51 +8241,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-e1a2884c"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-e1a2884c"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.75.40:9000"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-bb454774.results"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "component=wally180-instance-000002f8, layer=virtual, zerops-pipeline-1=a-pre-proc, zerops-pipeline-depth=1, type=pre-processing, zerops-analysis-step=a-pre-proc, zerops-analysis-type=one-to-one, vm=instance-000002f8, zerops-pod=a-pre-proc-pod-bb454774, collector=bitflow, node=wally180"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "component=wally180-instance-000002f8, layer=virtual, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, type=pre-processing, bitflow-analysis-step=a-pre-proc, bitflow-analysis-type=one-to-one, vm=instance-000002f8, bitflow-pod=a-pre-proc-pod-bb454774, collector=bitflow, node=wally180"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             }
           ],
@@ -8426,8 +8426,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://92aa1d9ab53c033180415b21a837229db5ae249d675179e6ca1bcdceed20bff5"
         }
       ],
@@ -8443,11 +8443,11 @@ const podsRuntime = [
       "resourceVersion": "490315",
       "creationTimestamp": "2020-01-17T14:06:42Z",
       "labels": {
-        "app": "zerops-anomaly-detector",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-anomaly-detector",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "output.a-pre-proc-pod-1de052f4.results"
+        "app": "bitflow-anomaly-detector",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "output.a-pre-proc-pod-1de052f4.results"
       }
     },
     "spec": {
@@ -8470,11 +8470,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "anomaly-detector",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-e41a84ff\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-e41a84ff\"\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\n{\n    # include-metrics(regex = [ \"^cpu$|^disk-io/all/ioBytes$|^mem/percent$|^net-io/bytes$\" ])\n    # exclude-metrics(regex = [ \".*(num_procs|net-proto.*|disk-usage.*|block/.*|Time|Bytes|bytes)$\" ])\n    exclude-metrics(regex = [ \".*(num_procs|net-proto.*)$\" ])\n    -\u003e set-tags(tags={ ad-stream=ad })\n\n    -\u003e fork-tag(tag = \"component\") {\n        \"*\" # Treat all tags here\n        -\u003e detect-anomalies-with-cabirch(\n                ensemblerSize = 100,\n                optInterval = 1000,\n                sendDistances = true, instanceTag = \"component\",\n                maxDecayRate = 0.08,\n                maxDecayValue = 1.0,\n                maxNodes = 25,\n                thresholdAdaptionRate = 0.0002,\n                thresholdMaxSigma = 5.0,\n                loadSimilarModels = false,\n                storeModels = true,\n                storeModelsIntervalSeconds = 3600, # store models once every hour\n                retrain = true)\n\n        -\u003e anomaly-smoothing(windowSize = 15, minNumAnomalies = 12)\n\n        -\u003e {\n            include-metrics(regex = [ \"^_.*\" ])\n            -\u003e set-anomaly-metric()\n            -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")\n            -\u003e drop()\n        ;\n            noop()\n        }\n    }\n;\n    set-tags(tags={ ad-stream=complete })\n}\n\n-\u003e merge-forked-anomaly-detection-streams(tag=ad-stream, adValue=ad, completeValue=complete, capacity=500) # The capacity must be at least TWICE the batch size of the steps before\n-\u003e -\n\n' |\\\n\\\n# Filter out _distance* and _threshold* metrics added by the anomaly detection\n/bitflow-pipeline ' - -\u003e \":9000\"'\n"
           ],
           "ports": [
             {
@@ -8485,51 +8485,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "tcp://10.233.124.49:9000"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-anomaly-detector"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-anomaly-detector-pod-e41a84ff"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-anomaly-detector-pod-e41a84ff"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
-              "value": "type=pre-processing, vm=instance-00000325, zerops-pod=a-pre-proc-pod-1de052f4, collector=bitflow, component=wally194-instance-00000325, zerops-analysis-step=a-pre-proc, zerops-pipeline-depth=1, zerops-pipeline-1=a-pre-proc, layer=virtual, node=wally194, zerops-analysis-type=one-to-one"
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
+              "value": "type=pre-processing, vm=instance-00000325, bitflow-pod=a-pre-proc-pod-1de052f4, collector=bitflow, component=wally194-instance-00000325, bitflow-analysis-step=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, layer=virtual, node=wally194, bitflow-analysis-type=one-to-one"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "output.a-pre-proc-pod-1de052f4.results"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             }
           ],
@@ -8670,8 +8670,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:bd0bcc2a92b548788210fb4c6c7f0453ae8f579d714e9b5e65225f288e1ccd19",
           "containerID": "docker://a7f129c75be65b855e4da7fe77f6c37597cb05b48642c7edf8bc71b97c42c786"
         }
       ],
@@ -8687,10 +8687,10 @@ const podsRuntime = [
       "resourceVersion": "493880",
       "creationTimestamp": "2020-01-17T14:27:22Z",
       "labels": {
-        "app": "zerops-brain",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-brain",
-        "zerops-analysis-type": "all-to-one"
+        "app": "bitflow-brain",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-brain",
+        "bitflow-analysis-type": "all-to-one"
       }
     },
     "spec": {
@@ -8718,11 +8718,11 @@ const podsRuntime = [
       ],
       "containers": [
         {
-          "name": "zerops-brain",
-          "image": "teambitflow/zerops-brain",
+          "name": "bitflow-brain",
+          "image": "teambitflow/bitflow-brain",
           "args": [
             "--eventLog",
-            "/zerops/brain-logs/events.csv",
+            "/bitflow/brain-logs/events.csv",
             "--injectorPort",
             "7888",
             "-c",
@@ -8737,40 +8737,40 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "all-to-one"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-brain"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-brain-pod"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-brain-pod"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             }
           ],
           "resources": {
@@ -8790,7 +8790,7 @@ const podsRuntime = [
             },
             {
               "name": "logs",
-              "mountPath": "/zerops/brain-logs"
+              "mountPath": "/bitflow/brain-logs"
             },
             {
               "name": "default-token-k5hzv",
@@ -8880,7 +8880,7 @@ const podsRuntime = [
       "startTime": "2020-01-17T14:27:22Z",
       "containerStatuses": [
         {
-          "name": "zerops-brain",
+          "name": "bitflow-brain",
           "state": {
             "running": {
               "startedAt": "2020-01-17T14:27:33Z"
@@ -8889,8 +8889,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-brain:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-brain@sha256:a663af55aa3709a4b063fbb38489d2d96e45bb48f871bdd292294ce89b5ff919",
+          "image": "teambitflow/bitflow-brain:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-brain@sha256:a663af55aa3709a4b063fbb38489d2d96e45bb48f871bdd292294ce89b5ff919",
           "containerID": "docker://300c62139fc6498242d57bf743c2147f16da9482c05f78b9a68baf3bf81d2380"
         }
       ],
@@ -8906,10 +8906,10 @@ const podsRuntime = [
       "resourceVersion": "461815",
       "creationTimestamp": "2020-01-17T11:38:53Z",
       "labels": {
-        "app": "zerops-influxdb-writer",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-influxdb-writer",
-        "zerops-analysis-type": "all-to-one"
+        "app": "bitflow-influxdb-writer",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-influxdb-writer",
+        "bitflow-analysis-type": "all-to-one"
       }
     },
     "spec": {
@@ -8932,48 +8932,48 @@ const podsRuntime = [
       "containers": [
         {
           "name": "influxdb-writer",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-influxdb-writer-pod\" -\u003e csv://-' |\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n    -s '- -\u003e write-to-influx-db(databaseURL=\"http://zerops-influxdb:8086\", databaseName=\"zerops\", username=\"admin\", password=\"password\", prefix=\"$${component}\")'\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-influxdb-writer-pod\" -\u003e csv://-' |\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n    -s '- -\u003e write-to-influx-db(databaseURL=\"http://bitflow-influxdb:8086\", databaseName=\"bitflow\", username=\"admin\", password=\"password\", prefix=\"$${component}\")'\n"
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-influxdb-writer"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-influxdb-writer-pod"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-influxdb-writer-pod"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "all-to-one"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             }
           ],
           "resources": {
@@ -9093,8 +9093,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://9eb7e27b0a3dd78e65569755d0bb50034282c332acae89ea94d698a9a792929d"
         }
       ],
@@ -9110,11 +9110,11 @@ const podsRuntime = [
       "resourceVersion": "462211",
       "creationTimestamp": "2020-01-17T11:38:43Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally194-instance-00000325-c9bb637a"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally194-instance-00000325-c9bb637a"
       }
     },
     "spec": {
@@ -9137,11 +9137,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-1de052f4\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-1de052f4\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -9152,52 +9152,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-1de052f4"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-1de052f4"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally194-instance-00000325-c9bb637a"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally194-instance-00000325, layer=virtual, node=wally194, vm=instance-00000325"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.204:8050/wally194-instance-00000325"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             }
           ],
           "resources": {
@@ -9337,8 +9337,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://9f73365739466d61dcfffa861e0a11646c26bb465a732f88954c7d0bf07d869e"
         }
       ],
@@ -9354,11 +9354,11 @@ const podsRuntime = [
       "resourceVersion": "463592",
       "creationTimestamp": "2020-01-17T11:42:48Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally193-4cd17737"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally193-4cd17737"
       }
     },
     "spec": {
@@ -9381,11 +9381,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-2b6b0164\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-2b6b0164\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -9396,52 +9396,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally193-4cd17737"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally193, layer=physical, node=wally193"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.203:8050/wally193"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-2b6b0164"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-2b6b0164"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             }
           ],
           "resources": {
@@ -9581,8 +9581,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://6296b729883a9d9438fb77919082454e850b9015e6dd45ec9e2e80bc8b184eb4"
         }
       ],
@@ -9598,11 +9598,11 @@ const podsRuntime = [
       "resourceVersion": "462209",
       "creationTimestamp": "2020-01-17T11:38:43Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally180-instance-00000317-fb20f985"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally180-instance-00000317-fb20f985"
       }
     },
     "spec": {
@@ -9625,11 +9625,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-3d51ff4f\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-3d51ff4f\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -9640,52 +9640,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "layer=virtual, node=wally180, vm=instance-00000317, collector=bitflow, component=wally180-instance-00000317"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-3d51ff4f"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-3d51ff4f"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally180-instance-00000317-fb20f985"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.190:8050/wally180-instance-00000317"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             }
           ],
           "resources": {
@@ -9825,8 +9825,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://8820cabc2eba953430a8fb0d9cf32ac5d8ab11a48e38c4ca4b797580d3815ffb"
         }
       ],
@@ -9842,11 +9842,11 @@ const podsRuntime = [
       "resourceVersion": "463529",
       "creationTimestamp": "2020-01-17T11:42:49Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally196-instance-00000319-38b38f2d"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally196-instance-00000319-38b38f2d"
       }
     },
     "spec": {
@@ -9869,11 +9869,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-58eaf87b\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-58eaf87b\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -9884,51 +9884,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-58eaf87b"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-58eaf87b"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally196-instance-00000319-38b38f2d"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.206:8050/wally196-instance-00000319"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally196-instance-00000319, layer=virtual, node=wally196, vm=instance-00000319"
             }
           ],
@@ -10069,8 +10069,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://051f06e2fb50d67140f979f0b4552eb1e0928c386d42d3ade9fee521bb50e851"
         }
       ],
@@ -10086,11 +10086,11 @@ const podsRuntime = [
       "resourceVersion": "462080",
       "creationTimestamp": "2020-01-17T11:38:49Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally197-instance-000002fd-a6e2ff8c"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally197-instance-000002fd-a6e2ff8c"
       }
     },
     "spec": {
@@ -10113,11 +10113,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-5ab6e825\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-5ab6e825\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -10128,51 +10128,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally197-instance-000002fd-a6e2ff8c"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-5ab6e825"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-5ab6e825"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally197-instance-000002fd, layer=virtual, node=wally197, vm=instance-000002fd"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.207:8050/wally197-instance-000002fd"
             }
           ],
@@ -10313,8 +10313,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://5efbf6152530537f2fb483bc49d5cc3d8bc57399aaf0d29dac9e23ec36d3e715"
         }
       ],
@@ -10330,11 +10330,11 @@ const podsRuntime = [
       "resourceVersion": "462255",
       "creationTimestamp": "2020-01-17T11:38:41Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally178-c8519d82"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally178-c8519d82"
       }
     },
     "spec": {
@@ -10357,11 +10357,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-7097b24b\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-7097b24b\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -10372,51 +10372,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-7097b24b"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-7097b24b"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally178-c8519d82"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.188:8050/wally178"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "component=wally178, layer=physical, node=wally178, collector=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             }
           ],
@@ -10557,8 +10557,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://552f33cd6fdf36011023e0a75a1b190be21d698386dd899e9efa801cccc03ce0"
         }
       ],
@@ -10574,11 +10574,11 @@ const podsRuntime = [
       "resourceVersion": "462282",
       "creationTimestamp": "2020-01-17T11:38:45Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally180-instance-00000310-ca57b521"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally180-instance-00000310-ca57b521"
       }
     },
     "spec": {
@@ -10601,11 +10601,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-70fb342f\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-70fb342f\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -10616,52 +10616,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-70fb342f"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-70fb342f"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "layer=virtual, node=wally180, vm=instance-00000310, collector=bitflow, component=wally180-instance-00000310"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally180-instance-00000310-ca57b521"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.190:8050/wally180-instance-00000310"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             }
           ],
           "resources": {
@@ -10801,8 +10801,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://b66138de55dd3d2cc5447249d09530cf89a1b93d6a19e33c7843edb2f827cf4d"
         }
       ],
@@ -10818,11 +10818,11 @@ const podsRuntime = [
       "resourceVersion": "463624",
       "creationTimestamp": "2020-01-17T11:42:50Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally194-instance-00000314-a9271b59"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally194-instance-00000314-a9271b59"
       }
     },
     "spec": {
@@ -10845,11 +10845,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-778a7588\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-778a7588\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -10860,51 +10860,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "component=wally194-instance-00000314, layer=virtual, node=wally194, vm=instance-00000314, collector=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-778a7588"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-778a7588"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally194-instance-00000314-a9271b59"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.204:8050/wally194-instance-00000314"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             }
           ],
@@ -11045,8 +11045,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://b001493827770d7d63612f0fc4d2fbaa7845343129c1d320aa94602b69d48e36"
         }
       ],
@@ -11062,11 +11062,11 @@ const podsRuntime = [
       "resourceVersion": "463493",
       "creationTimestamp": "2020-01-17T11:42:48Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally179-instance-000002ff-a57a8bb1"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally179-instance-000002ff-a57a8bb1"
       }
     },
     "spec": {
@@ -11089,11 +11089,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-8490377c\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-8490377c\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -11104,52 +11104,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.189:8050/wally179-instance-000002ff"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally179-instance-000002ff, layer=virtual, node=wally179, vm=instance-000002ff"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-8490377c"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-8490377c"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally179-instance-000002ff-a57a8bb1"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             }
           ],
           "resources": {
@@ -11289,8 +11289,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://96e70b32982b67c0772dd51cd7b750622004031addd91a907df24bc24c8b9111"
         }
       ],
@@ -11306,11 +11306,11 @@ const podsRuntime = [
       "resourceVersion": "462190",
       "creationTimestamp": "2020-01-17T11:38:42Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally180-instance-000002fe-f38aba87"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally180-instance-000002fe-f38aba87"
       }
     },
     "spec": {
@@ -11333,11 +11333,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-8ed76f37\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-8ed76f37\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -11348,52 +11348,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally180-instance-000002fe-f38aba87"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "vm=instance-000002fe, collector=bitflow, component=wally180-instance-000002fe, layer=virtual, node=wally180"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-8ed76f37"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-8ed76f37"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.190:8050/wally180-instance-000002fe"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             }
           ],
           "resources": {
@@ -11533,8 +11533,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://702bd7609d63af991f3a8bdc8a90379a8b47bb417796ed777636aaa112afd7ef"
         }
       ],
@@ -11550,11 +11550,11 @@ const podsRuntime = [
       "resourceVersion": "463475",
       "creationTimestamp": "2020-01-17T11:42:51Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally197-instance-00000326-bb09180e"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally197-instance-00000326-bb09180e"
       }
     },
     "spec": {
@@ -11577,11 +11577,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-90efac01\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-90efac01\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -11592,52 +11592,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "node=wally197, vm=instance-00000326, collector=bitflow, component=wally197-instance-00000326, layer=virtual"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.207:8050/wally197-instance-00000326"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally197-instance-00000326-bb09180e"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-90efac01"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-90efac01"
             }
           ],
           "resources": {
@@ -11777,8 +11777,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://ba3a20eda38c23c9762b1efc0664ea181660814cea2bc1f5e5487b0ed678eb6a"
         }
       ],
@@ -11794,11 +11794,11 @@ const podsRuntime = [
       "resourceVersion": "462148",
       "creationTimestamp": "2020-01-17T11:38:57Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally195-instance-00000323-6c5b7b35"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally195-instance-00000323-6c5b7b35"
       }
     },
     "spec": {
@@ -11821,11 +11821,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-b6034bac\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-b6034bac\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -11836,52 +11836,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally195-instance-00000323-6c5b7b35"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.205:8050/wally195-instance-00000323"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "layer=virtual, node=wally195, vm=instance-00000323, collector=bitflow, component=wally195-instance-00000323"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-b6034bac"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-b6034bac"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             }
           ],
           "resources": {
@@ -12021,8 +12021,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://01d3facace839eeccac1f58ebadad405c6d5a86742c5d5a1496fc1ec38139ffa"
         }
       ],
@@ -12038,11 +12038,11 @@ const podsRuntime = [
       "resourceVersion": "462743",
       "creationTimestamp": "2020-01-17T11:40:14Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally180-instance-000002f8-361affb8"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally180-instance-000002f8-361affb8"
       }
     },
     "spec": {
@@ -12065,11 +12065,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-bb454774\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-bb454774\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -12080,52 +12080,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-bb454774"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-bb454774"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "vm=instance-000002f8, collector=bitflow, component=wally180-instance-000002f8, layer=virtual, node=wally180"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally180-instance-000002f8-361affb8"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.190:8050/wally180-instance-000002f8"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             }
           ],
           "resources": {
@@ -12265,8 +12265,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://92e5d7412bff3b9d03b3ca379e508ff70e6b0cc00949824ef7b166f02c10b7e0"
         }
       ],
@@ -12282,11 +12282,11 @@ const podsRuntime = [
       "resourceVersion": "462311",
       "creationTimestamp": "2020-01-17T11:38:57Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally198-instance-000002f7-60885c08"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally198-instance-000002f7-60885c08"
       }
     },
     "spec": {
@@ -12309,11 +12309,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-be7d3b58\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-be7d3b58\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -12324,52 +12324,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally198-instance-000002f7, layer=virtual, node=wally198, vm=instance-000002f7"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.208:8050/wally198-instance-000002f7"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-be7d3b58"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-be7d3b58"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally198-instance-000002f7-60885c08"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             }
           ],
           "resources": {
@@ -12509,8 +12509,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://8847c8db963c09986e3b2bcc58ec49c53cdea2e280e2e0b58e908d14f5960990"
         }
       ],
@@ -12526,11 +12526,11 @@ const podsRuntime = [
       "resourceVersion": "462750",
       "creationTimestamp": "2020-01-17T11:40:19Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally193-instance-00000313-16f400fe"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally193-instance-00000313-16f400fe"
       }
     },
     "spec": {
@@ -12553,11 +12553,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-e1b57e20\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-e1b57e20\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -12568,52 +12568,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally193-instance-00000313-16f400fe"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally193-instance-00000313, layer=virtual, node=wally193, vm=instance-00000313"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.203:8050/wally193-instance-00000313"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-e1b57e20"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-e1b57e20"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             }
           ],
           "resources": {
@@ -12753,8 +12753,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://da5ba6cc7623ae69fc95f5054ce0a94c26044df6443b7bd1dd508c6889feec86"
         }
       ],
@@ -12770,11 +12770,11 @@ const podsRuntime = [
       "resourceVersion": "462232",
       "creationTimestamp": "2020-01-17T11:38:43Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally178-instance-0000031d-75a47182"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally178-instance-0000031d-75a47182"
       }
     },
     "spec": {
@@ -12797,11 +12797,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-ed34aae5\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-ed34aae5\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -12812,52 +12812,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally178-instance-0000031d-75a47182"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "collector=bitflow, component=wally178-instance-0000031d, layer=virtual, node=wally178, vm=instance-0000031d"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.188:8050/wally178-instance-0000031d"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-ed34aae5"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-ed34aae5"
             }
           ],
           "resources": {
@@ -12997,8 +12997,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://4a6f142c24e2e3a036436361c7b51016ea9677f883a6d93952a5297e02d4383c"
         }
       ],
@@ -13014,11 +13014,11 @@ const podsRuntime = [
       "resourceVersion": "462186",
       "creationTimestamp": "2020-01-17T11:38:45Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally179-instance-00000322-705c39d0"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally179-instance-00000322-705c39d0"
       }
     },
     "spec": {
@@ -13041,11 +13041,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-ef439502\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-ef439502\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -13056,51 +13056,51 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.189:8050/wally179-instance-00000322"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "node=wally179, vm=instance-00000322, collector=bitflow, component=wally179-instance-00000322, layer=virtual"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-ef439502"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-ef439502"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally179-instance-00000322-705c39d0"
             }
           ],
@@ -13241,8 +13241,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://96f681a933e344dda179c2902462b98f4bf1097ecd33809008dae8d0454e0dbb"
         }
       ],
@@ -13258,11 +13258,11 @@ const podsRuntime = [
       "resourceVersion": "462105",
       "creationTimestamp": "2020-01-17T11:38:44Z",
       "labels": {
-        "app": "zerops-pre-processing",
-        "operator": "zerops",
-        "zerops-analysis-step": "a-pre-proc",
-        "zerops-analysis-type": "one-to-one",
-        "zerops-data-source-name": "bitflow-collector-wally196-instance-000002fa-2bb67ac6"
+        "app": "bitflow-pre-processing",
+        "operator": "bitflow",
+        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-analysis-type": "one-to-one",
+        "bitflow-data-source-name": "bitflow-collector-wally196-instance-000002fa-2bb67ac6"
       }
     },
     "spec": {
@@ -13285,11 +13285,11 @@ const podsRuntime = [
       "containers": [
         {
           "name": "pre-processing",
-          "image": "teambitflow/zerops-analysis",
+          "image": "teambitflow/bitflow-analysis",
           "command": [
             "sh",
             "-c",
-            "/bitflow-pipeline '\"dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-f7ce31fb\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar zerops-analysis.jar -P zerops -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
+            "/bitflow-pipeline '\"dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-f7ce31fb\"\n    -\u003e filter(expr=` tag(\"preparing-\" + tag(\"component\")) != \"true\"  \u0026\u0026  tag(\"maintenance\") != \"true\" `)\n    -\u003e rename(metrics={ \"libvirt/instance-[^/]*/\" = \"\", \"block/io\" = \"disk-io/all/io\" })\n    -\u003e csv://-' |\\\n\\\njava -Duser.timezone=Europe/Berlin -jar bitflow-analysis.jar -P bitflow -P bitflow4j \\\n-s ' - -\u003e\nfork-tag(tag = \"component\") {\n    \"*\" # Treat all tags here\n    -\u003e scale-min-max-with-model-repository(\n            conceptChangeThreshold = 0.1,\n            conceptDriftDetectorType = \"robustThreshold\",\n            key = \"component\",\n            keyType = \"tag\",\n            applyConceptChanges = false,\n            retrain = false\n       )\n    -\u003e fix-tags(unknownIsNormal=true, normalTags=[ load ])\n}\n-\u003e - ' |\\\n\\\n/bitflow-pipeline ' - \n    -\u003e :9000 '\n"
           ],
           "ports": [
             {
@@ -13300,52 +13300,52 @@ const podsRuntime = [
           ],
           "env": [
             {
-              "name": "ZEROPS_DATA_SOURCE_NAME",
+              "name": "BITFLOW_DATA_SOURCE_NAME",
               "value": "bitflow-collector-wally196-instance-000002fa-2bb67ac6"
             },
             {
-              "name": "ZEROPS_ANALYSIS_TYPE",
+              "name": "BITFLOW_ANALYSIS_TYPE",
               "value": "one-to-one"
             },
             {
-              "name": "ZEROPS_ANALYSIS_STEP",
+              "name": "BITFLOW_ANALYSIS_STEP",
               "value": "a-pre-proc"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE",
-              "value": "dynamic://zerops-operator:8888/dataSources/a-pre-proc-pod-f7ce31fb"
+              "name": "BITFLOW_DATA_SOURCE",
+              "value": "dynamic://bitflow-operator:8888/dataSources/a-pre-proc-pod-f7ce31fb"
             },
             {
-              "name": "ZEROPS_REDIS_ENDPOINT",
-              "value": "http://user:pw@zerops-redis-master:6379"
+              "name": "BITFLOW_REDIS_ENDPOINT",
+              "value": "http://user:pw@bitflow-redis-master:6379"
             },
             {
-              "name": "ZEROPS_RABBITMQ_URI",
-              "value": "amqp://user:xxxxxxxx@zerops-rabbit-rabbitmq-ha:5672/zerops-operator"
+              "name": "BITFLOW_RABBITMQ_URI",
+              "value": "amqp://user:xxxxxxxx@bitflow-rabbit-rabbitmq-ha:5672/bitflow-operator"
             },
             {
-              "name": "ZEROPS_NEO4J_ENDPOINT",
-              "value": "http://neo4j:xxx@zerops-neo4j-neo4j:7474"
+              "name": "BITFLOW_NEO4J_ENDPOINT",
+              "value": "http://neo4j:xxx@bitflow-neo4j-neo4j:7474"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_LABELS",
+              "name": "BITFLOW_DATA_SOURCE_LABELS",
               "value": "vm=instance-000002fa, collector=bitflow, component=wally196-instance-000002fa, layer=virtual, node=wally196"
             },
             {
-              "name": "ZEROPS_DATA_SOURCE_URL",
+              "name": "BITFLOW_DATA_SOURCE_URL",
               "value": "http://130.149.249.206:8050/wally196-instance-000002fa"
             },
             {
-              "name": "ZEROPS_REDIS_KEY_PREFIX",
-              "value": "zerops-operator:"
+              "name": "BITFLOW_REDIS_KEY_PREFIX",
+              "value": "bitflow-operator:"
             },
             {
-              "name": "ZEROPS_RABBITMQ_EXCHANGE_NAME",
-              "value": "zerops-operator"
+              "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
+              "value": "bitflow-operator"
             },
             {
-              "name": "ZEROPS_RABBITMQ_SEND_HEADERS",
-              "value": "zerops=zerops"
+              "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
+              "value": "bitflow=bitflow"
             }
           ],
           "resources": {
@@ -13485,8 +13485,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-analysis:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
+          "image": "teambitflow/bitflow-analysis:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-analysis@sha256:7e15ef399a7b357ae36476b4bd4e8447162c91e9adad112906f1821d6fd10117",
           "containerID": "docker://d215ad6fdee7ad554361d05d3755fcf68ad6d6b5a4904c0abf881adb32201034"
         }
       ],
@@ -13495,17 +13495,17 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-grafana-5f997b69b9-8drhb",
-      "generateName": "zerops-grafana-5f997b69b9-",
+      "name": "bitflow-grafana-5f997b69b9-8drhb",
+      "generateName": "bitflow-grafana-5f997b69b9-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-grafana-5f997b69b9-8drhb",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-grafana-5f997b69b9-8drhb",
       "uid": "74c108b3-ac70-4914-b9a7-1cd244e6c26d",
       "resourceVersion": "202588",
       "creationTimestamp": "2020-01-16T12:34:14Z",
       "labels": {
         "app": "grafana",
         "pod-template-hash": "5f997b69b9",
-        "release": "zerops-grafana"
+        "release": "bitflow-grafana"
       },
       "annotations": {
         "checksum/config": "0ce452728735890454b6b55e17dfbdbb931647268413a76894145f446afce87d",
@@ -13517,7 +13517,7 @@ const podsRuntime = [
         {
           "apiVersion": "apps/v1",
           "kind": "ReplicaSet",
-          "name": "zerops-grafana-5f997b69b9",
+          "name": "bitflow-grafana-5f997b69b9",
           "uid": "71598c90-043d-4259-86e2-a9859b4ef25a",
           "controller": true,
           "blockOwnerDeletion": true
@@ -13529,20 +13529,20 @@ const podsRuntime = [
         {
           "name": "config",
           "configMap": {
-            "name": "zerops-grafana",
+            "name": "bitflow-grafana",
             "defaultMode": 420
           }
         },
         {
           "name": "storage",
           "persistentVolumeClaim": {
-            "claimName": "zerops-grafana"
+            "claimName": "bitflow-grafana"
           }
         },
         {
-          "name": "zerops-grafana-token-8qd89",
+          "name": "bitflow-grafana-token-8qd89",
           "secret": {
-            "secretName": "zerops-grafana-token-8qd89",
+            "secretName": "bitflow-grafana-token-8qd89",
             "defaultMode": 420
           }
         }
@@ -13564,7 +13564,7 @@ const podsRuntime = [
               "mountPath": "/var/lib/grafana"
             },
             {
-              "name": "zerops-grafana-token-8qd89",
+              "name": "bitflow-grafana-token-8qd89",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -13598,7 +13598,7 @@ const podsRuntime = [
               "name": "GF_SECURITY_ADMIN_USER",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-grafana",
+                  "name": "bitflow-grafana",
                   "key": "admin-user"
                 }
               }
@@ -13607,7 +13607,7 @@ const podsRuntime = [
               "name": "GF_SECURITY_ADMIN_PASSWORD",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-grafana",
+                  "name": "bitflow-grafana",
                   "key": "admin-password"
                 }
               }
@@ -13629,7 +13629,7 @@ const podsRuntime = [
               "mountPath": "/var/lib/grafana"
             },
             {
-              "name": "zerops-grafana-token-8qd89",
+              "name": "bitflow-grafana-token-8qd89",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -13665,8 +13665,8 @@ const podsRuntime = [
       "restartPolicy": "Always",
       "terminationGracePeriodSeconds": 30,
       "dnsPolicy": "ClusterFirst",
-      "serviceAccountName": "zerops-grafana",
-      "serviceAccount": "zerops-grafana",
+      "serviceAccountName": "bitflow-grafana",
+      "serviceAccount": "bitflow-grafana",
       "nodeName": "wally135",
       "securityContext": {
         "runAsUser": 472,
@@ -13762,25 +13762,25 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-influxdb-0",
-      "generateName": "zerops-influxdb-",
+      "name": "bitflow-influxdb-0",
+      "generateName": "bitflow-influxdb-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-influxdb-0",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-influxdb-0",
       "uid": "dab1cdab-5463-45ea-b317-f69e1cf95c15",
       "resourceVersion": "226130",
       "creationTimestamp": "2020-01-16T14:37:59Z",
       "labels": {
-        "app": "zerops-influxdb",
+        "app": "bitflow-influxdb",
         "chart": "influxdb-3.1.1",
-        "controller-revision-hash": "zerops-influxdb-67d44fcd75",
-        "release": "zerops-influxdb",
-        "statefulset.kubernetes.io/pod-name": "zerops-influxdb-0"
+        "controller-revision-hash": "bitflow-influxdb-67d44fcd75",
+        "release": "bitflow-influxdb",
+        "statefulset.kubernetes.io/pod-name": "bitflow-influxdb-0"
       },
       "ownerReferences": [
         {
           "apiVersion": "apps/v1",
           "kind": "StatefulSet",
-          "name": "zerops-influxdb",
+          "name": "bitflow-influxdb",
           "uid": "feabbb7f-7b64-4bf2-b950-f7c95840d8f4",
           "controller": true,
           "blockOwnerDeletion": true
@@ -13790,22 +13790,22 @@ const podsRuntime = [
     "spec": {
       "volumes": [
         {
-          "name": "zerops-influxdb-data",
+          "name": "bitflow-influxdb-data",
           "persistentVolumeClaim": {
-            "claimName": "zerops-influxdb-data-zerops-influxdb-0"
+            "claimName": "bitflow-influxdb-data-bitflow-influxdb-0"
           }
         },
         {
           "name": "config",
           "configMap": {
-            "name": "zerops-influxdb",
+            "name": "bitflow-influxdb",
             "defaultMode": 420
           }
         },
         {
           "name": "init",
           "configMap": {
-            "name": "zerops-influxdb-init",
+            "name": "bitflow-influxdb-init",
             "defaultMode": 420
           }
         },
@@ -13819,7 +13819,7 @@ const podsRuntime = [
       ],
       "containers": [
         {
-          "name": "zerops-influxdb",
+          "name": "bitflow-influxdb",
           "image": "influxdb:1.7.6-alpine",
           "ports": [
             {
@@ -13837,7 +13837,7 @@ const podsRuntime = [
           "resources": {},
           "volumeMounts": [
             {
-              "name": "zerops-influxdb-data",
+              "name": "bitflow-influxdb-data",
               "mountPath": "/var/lib/influxdb"
             },
             {
@@ -13890,8 +13890,8 @@ const podsRuntime = [
       "serviceAccount": "default",
       "nodeName": "wally149",
       "securityContext": {},
-      "hostname": "zerops-influxdb-0",
-      "subdomain": "zerops-influxdb",
+      "hostname": "bitflow-influxdb-0",
+      "subdomain": "bitflow-influxdb",
       "schedulerName": "default-scheduler",
       "tolerations": [
         {
@@ -13943,7 +13943,7 @@ const podsRuntime = [
       "startTime": "2020-01-16T14:38:01Z",
       "containerStatuses": [
         {
-          "name": "zerops-influxdb",
+          "name": "bitflow-influxdb",
           "state": {
             "running": {
               "startedAt": "2020-01-16T14:38:06Z"
@@ -13962,10 +13962,10 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-neo4j-neo4j-core-0",
-      "generateName": "zerops-neo4j-neo4j-core-",
+      "name": "bitflow-neo4j-neo4j-core-0",
+      "generateName": "bitflow-neo4j-neo4j-core-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-neo4j-neo4j-core-0",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-neo4j-neo4j-core-0",
       "uid": "9aaba59a-eea9-4996-b4dc-db65554a663d",
       "resourceVersion": "191280",
       "creationTimestamp": "2020-01-16T11:36:05Z",
@@ -13973,16 +13973,16 @@ const podsRuntime = [
         "app": "neo4j",
         "chart": "neo4j-1.2.2",
         "component": "core",
-        "controller-revision-hash": "zerops-neo4j-neo4j-core-7766c966b4",
+        "controller-revision-hash": "bitflow-neo4j-neo4j-core-7766c966b4",
         "heritage": "Helm",
-        "release": "zerops-neo4j",
-        "statefulset.kubernetes.io/pod-name": "zerops-neo4j-neo4j-core-0"
+        "release": "bitflow-neo4j",
+        "statefulset.kubernetes.io/pod-name": "bitflow-neo4j-neo4j-core-0"
       },
       "ownerReferences": [
         {
           "apiVersion": "apps/v1",
           "kind": "StatefulSet",
-          "name": "zerops-neo4j-neo4j-core",
+          "name": "bitflow-neo4j-neo4j-core",
           "uid": "dff09464-504e-4315-af27-26b953a16f87",
           "controller": true,
           "blockOwnerDeletion": true
@@ -13994,7 +13994,7 @@ const podsRuntime = [
         {
           "name": "datadir",
           "persistentVolumeClaim": {
-            "claimName": "datadir-zerops-neo4j-neo4j-core-0"
+            "claimName": "datadir-bitflow-neo4j-neo4j-core-0"
           }
         },
         {
@@ -14011,7 +14011,7 @@ const podsRuntime = [
       ],
       "containers": [
         {
-          "name": "zerops-neo4j-neo4j",
+          "name": "bitflow-neo4j-neo4j",
           "image": "neo4j:3.4.5",
           "command": [
             "/bin/bash",
@@ -14068,13 +14068,13 @@ const podsRuntime = [
             },
             {
               "name": "NEO4J_causal__clustering_initial__discovery__members",
-              "value": "zerops-neo4j-neo4j.default.svc.cluster.local:5000"
+              "value": "bitflow-neo4j-neo4j.default.svc.cluster.local:5000"
             },
             {
               "name": "NEO4J_SECRETS_PASSWORD",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-neo4j-neo4j-secrets",
+                  "name": "bitflow-neo4j-neo4j-secrets",
                   "key": "neo4j-password"
                 }
               }
@@ -14108,8 +14108,8 @@ const podsRuntime = [
       "serviceAccount": "default",
       "nodeName": "wally145",
       "securityContext": {},
-      "hostname": "zerops-neo4j-neo4j-core-0",
-      "subdomain": "zerops-neo4j-neo4j",
+      "hostname": "bitflow-neo4j-neo4j-core-0",
+      "subdomain": "bitflow-neo4j-neo4j",
       "schedulerName": "default-scheduler",
       "tolerations": [
         {
@@ -14161,7 +14161,7 @@ const podsRuntime = [
       "startTime": "2020-01-16T11:36:07Z",
       "containerStatuses": [
         {
-          "name": "zerops-neo4j-neo4j",
+          "name": "bitflow-neo4j-neo4j",
           "state": {
             "running": {
               "startedAt": "2020-01-16T11:36:21Z"
@@ -14180,26 +14180,26 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-nfs-nfs-server-provisioner-0",
-      "generateName": "zerops-nfs-nfs-server-provisioner-",
+      "name": "bitflow-nfs-nfs-server-provisioner-0",
+      "generateName": "bitflow-nfs-nfs-server-provisioner-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-nfs-nfs-server-provisioner-0",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-nfs-nfs-server-provisioner-0",
       "uid": "c7798706-edb5-4134-bab9-b1220261982e",
       "resourceVersion": "189494",
       "creationTimestamp": "2020-01-16T11:27:50Z",
       "labels": {
         "app": "nfs-server-provisioner",
         "chart": "nfs-server-provisioner-0.3.2",
-        "controller-revision-hash": "zerops-nfs-nfs-server-provisioner-56c4c85957",
+        "controller-revision-hash": "bitflow-nfs-nfs-server-provisioner-56c4c85957",
         "heritage": "Helm",
-        "release": "zerops-nfs",
-        "statefulset.kubernetes.io/pod-name": "zerops-nfs-nfs-server-provisioner-0"
+        "release": "bitflow-nfs",
+        "statefulset.kubernetes.io/pod-name": "bitflow-nfs-nfs-server-provisioner-0"
       },
       "ownerReferences": [
         {
           "apiVersion": "apps/v1",
           "kind": "StatefulSet",
-          "name": "zerops-nfs-nfs-server-provisioner",
+          "name": "bitflow-nfs-nfs-server-provisioner",
           "uid": "5bd9227f-1ebb-4124-8269-86561d9d928d",
           "controller": true,
           "blockOwnerDeletion": true
@@ -14213,9 +14213,9 @@ const podsRuntime = [
           "emptyDir": {}
         },
         {
-          "name": "zerops-nfs-nfs-server-provisioner-token-77ppg",
+          "name": "bitflow-nfs-nfs-server-provisioner-token-77ppg",
           "secret": {
-            "secretName": "zerops-nfs-nfs-server-provisioner-token-77ppg",
+            "secretName": "bitflow-nfs-nfs-server-provisioner-token-77ppg",
             "defaultMode": 420
           }
         }
@@ -14225,7 +14225,7 @@ const podsRuntime = [
           "name": "nfs-server-provisioner",
           "image": "quay.io/kubernetes_incubator/nfs-provisioner:v2.2.1-k8s1.12",
           "args": [
-            "-provisioner=cluster.local/zerops-nfs-nfs-server-provisioner"
+            "-provisioner=cluster.local/bitflow-nfs-nfs-server-provisioner"
           ],
           "ports": [
             {
@@ -14261,7 +14261,7 @@ const podsRuntime = [
             },
             {
               "name": "SERVICE_NAME",
-              "value": "zerops-nfs-nfs-server-provisioner"
+              "value": "bitflow-nfs-nfs-server-provisioner"
             },
             {
               "name": "POD_NAMESPACE",
@@ -14280,7 +14280,7 @@ const podsRuntime = [
               "mountPath": "/export"
             },
             {
-              "name": "zerops-nfs-nfs-server-provisioner-token-77ppg",
+              "name": "bitflow-nfs-nfs-server-provisioner-token-77ppg",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -14301,12 +14301,12 @@ const podsRuntime = [
       "restartPolicy": "Always",
       "terminationGracePeriodSeconds": 100,
       "dnsPolicy": "ClusterFirst",
-      "serviceAccountName": "zerops-nfs-nfs-server-provisioner",
-      "serviceAccount": "zerops-nfs-nfs-server-provisioner",
+      "serviceAccountName": "bitflow-nfs-nfs-server-provisioner",
+      "serviceAccount": "bitflow-nfs-nfs-server-provisioner",
       "nodeName": "wally139",
       "securityContext": {},
-      "hostname": "zerops-nfs-nfs-server-provisioner-0",
-      "subdomain": "zerops-nfs-nfs-server-provisioner",
+      "hostname": "bitflow-nfs-nfs-server-provisioner-0",
+      "subdomain": "bitflow-nfs-nfs-server-provisioner",
       "schedulerName": "default-scheduler",
       "tolerations": [
         {
@@ -14377,15 +14377,15 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-operator-5d476c7884-n74d9",
-      "generateName": "zerops-operator-5d476c7884-",
+      "name": "bitflow-operator-5d476c7884-n74d9",
+      "generateName": "bitflow-operator-5d476c7884-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-operator-5d476c7884-n74d9",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-operator-5d476c7884-n74d9",
       "uid": "76b6b94e-dcfe-44d7-b2cb-973ebed645e4",
       "resourceVersion": "196712",
       "creationTimestamp": "2020-01-16T12:04:50Z",
       "labels": {
-        "app.kubernetes.io/instance": "zerops-operator",
+        "app.kubernetes.io/instance": "bitflow-operator",
         "app.kubernetes.io/name": "operator",
         "pod-template-hash": "5d476c7884"
       },
@@ -14393,7 +14393,7 @@ const podsRuntime = [
         {
           "apiVersion": "apps/v1",
           "kind": "ReplicaSet",
-          "name": "zerops-operator-5d476c7884",
+          "name": "bitflow-operator-5d476c7884",
           "uid": "9780e62a-b079-42c1-9072-a6695ac2abaf",
           "controller": true,
           "blockOwnerDeletion": true
@@ -14410,9 +14410,9 @@ const podsRuntime = [
           }
         },
         {
-          "name": "zerops-admin-token-c6w7n",
+          "name": "bitflow-admin-token-c6w7n",
           "secret": {
-            "secretName": "zerops-admin-token-c6w7n",
+            "secretName": "bitflow-admin-token-c6w7n",
             "defaultMode": 420
           }
         }
@@ -14420,7 +14420,7 @@ const podsRuntime = [
       "containers": [
         {
           "name": "operator",
-          "image": "teambitflow/zerops-operator:latest",
+          "image": "teambitflow/bitflow-operator:latest",
           "ports": [
             {
               "name": "rest-api",
@@ -14440,7 +14440,7 @@ const podsRuntime = [
             },
             {
               "name": "POD_IP",
-              "value": "zerops-operator"
+              "value": "bitflow-operator"
             },
             {
               "name": "POD_NAME",
@@ -14452,8 +14452,8 @@ const podsRuntime = [
               }
             },
             {
-              "name": "ZEROPS_CONFIG_MAP",
-              "value": "zerops-operator-config"
+              "name": "BITFLOW_CONFIG_MAP",
+              "value": "bitflow-operator-config"
             },
             {
               "name": "API_LISTEN_PORT",
@@ -14464,8 +14464,8 @@ const podsRuntime = [
               "value": "1"
             },
             {
-              "name": "ZEROPS_ID_LABELS",
-              "value": "operator=zerops"
+              "name": "BITFLOW_ID_LABELS",
+              "value": "operator=bitflow"
             }
           ],
           "resources": {},
@@ -14475,7 +14475,7 @@ const podsRuntime = [
               "mountPath": "/etc/localtime"
             },
             {
-              "name": "zerops-admin-token-c6w7n",
+              "name": "bitflow-admin-token-c6w7n",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -14510,8 +14510,8 @@ const podsRuntime = [
       "restartPolicy": "Always",
       "terminationGracePeriodSeconds": 30,
       "dnsPolicy": "ClusterFirst",
-      "serviceAccountName": "zerops-admin",
-      "serviceAccount": "zerops-admin",
+      "serviceAccountName": "bitflow-admin",
+      "serviceAccount": "bitflow-admin",
       "nodeName": "wally149",
       "securityContext": {},
       "schedulerName": "default-scheduler",
@@ -14574,8 +14574,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-operator:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-operator@sha256:41fff016e5405a521ae3075d54d5e0a94866ca29edd8dfd2f7ef96661e580213",
+          "image": "teambitflow/bitflow-operator:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-operator@sha256:41fff016e5405a521ae3075d54d5e0a94866ca29edd8dfd2f7ef96661e580213",
           "containerID": "docker://b9672f86a66213df4e634c3f63255bb073ad697f3d3bdcadb63ba7b6c678f8d9"
         }
       ],
@@ -14584,22 +14584,22 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-proxy-96f86d9bb-98gp7",
-      "generateName": "zerops-proxy-96f86d9bb-",
+      "name": "bitflow-proxy-96f86d9bb-98gp7",
+      "generateName": "bitflow-proxy-96f86d9bb-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-proxy-96f86d9bb-98gp7",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-proxy-96f86d9bb-98gp7",
       "uid": "85acdc66-10e5-49b3-aea2-0456ff754f99",
       "resourceVersion": "575673",
       "creationTimestamp": "2020-01-17T21:53:01Z",
       "labels": {
         "pod-template-hash": "96f86d9bb",
-        "run": "zerops-proxy"
+        "run": "bitflow-proxy"
       },
       "ownerReferences": [
         {
           "apiVersion": "apps/v1",
           "kind": "ReplicaSet",
-          "name": "zerops-proxy-96f86d9bb",
+          "name": "bitflow-proxy-96f86d9bb",
           "uid": "01f9e76a-1034-402c-bb0f-cc8130e51fd9",
           "controller": true,
           "blockOwnerDeletion": true
@@ -14609,17 +14609,17 @@ const podsRuntime = [
     "spec": {
       "volumes": [
         {
-          "name": "zerops-admin-token-c6w7n",
+          "name": "bitflow-admin-token-c6w7n",
           "secret": {
-            "secretName": "zerops-admin-token-c6w7n",
+            "secretName": "bitflow-admin-token-c6w7n",
             "defaultMode": 420
           }
         }
       ],
       "containers": [
         {
-          "name": "zerops-proxy",
-          "image": "teambitflow/zerops-proxy",
+          "name": "bitflow-proxy",
+          "image": "teambitflow/bitflow-proxy",
           "args": [
             "-l",
             ":8080"
@@ -14633,7 +14633,7 @@ const podsRuntime = [
           "resources": {},
           "volumeMounts": [
             {
-              "name": "zerops-admin-token-c6w7n",
+              "name": "bitflow-admin-token-c6w7n",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -14658,8 +14658,8 @@ const podsRuntime = [
       "restartPolicy": "Always",
       "terminationGracePeriodSeconds": 30,
       "dnsPolicy": "ClusterFirst",
-      "serviceAccountName": "zerops-admin",
-      "serviceAccount": "zerops-admin",
+      "serviceAccountName": "bitflow-admin",
+      "serviceAccount": "bitflow-admin",
       "nodeName": "wally145",
       "securityContext": {},
       "schedulerName": "default-scheduler",
@@ -14713,7 +14713,7 @@ const podsRuntime = [
       "startTime": "2020-01-17T21:53:01Z",
       "containerStatuses": [
         {
-          "name": "zerops-proxy",
+          "name": "bitflow-proxy",
           "state": {
             "running": {
               "startedAt": "2020-01-17T21:53:09Z"
@@ -14722,8 +14722,8 @@ const podsRuntime = [
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "teambitflow/zerops-proxy:latest",
-          "imageID": "docker-pullable://teambitflow/zerops-proxy@sha256:6900f3a2c35c84f7a0c2b8b3ad2fafd4ae399a228598204fcda597c9b543a76e",
+          "image": "teambitflow/bitflow-proxy:latest",
+          "imageID": "docker-pullable://teambitflow/bitflow-proxy@sha256:6900f3a2c35c84f7a0c2b8b3ad2fafd4ae399a228598204fcda597c9b543a76e",
           "containerID": "docker://9d481367b36f5beefad3d42dbbc56cf593993623dcb6803ed011d0dec3472cf7"
         }
       ],
@@ -14732,15 +14732,15 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-querier-neo4j-openstack-querier-57bd4f67c8-vxw5m",
-      "generateName": "zerops-querier-neo4j-openstack-querier-57bd4f67c8-",
+      "name": "bitflow-querier-neo4j-openstack-querier-57bd4f67c8-vxw5m",
+      "generateName": "bitflow-querier-neo4j-openstack-querier-57bd4f67c8-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-querier-neo4j-openstack-querier-57bd4f67c8-vxw5m",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-querier-neo4j-openstack-querier-57bd4f67c8-vxw5m",
       "uid": "05fddcdc-c295-416d-b008-d95d38eb3adb",
       "resourceVersion": "192757",
       "creationTimestamp": "2020-01-16T11:43:27Z",
       "labels": {
-        "app.kubernetes.io/instance": "zerops-querier",
+        "app.kubernetes.io/instance": "bitflow-querier",
         "app.kubernetes.io/name": "neo4j-openstack-querier",
         "pod-template-hash": "57bd4f67c8"
       },
@@ -14748,7 +14748,7 @@ const podsRuntime = [
         {
           "apiVersion": "apps/v1",
           "kind": "ReplicaSet",
-          "name": "zerops-querier-neo4j-openstack-querier-57bd4f67c8",
+          "name": "bitflow-querier-neo4j-openstack-querier-57bd4f67c8",
           "uid": "10208935-65f2-4792-a8e5-c37308242f71",
           "controller": true,
           "blockOwnerDeletion": true
@@ -14794,7 +14794,7 @@ const podsRuntime = [
             },
             {
               "name": "GRAPHDB_HOST",
-              "value": "zerops-neo4j-neo4j"
+              "value": "bitflow-neo4j-neo4j"
             },
             {
               "name": "GRAPHDB_USER",
@@ -14804,7 +14804,7 @@ const podsRuntime = [
               "name": "GRAPHDB_PASSWORD",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-neo4j-neo4j-secrets",
+                  "name": "bitflow-neo4j-neo4j-secrets",
                   "key": "neo4j-password"
                 }
               }
@@ -14926,15 +14926,15 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-querier-neo4j-openstack-querier-querier-6995c8b8f8-ncjs6",
-      "generateName": "zerops-querier-neo4j-openstack-querier-querier-6995c8b8f8-",
+      "name": "bitflow-querier-neo4j-openstack-querier-querier-6995c8b8f8-ncjs6",
+      "generateName": "bitflow-querier-neo4j-openstack-querier-querier-6995c8b8f8-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-querier-neo4j-openstack-querier-querier-6995c8b8f8-ncjs6",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-querier-neo4j-openstack-querier-querier-6995c8b8f8-ncjs6",
       "uid": "ef68e64b-fae4-448d-a6bb-0fa6a91bd603",
       "resourceVersion": "192775",
       "creationTimestamp": "2020-01-16T11:43:27Z",
       "labels": {
-        "app.kubernetes.io/instance": "zerops-querier",
+        "app.kubernetes.io/instance": "bitflow-querier",
         "app.kubernetes.io/name": "neo4j-openstack-querier-querier",
         "pod-template-hash": "6995c8b8f8"
       },
@@ -14942,7 +14942,7 @@ const podsRuntime = [
         {
           "apiVersion": "apps/v1",
           "kind": "ReplicaSet",
-          "name": "zerops-querier-neo4j-openstack-querier-querier-6995c8b8f8",
+          "name": "bitflow-querier-neo4j-openstack-querier-querier-6995c8b8f8",
           "uid": "9d001ab6-8c65-4d06-8ba9-3ac8f45287a4",
           "controller": true,
           "blockOwnerDeletion": true
@@ -14977,11 +14977,11 @@ const podsRuntime = [
             },
             {
               "name": "NEO4J_SERVICE_URL",
-              "value": "http://zerops-querier-neo4j-openstack-querier.default.svc.cluster.local:80/neo4j"
+              "value": "http://bitflow-querier-neo4j-openstack-querier.default.svc.cluster.local:80/neo4j"
             },
             {
               "name": "NEO4J_SERVICE_HOST",
-              "value": "zerops-querier-neo4j-openstack-querier.default.svc.cluster.local"
+              "value": "bitflow-querier-neo4j-openstack-querier.default.svc.cluster.local"
             },
             {
               "name": "NEO4J_SERVICE_PORT",
@@ -15134,18 +15134,18 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-rabbit-rabbitmq-ha-0",
-      "generateName": "zerops-rabbit-rabbitmq-ha-",
+      "name": "bitflow-rabbit-rabbitmq-ha-0",
+      "generateName": "bitflow-rabbit-rabbitmq-ha-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-rabbit-rabbitmq-ha-0",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-rabbit-rabbitmq-ha-0",
       "uid": "7b241980-c6f1-4ac9-83eb-846e263fec00",
       "resourceVersion": "191835",
       "creationTimestamp": "2020-01-16T11:36:02Z",
       "labels": {
         "app": "rabbitmq-ha",
-        "controller-revision-hash": "zerops-rabbit-rabbitmq-ha-77dfbdcfd",
-        "release": "zerops-rabbit",
-        "statefulset.kubernetes.io/pod-name": "zerops-rabbit-rabbitmq-ha-0"
+        "controller-revision-hash": "bitflow-rabbit-rabbitmq-ha-77dfbdcfd",
+        "release": "bitflow-rabbit",
+        "statefulset.kubernetes.io/pod-name": "bitflow-rabbit-rabbitmq-ha-0"
       },
       "annotations": {
         "checksum/config": "755e8e0bc22896e85b21c810e6f54699549f81bb9993df79d9c58a86b621eb85",
@@ -15155,7 +15155,7 @@ const podsRuntime = [
         {
           "apiVersion": "apps/v1",
           "kind": "StatefulSet",
-          "name": "zerops-rabbit-rabbitmq-ha",
+          "name": "bitflow-rabbit-rabbitmq-ha",
           "uid": "c7ed17a5-612f-4604-ae72-9b1d427fb47e",
           "controller": true,
           "blockOwnerDeletion": true
@@ -15167,7 +15167,7 @@ const podsRuntime = [
         {
           "name": "data",
           "persistentVolumeClaim": {
-            "claimName": "data-zerops-rabbit-rabbitmq-ha-0"
+            "claimName": "data-bitflow-rabbit-rabbitmq-ha-0"
           }
         },
         {
@@ -15177,14 +15177,14 @@ const podsRuntime = [
         {
           "name": "configmap",
           "configMap": {
-            "name": "zerops-rabbit-rabbitmq-ha",
+            "name": "bitflow-rabbit-rabbitmq-ha",
             "defaultMode": 420
           }
         },
         {
           "name": "definitions",
           "secret": {
-            "secretName": "zerops-rabbit-rabbitmq-ha",
+            "secretName": "bitflow-rabbit-rabbitmq-ha",
             "items": [
               {
                 "key": "definitions.json",
@@ -15195,9 +15195,9 @@ const podsRuntime = [
           }
         },
         {
-          "name": "zerops-rabbit-rabbitmq-ha-token-nxq68",
+          "name": "bitflow-rabbit-rabbitmq-ha-token-nxq68",
           "secret": {
-            "secretName": "zerops-rabbit-rabbitmq-ha-token-nxq68",
+            "secretName": "bitflow-rabbit-rabbitmq-ha-token-nxq68",
             "defaultMode": 420
           }
         }
@@ -15225,13 +15225,13 @@ const podsRuntime = [
             },
             {
               "name": "RABBITMQ_MNESIA_DIR",
-              "value": "/var/lib/rabbitmq/mnesia/rabbit@$(POD_NAME).zerops-rabbit-rabbitmq-ha-discovery.default.svc.cluster.local"
+              "value": "/var/lib/rabbitmq/mnesia/rabbit@$(POD_NAME).bitflow-rabbit-rabbitmq-ha-discovery.default.svc.cluster.local"
             },
             {
               "name": "RABBITMQ_ERLANG_COOKIE",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-rabbit-rabbitmq-ha",
+                  "name": "bitflow-rabbit-rabbitmq-ha",
                   "key": "rabbitmq-erlang-cookie"
                 }
               }
@@ -15252,7 +15252,7 @@ const podsRuntime = [
               "mountPath": "/var/lib/rabbitmq"
             },
             {
-              "name": "zerops-rabbit-rabbitmq-ha-token-nxq68",
+              "name": "bitflow-rabbit-rabbitmq-ha-token-nxq68",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -15299,21 +15299,21 @@ const podsRuntime = [
             },
             {
               "name": "RABBITMQ_NODENAME",
-              "value": "rabbit@$(MY_POD_NAME).zerops-rabbit-rabbitmq-ha-discovery.default.svc.cluster.local"
+              "value": "rabbit@$(MY_POD_NAME).bitflow-rabbit-rabbitmq-ha-discovery.default.svc.cluster.local"
             },
             {
               "name": "K8S_HOSTNAME_SUFFIX",
-              "value": ".zerops-rabbit-rabbitmq-ha-discovery.default.svc.cluster.local"
+              "value": ".bitflow-rabbit-rabbitmq-ha-discovery.default.svc.cluster.local"
             },
             {
               "name": "K8S_SERVICE_NAME",
-              "value": "zerops-rabbit-rabbitmq-ha-discovery"
+              "value": "bitflow-rabbit-rabbitmq-ha-discovery"
             },
             {
               "name": "RABBITMQ_ERLANG_COOKIE",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-rabbit-rabbitmq-ha",
+                  "name": "bitflow-rabbit-rabbitmq-ha",
                   "key": "rabbitmq-erlang-cookie"
                 }
               }
@@ -15322,7 +15322,7 @@ const podsRuntime = [
               "name": "RABBIT_MANAGEMENT_USER",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-rabbit-rabbitmq-ha",
+                  "name": "bitflow-rabbit-rabbitmq-ha",
                   "key": "rabbitmq-management-username"
                 }
               }
@@ -15331,7 +15331,7 @@ const podsRuntime = [
               "name": "RABBIT_MANAGEMENT_PASSWORD",
               "valueFrom": {
                 "secretKeyRef": {
-                  "name": "zerops-rabbit-rabbitmq-ha",
+                  "name": "bitflow-rabbit-rabbitmq-ha",
                   "key": "rabbitmq-management-password"
                 }
               }
@@ -15353,7 +15353,7 @@ const podsRuntime = [
               "mountPath": "/etc/definitions"
             },
             {
-              "name": "zerops-rabbit-rabbitmq-ha-token-nxq68",
+              "name": "bitflow-rabbit-rabbitmq-ha-token-nxq68",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -15394,8 +15394,8 @@ const podsRuntime = [
       "restartPolicy": "Always",
       "terminationGracePeriodSeconds": 10,
       "dnsPolicy": "ClusterFirst",
-      "serviceAccountName": "zerops-rabbit-rabbitmq-ha",
-      "serviceAccount": "zerops-rabbit-rabbitmq-ha",
+      "serviceAccountName": "bitflow-rabbit-rabbitmq-ha",
+      "serviceAccount": "bitflow-rabbit-rabbitmq-ha",
       "nodeName": "wally142",
       "securityContext": {
         "runAsUser": 100,
@@ -15403,8 +15403,8 @@ const podsRuntime = [
         "runAsNonRoot": true,
         "fsGroup": 101
       },
-      "hostname": "zerops-rabbit-rabbitmq-ha-0",
-      "subdomain": "zerops-rabbit-rabbitmq-ha-discovery",
+      "hostname": "bitflow-rabbit-rabbitmq-ha-0",
+      "subdomain": "bitflow-rabbit-rabbitmq-ha-discovery",
       "affinity": {
         "podAntiAffinity": {
           "preferredDuringSchedulingIgnoredDuringExecution": [
@@ -15414,7 +15414,7 @@ const podsRuntime = [
                 "labelSelector": {
                   "matchLabels": {
                     "app": "rabbitmq-ha",
-                    "release": "zerops-rabbit"
+                    "release": "bitflow-rabbit"
                   }
                 },
                 "topologyKey": "kubernetes.io/hostname"
@@ -15513,20 +15513,20 @@ const podsRuntime = [
   },
   {
     "metadata": {
-      "name": "zerops-redis-master-0",
-      "generateName": "zerops-redis-master-",
+      "name": "bitflow-redis-master-0",
+      "generateName": "bitflow-redis-master-",
       "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/pods/zerops-redis-master-0",
+      "selfLink": "/api/v1/namespaces/default/pods/bitflow-redis-master-0",
       "uid": "31c228dc-51dc-4402-bf66-7460a8481e4c",
       "resourceVersion": "192535",
       "creationTimestamp": "2020-01-16T11:41:41Z",
       "labels": {
         "app": "redis",
         "chart": "redis-10.3.2",
-        "controller-revision-hash": "zerops-redis-master-674dd9cbf8",
-        "release": "zerops-redis",
+        "controller-revision-hash": "bitflow-redis-master-674dd9cbf8",
+        "release": "bitflow-redis",
         "role": "master",
-        "statefulset.kubernetes.io/pod-name": "zerops-redis-master-0"
+        "statefulset.kubernetes.io/pod-name": "bitflow-redis-master-0"
       },
       "annotations": {
         "checksum/configmap": "f930f53542055a39faf663da4ffa9ca616c7ea443facd32ef727ec488e464926",
@@ -15537,7 +15537,7 @@ const podsRuntime = [
         {
           "apiVersion": "apps/v1",
           "kind": "StatefulSet",
-          "name": "zerops-redis-master",
+          "name": "bitflow-redis-master",
           "uid": "e4bb5875-1a2c-4404-b0eb-f8e256f311ee",
           "controller": true,
           "blockOwnerDeletion": true
@@ -15549,21 +15549,21 @@ const podsRuntime = [
         {
           "name": "health",
           "configMap": {
-            "name": "zerops-redis-health",
+            "name": "bitflow-redis-health",
             "defaultMode": 493
           }
         },
         {
           "name": "config",
           "configMap": {
-            "name": "zerops-redis",
+            "name": "bitflow-redis",
             "defaultMode": 420
           }
         },
         {
           "name": "redis-data",
           "persistentVolumeClaim": {
-            "claimName": "zerops-redis-data"
+            "claimName": "bitflow-redis-data"
           }
         },
         {
@@ -15578,9 +15578,9 @@ const podsRuntime = [
           "emptyDir": {}
         },
         {
-          "name": "zerops-admin-token-c6w7n",
+          "name": "bitflow-admin-token-c6w7n",
           "secret": {
-            "secretName": "zerops-admin-token-c6w7n",
+            "secretName": "bitflow-admin-token-c6w7n",
             "defaultMode": 420
           }
         }
@@ -15601,7 +15601,7 @@ const podsRuntime = [
               "mountPath": "/host-sys"
             },
             {
-              "name": "zerops-admin-token-c6w7n",
+              "name": "bitflow-admin-token-c6w7n",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -15617,7 +15617,7 @@ const podsRuntime = [
       ],
       "containers": [
         {
-          "name": "zerops-redis",
+          "name": "bitflow-redis",
           "image": "docker.io/bitnami/redis:5.0.7-debian-9-r45",
           "command": [
             "/bin/bash",
@@ -15664,7 +15664,7 @@ const podsRuntime = [
               "mountPath": "/opt/bitnami/redis/etc/"
             },
             {
-              "name": "zerops-admin-token-c6w7n",
+              "name": "bitflow-admin-token-c6w7n",
               "readOnly": true,
               "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
             }
@@ -15708,14 +15708,14 @@ const podsRuntime = [
       "restartPolicy": "Always",
       "terminationGracePeriodSeconds": 30,
       "dnsPolicy": "ClusterFirst",
-      "serviceAccountName": "zerops-admin",
-      "serviceAccount": "zerops-admin",
+      "serviceAccountName": "bitflow-admin",
+      "serviceAccount": "bitflow-admin",
       "nodeName": "wally142",
       "securityContext": {
         "fsGroup": 1001
       },
-      "hostname": "zerops-redis-master-0",
-      "subdomain": "zerops-redis-headless",
+      "hostname": "bitflow-redis-master-0",
+      "subdomain": "bitflow-redis-headless",
       "schedulerName": "default-scheduler",
       "tolerations": [
         {
@@ -15787,7 +15787,7 @@ const podsRuntime = [
       ],
       "containerStatuses": [
         {
-          "name": "zerops-redis",
+          "name": "bitflow-redis",
           "state": {
             "running": {
               "startedAt": "2020-01-16T11:42:42Z"

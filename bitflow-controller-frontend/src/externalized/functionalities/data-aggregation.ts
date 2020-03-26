@@ -78,12 +78,12 @@ export async function getDataSourcesFromRawDataAndSaveToMap() {
       }));
       let specUrl: string = dataSourceRaw.spec.url;
       let validationError: string = dataSourceRaw.status.validationError;
-      let creatorPodName = dataSourceRaw.metadata.labels['zerops-pod'];
+      let creatorPodName = dataSourceRaw.metadata.labels['bitflow-pod'];
       let hasCreatorPod = false;
       if (creatorPodName != undefined) {
         hasCreatorPod = true;
       }
-      let outputName = dataSourceRaw.metadata.labels['zerops-output'];
+      let outputName = dataSourceRaw.metadata.labels['bitflow-output'];
       let hasOutputName = outputName != undefined;
       return {
         name: name,
@@ -133,11 +133,11 @@ export async function getPodsAndStepsFromRawDataAndSaveToMap() {
       .map(podRaw => {
         let name: string = podRaw.metadata.name;
         let phase: string = podRaw.status.phase;
-        let creatorStepName = podRaw.metadata.labels['zerops-analysis-step'];
+        let creatorStepName = podRaw.metadata.labels['bitflow-analysis-step'];
 
         let hasCreatorStep = creatorStepName != undefined;
 
-        let creatorDataSourceName = podRaw.metadata.labels['zerops-data-source-name'];
+        let creatorDataSourceName = podRaw.metadata.labels['bitflow-data-source-name'];
         let creatorDataSourceNames: string[];
         if (creatorDataSourceName != undefined) {
           creatorDataSourceNames = [creatorDataSourceName];

@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: zerops-frontend
+  name: bitflow-controller-frontend
   labels:
-    app: zerops-frontend
+    app: bitflow-controller-frontend
 spec:
   serviceAccount: zerops-admin
   restartPolicy: Always
   containers:
-  - image: teambitflow/zerops-frontend:v1
+  - image: teambitflow/bitflow-controller-frontend:v1
     tty: true
     imagePullPolicy: Always
     name: aggregator
