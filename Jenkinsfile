@@ -102,21 +102,52 @@ pipeline {
                 }
             }
         }
-        stage('Docker') {
-            // These stages do NOT run within a docker container, because the scripts below start containers themselves
-            agent any
+        stage('Docker bitflow-api-proxy') {
+            agent {
+                docker {
+                    // TODO the container used here should have the same base as native-prebuilt.Dockerfile, used below
+                    image 'teambitflow/golang-build:docker'
+                    args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             stages {
-                stage('Prepare Docker build') {
+                stage('Prepare and build container') {
                     steps {
-                        sh 'bitflow-api-proxy/build/alpine-build.sh /tmp/go-mod-cache'
-                        sh 'bitflow-controller/build/alpine-build.sh /tmp/go-mod-cache'
+                        sh 'bitflow-api-proxy/build/native-build.sh'
+                        script {
+                            proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/native-prebuilt.Dockerfile bitflow-api-proxy/build'
+                        }
                     }
                 }
-                stage('Docker build') {
+                stage('Docker push') {
+                    when {
+                        branch 'master'
+                    }
                     steps {
                         script {
-                            controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build'
-                            proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build'
+                            docker.withRegistry('', registryCredential) {
+                                proxyImage.push("build-$BUILD_NUMBER")
+                                proxyImage.push("latest")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Docker bitflow-controller') {
+            agent {
+                docker {
+                    // TODO the container used here should have the same base as native-prebuilt.Dockerfile, used below
+                    image 'teambitflow/golang-build:docker'
+                    args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
+            stages {
+                stage('Prepare and build container') {
+                    steps {
+                        sh 'bitflow-controller/build/native-build.sh'
+                        script {
+                            controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/native-prebuilt.Dockerfile bitflow-controller/build'
                         }
                     }
                 }
@@ -129,8 +160,6 @@ pipeline {
                             docker.withRegistry('', registryCredential) {
                                 controllerImage.push("build-$BUILD_NUMBER")
                                 controllerImage.push("latest")
-                                proxyImage.push("build-$BUILD_NUMBER")
-                                proxyImage.push("latest")
                             }
                         }
                     }
