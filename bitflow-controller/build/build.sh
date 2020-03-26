@@ -9,8 +9,9 @@ BUILD_DIR="bitflow-controller/build/_output/bin/$BUILD_TARGET"
 echo "Building into $BUILD_DIR"
 shift
 
-mod_cache_dir=$(readlink -f "$1/$BUILD_TARGET")
+mod_cache_dir="$1/$BUILD_TARGET"
 echo "Using Go-mod-cache directory: $mod_cache_dir"
+mkdir -p "$mod_cache_dir"
 shift
 
 build_args="$@"
