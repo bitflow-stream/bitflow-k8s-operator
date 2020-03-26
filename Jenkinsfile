@@ -14,7 +14,7 @@ pipeline {
         stage('Build & test') {
             agent {
                 docker {
-                    image 'teambitflow/golang-build:alpine'
+                    image 'teambitflow/golang-build:docker'
                     args '-v /root/.goroot:/go'
                 }
             }
