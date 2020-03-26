@@ -17,6 +17,17 @@ shift
 
 build_args="$@"
 
+
+echo -e "\n==== 1"
+pwd
+ls
+
+echo -e "\n==== 2"
+ls $mod_cache_dir
+
+echo -e "\n==== 3"
+ls $root
+
 # Build inside the container, but mount relevant directories to get access to the build results.
 docker run -v "$mod_cache_dir:/go" -v "$root:/build/src" "$BUILD_IMAGE" \
   sh -c "
