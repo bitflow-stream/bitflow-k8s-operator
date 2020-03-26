@@ -104,6 +104,7 @@ pipeline {
         }
         stage('Docker') {
             // These stages do NOT run within a docker container, because the scripts below start containers themselves
+            agent any
             stages {
                 stage('Prepare Docker build') {
                     steps {
