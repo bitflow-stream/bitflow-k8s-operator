@@ -2,6 +2,8 @@ package bitflow
 
 import (
 	"fmt"
+
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 )
 
 type MiscTestSuite struct {
@@ -13,9 +15,9 @@ func (s *BitflowControllerTestSuite) TestMisc() {
 }
 
 func (s *MiscTestSuite) TestHashFunction() {
-	id := HashName("pre", "step-1", "source-1")
-	s.Equal(HASH_SUFFIX_LENGTH, len(id)-len("pre"), "Length of identifier does not have the correct length")
-	id2 := HashName("pre", "step-1", "source-1")
+	id := common.HashName("pre", "step-1", "source-1")
+	s.Equal(common.HashSuffixLength, len(id)-len("pre"), "Length of identifier does not have the correct length")
+	id2 := common.HashName("pre", "step-1", "source-1")
 	s.Equal(id, id2, "Hash must be consistent")
 }
 
