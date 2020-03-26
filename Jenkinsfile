@@ -2,12 +2,7 @@ pipeline {
     options {
         timeout(time: 1, unit: 'HOURS')
     }
-    agent {
-        docker {
-            image 'teambitflow/golang-build:docker'
-            args '-v /tmp:/tmp -v /root/.goroot:/go -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent none
     environment {
         registryController = 'teambitflow/bitflow-controller'
         registryProxy = 'teambitflow/bitflow-api-proxy'
@@ -16,112 +11,127 @@ pipeline {
         proxyImage = ''
     }
     stages {
-        stage('Git') {
-            steps {
-                script {
-                    env.GIT_COMMITTER_EMAIL = sh(
-                        script: "git --no-pager show -s --format='%ae'",
-                        returnStdout: true
-                        ).trim()
+        stage('Build & test') {
+            agent {
+                docker {
+                    image 'teambitflow/golang-build:alpine'
+                    args '-v /root/.goroot:/go'
                 }
             }
-        }
-        stage('Build & test controller') {
-            steps {
-                dir ('bitflow-controller') {
-                    sh 'rm -f go.sum'
-                    sh 'go clean -i -v ./...'
-                    sh 'go install -v ./...'
-                    sh 'rm -rf reports && mkdir -p reports'
-                    sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
-                    sh 'go vet ./... &> reports/vet.txt || true'
-                    sh 'golint $(go list -f "{{.Dir}}" ./...) &> reports/lint.txt'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts 'bitflow-controller/reports/*'
-                    junit 'bitflow-controller/reports/test.xml'
-                }
-            }
-        }
-        stage('Build & test REST API proxy') {
-            steps {
-                dir ('bitflow-api-proxy') {
-                    sh 'rm -f go.sum'
-                    sh 'go clean -i -v ./...'
-                    sh 'go install -v ./...'
-                    sh 'rm -rf reports && mkdir -p reports'
-                    sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
-                    sh 'go vet ./... &> reports/vet.txt || true'
-                    sh 'golint $(go list -f "{{.Dir}}" ./...) &> reports/lint.txt'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts 'bitflow-api-proxy/reports/*'
-                    junit 'bitflow-api-proxy/reports/test.xml'
-                }
-            }
-        }
-        stage('SonarQube') {
-            steps {
-                script {
-                    // sonar-scanner which don't rely on JVM
-                    def scannerHome = tool 'sonar-scanner-linux'
-                    withSonarQubeEnv('CIT SonarQube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-controller -Dsonar.branch.name=$BRANCH_NAME \
-                                -Dsonar.sources=bitflow-controller -Dsonar.tests=bitflow-controller \
-                                -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
-                                -Dsonar.go.golint.reportPath=bitflow-controller/reports/lint.txt \
-                                -Dsonar.go.govet.reportPaths=bitflow-controller/reports/vet.txt \
-                                -Dsonar.go.coverage.reportPaths=bitflow-controller/reports/test-coverage.txt \
-                                -Dsonar.test.reportPath=bitflow-controller/reports/test.xml
-                        """
-                    }
-                    withSonarQubeEnv('CIT SonarQube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-api-proxy -Dsonar.branch.name=$BRANCH_NAME \
-                                -Dsonar.sources=bitflow-api-proxy -Dsonar.tests=bitflow-api-proxy \
-                                -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
-                                -Dsonar.go.golint.reportPath=bitflow-api-proxy/reports/lint.txt \
-                                -Dsonar.go.govet.reportPaths=bitflow-api-proxy/reports/vet.txt \
-                                -Dsonar.go.coverage.reportPaths=bitflow-api-proxy/reports/test-coverage.txt \
-                                -Dsonar.test.reportPath=bitflow-api-proxy/reports/test.xml
-                        """
+            stages {
+                stage('Git') {
+                    steps {
+                        script {
+                            env.GIT_COMMITTER_EMAIL = sh(
+                                script: "git --no-pager show -s --format='%ae'",
+                                returnStdout: true
+                                ).trim()
+                        }
                     }
                 }
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                stage('Build & test controller') {
+                    steps {
+                        dir ('bitflow-controller') {
+                            sh 'rm -f go.sum'
+                            sh 'go clean -i -v ./...'
+                            sh 'go install -v ./...'
+                            sh 'rm -rf reports && mkdir -p reports'
+                            sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
+                            sh 'go vet ./... &> reports/vet.txt || true'
+                            sh 'golint $(go list -f "{{.Dir}}" ./...) &> reports/lint.txt'
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts 'bitflow-controller/reports/*'
+                            junit 'bitflow-controller/reports/test.xml'
+                        }
+                    }
+                }
+                stage('Build & test REST API proxy') {
+                    steps {
+                        dir ('bitflow-api-proxy') {
+                            sh 'rm -f go.sum'
+                            sh 'go clean -i -v ./...'
+                            sh 'go install -v ./...'
+                            sh 'rm -rf reports && mkdir -p reports'
+                            sh 'go test -v ./... -coverprofile=reports/test-coverage.txt 2>&1 | go-junit-report > reports/test.xml'
+                            sh 'go vet ./... &> reports/vet.txt || true'
+                            sh 'golint $(go list -f "{{.Dir}}" ./...) &> reports/lint.txt'
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts 'bitflow-api-proxy/reports/*'
+                            junit 'bitflow-api-proxy/reports/test.xml'
+                        }
+                    }
+                }
+                stage('SonarQube') {
+                    steps {
+                        script {
+                            // sonar-scanner which don't rely on JVM
+                            def scannerHome = tool 'sonar-scanner-linux'
+                            withSonarQubeEnv('CIT SonarQube') {
+                                sh """
+                                    ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-controller -Dsonar.branch.name=$BRANCH_NAME \
+                                        -Dsonar.sources=bitflow-controller -Dsonar.tests=bitflow-controller \
+                                        -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
+                                        -Dsonar.go.golint.reportPath=bitflow-controller/reports/lint.txt \
+                                        -Dsonar.go.govet.reportPaths=bitflow-controller/reports/vet.txt \
+                                        -Dsonar.go.coverage.reportPaths=bitflow-controller/reports/test-coverage.txt \
+                                        -Dsonar.test.reportPath=bitflow-controller/reports/test.xml
+                                """
+                            }
+                            withSonarQubeEnv('CIT SonarQube') {
+                                sh """
+                                    ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=bitflow-api-proxy -Dsonar.branch.name=$BRANCH_NAME \
+                                        -Dsonar.sources=bitflow-api-proxy -Dsonar.tests=bitflow-api-proxy \
+                                        -Dsonar.inclusions="**/*.go" -Dsonar.test.inclusions="**/*_test.go" \
+                                        -Dsonar.go.golint.reportPath=bitflow-api-proxy/reports/lint.txt \
+                                        -Dsonar.go.govet.reportPaths=bitflow-api-proxy/reports/vet.txt \
+                                        -Dsonar.go.coverage.reportPaths=bitflow-api-proxy/reports/test-coverage.txt \
+                                        -Dsonar.test.reportPath=bitflow-api-proxy/reports/test.xml
+                                """
+                            }
+                        }
+                        timeout(time: 10, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
                 }
             }
         }
-        stage('Prepare Docker build') {
-            steps {
-                sh 'bitflow-api-proxy/build/alpine-build.sh /tmp/go-mod-cache'
-                sh 'bitflow-controller/build/alpine-build.sh /tmp/go-mod-cache'
-            }
-        }
-        stage('Docker build') {
-            steps {
-                script {
-                    controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build'
-                    proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build'
+        stage('Docker') {
+            // These stages do NOT run within a docker container, because the scripts below start containers themselves
+            stages {
+                stage('Prepare Docker build') {
+                    steps {
+                        sh 'bitflow-api-proxy/build/alpine-build.sh /tmp/go-mod-cache'
+                        sh 'bitflow-controller/build/alpine-build.sh /tmp/go-mod-cache'
+                    }
                 }
-            }
-        }
-        stage('Docker push') {
-            when {
-                branch 'master'
-            }
-            steps {
-                script {
-                    docker.withRegistry('', registryCredential) {
-                        controllerImage.push("build-$BUILD_NUMBER")
-                        controllerImage.push("latest")
-                        proxyImage.push("build-$BUILD_NUMBER")
-                        proxyImage.push("latest")
+                stage('Docker build') {
+                    steps {
+                        script {
+                            controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build'
+                            proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build'
+                        }
+                    }
+                }
+                stage('Docker push') {
+                    when {
+                        branch 'master'
+                    }
+                    steps {
+                        script {
+                            docker.withRegistry('', registryCredential) {
+                                controllerImage.push("build-$BUILD_NUMBER")
+                                controllerImage.push("latest")
+                                proxyImage.push("build-$BUILD_NUMBER")
+                                proxyImage.push("latest")
+                            }
+                        }
                     }
                 }
             }
