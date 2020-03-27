@@ -1,5 +1,4 @@
 # teambitflow/bitflow-api-proxy
-c
 # docker build -t teambitflow/bitflow-api-proxy -f bitflow-api-proxy/build/multi-stage/alpine-full.Dockerfile .
 FROM golang:1.12-alpine as build
 ENV GO111MODULE=on
@@ -15,7 +14,7 @@ RUN sed -i $(find -name go.mod) -e '\_//.*gitignore$_d' -e '\_#.*gitignore$_d' &
 
 # Copy rest of the source code and build
 # Delete go.sum files and clean go.mod files form local 'replace' directives
-COPY .. .
+COPY . .
 RUN find -name go.sum -delete && \
     sed -i $(find -name go.mod) -e '\_//.*gitignore$_d' -e '\_#.*gitignore$_d' && \
     cd bitflow-api-proxy && \
