@@ -166,26 +166,33 @@ pipeline {
         }
     }
     post {
-        node {
-            success {
+        success {
+            node {
                 withSonarQubeEnv('CIT SonarQube') {
                     slackSend channel: '#jenkins-builds-all', color: 'good',
                         message: "Build ${env.JOB_NAME} ${env.BUILD_NUMBER} was successful (<${env.BUILD_URL}|Open Jenkins>) (<${env.SONAR_HOST_URL}|Open SonarQube>)"
                 }
             }
-            failure {
+        }
+        failure {
+            node {
                 slackSend channel: '#jenkins-builds-all', color: 'danger',
                     message: "Build ${env.JOB_NAME} ${env.BUILD_NUMBER} failed (<${env.BUILD_URL}|Open Jenkins>)"
             }
-            fixed {
+        }
+        fixed {
+            node {
                 withSonarQubeEnv('CIT SonarQube') {
                     slackSend channel: '#jenkins-builds', color: 'good',
                         message: "Thanks to ${env.GIT_COMMITTER_EMAIL}, build ${env.JOB_NAME} ${env.BUILD_NUMBER} was successful (<${env.BUILD_URL}|Open Jenkins>) (<${env.SONAR_HOST_URL}|Open SonarQube>)"
                 }
             }
-            regression {
+        }
+        regression {
+            node {
                 slackSend channel: '#jenkins-builds', color: 'danger',
                     message: "What have you done ${env.GIT_COMMITTER_EMAIL}? Build ${env.JOB_NAME} ${env.BUILD_NUMBER} failed (<${env.BUILD_URL}|Open Jenkins>)"
+                }
             }
         }
     }
