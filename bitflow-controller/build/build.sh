@@ -27,7 +27,7 @@ docker run -v "$mod_cache_dir:/go" -v "$root:/build/src" "$BUILD_IMAGE" \
     sed -i \$(find -name go.mod) -e '\_//.*gitignore\$_d' -e '\_#.*gitignore\$_d'
     find -name go.sum -delete
 
-    # Build the collector and plugins, put the outputs in the mounted source folder
+    # Build the binary, put the outputs in the mounted source folder
     cd bitflow-controller
     go build -o ../../src/$BUILD_DIR/bitflow-controller $build_args ./cmd/manager
   "
