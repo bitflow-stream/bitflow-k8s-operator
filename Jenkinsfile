@@ -192,7 +192,6 @@ pipeline {
             node {
                 slackSend channel: '#jenkins-builds', color: 'danger',
                     message: "What have you done ${env.GIT_COMMITTER_EMAIL}? Build ${env.JOB_NAME} ${env.BUILD_NUMBER} failed (<${env.BUILD_URL}|Open Jenkins>)"
-                }
             }
         }
     }
