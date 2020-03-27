@@ -14,8 +14,8 @@ pipeline {
         stage('Build & test') {
             agent {
                 docker {
-                    image 'teambitflow/golang-build:alpine'
-                    args '-v /tmp/go-mod-cache/alpine:/go'
+                    image 'teambitflow/golang-build:debian'
+                    args '-v /tmp/go-mod-cache/debian:/go'
                 }
             }
             stages {
@@ -48,7 +48,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Build & test REST API proxy') {
+                stage('Build & test api-proxy') {
                     steps {
                         dir ('bitflow-api-proxy') {
                             sh 'rm -f go.sum'
@@ -105,7 +105,6 @@ pipeline {
         stage('Docker bitflow-api-proxy') {
             agent {
                 docker {
-                    // TODO the container used here should have the same base as native-prebuilt.Dockerfile, used below
                     image 'teambitflow/golang-build:alpine'
                     args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
                 }
@@ -137,7 +136,6 @@ pipeline {
         stage('Docker bitflow-controller') {
             agent {
                 docker {
-                    // TODO the container used here should have the same base as native-prebuilt.Dockerfile, used below
                     image 'teambitflow/golang-build:alpine'
                     args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
                 }
