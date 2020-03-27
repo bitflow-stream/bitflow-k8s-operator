@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 home=`dirname $(readlink -f $0)`
 root=`readlink -f "$home/../.."`
 
@@ -17,33 +16,12 @@ shift
 
 build_args="$@"
 
-
-echo -e "\n==== 1"
-pwd
-ls
-
-echo -e "\n==== 2"
-ls $mod_cache_dir
-
-echo -e "\n==== 3"
-ls $root
-
 # Build inside the container, but mount relevant directories to get access to the build results.
 docker run -v "$mod_cache_dir:/go" -v "$root:/build/src" "$BUILD_IMAGE" \
   sh -c "
-    set -x
-    echo PWD
-    pwd
-    echo LISTING
-    ls src
-
     # Copy entire source-tree in order to make changes to go.mod/go.sum
     cp -r src build
     cd build
-
-  echo PWD2
-  pwd
-  ls
 
     # Prepare go.mod/go.sum files
     sed -i \$(find -name go.mod) -e '\_//.*gitignore\$_d' -e '\_#.*gitignore\$_d'

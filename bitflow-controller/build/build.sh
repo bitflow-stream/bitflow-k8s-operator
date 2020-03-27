@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 home=`dirname $(readlink -f $0)`
 root=`readlink -f "$home/../.."`
 

@@ -70,7 +70,6 @@ pipeline {
                 stage('SonarQube') {
                     steps {
                         script {
-                            // sonar-scanner which don't rely on JVM
                             def scannerHome = tool 'sonar-scanner-linux'
                             withSonarQubeEnv('CIT SonarQube') {
                                 sh """
@@ -114,7 +113,7 @@ pipeline {
                     steps {
                         sh 'bitflow-api-proxy/build/native-build.sh'
                         script {
-                            proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/native-prebuilt.Dockerfile bitflow-api-proxy/build'
+                            proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build/_output/bin'
                         }
                     }
                 }
@@ -145,7 +144,7 @@ pipeline {
                     steps {
                         sh 'bitflow-controller/build/native-build.sh'
                         script {
-                            controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/native-prebuilt.Dockerfile bitflow-controller/build'
+                            controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build/_output/bin'
                         }
                     }
                 }
