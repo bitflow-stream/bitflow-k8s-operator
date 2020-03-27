@@ -165,8 +165,8 @@ pipeline {
             }
         }
     }
-    node {
-        post {
+    post {
+        node {
             success {
                 withSonarQubeEnv('CIT SonarQube') {
                     slackSend channel: '#jenkins-builds-all', color: 'good',
@@ -190,4 +190,3 @@ pipeline {
         }
     }
 }
-
