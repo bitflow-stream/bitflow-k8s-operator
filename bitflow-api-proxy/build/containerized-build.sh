@@ -1,9 +1,9 @@
 #!/bin/bash
 home=`dirname $(readlink -f $0)`
-root=`readlink -f "$home/../.."`
+root=`readlink -f "$home/.."`
 
-test $# -ge 1 || { echo "Parameters: <Go-mod-cache directory> <Build args (optional)>"; exit 1; }
-BUILD_TARGET="alpine"
+test $# -ge 2 || { echo "Parameters: <container to build for (arm32v7/arm64v8/alpine)> <Go-mod-cache directory> <Build args (optional)>"; exit 1; }
+BUILD_TARGET="$1"
 BUILD_IMAGE="teambitflow/golang-build:$BUILD_TARGET"
 BUILD_DIR="bitflow-api-proxy/build/_output/bin/$BUILD_TARGET"
 echo "Building into $BUILD_DIR"
