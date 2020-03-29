@@ -1,6 +1,6 @@
 module github.com/bitflow-stream/bitflow-k8s-operator/bitflow-api-proxy
 
-go 1.12
+go 1.14
 
 require (
 	github.com/antongulenko/golib v0.0.24

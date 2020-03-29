@@ -1,6 +1,6 @@
 module github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller
 
-go 1.13
+go 1.14
 
 require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
