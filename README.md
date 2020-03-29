@@ -132,7 +132,7 @@ Just run
 
 ### Without operator-sdk 
 - `go build -v -o ./bitflow-controller/build/_output/bin/bitflow-controller ./bitflow-controller/cmd/manager`
-- `docker build --tag=teambitflow/bitflow-controller -f ./bitflow-controller/build/Dockerfile .`
+- `docker build --tag=bitflowstream/bitflow-controller -f ./bitflow-controller/build/Dockerfile .`
 
 ## Extending Bitflow resources
 The system currently maintains the two resource types BitflowStep and BitflowSource.

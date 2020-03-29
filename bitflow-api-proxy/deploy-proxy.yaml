@@ -29,7 +29,7 @@ spec:
     spec:
       serviceAccountName: bitflow-controller
       containers:
-        - image: teambitflow/bitflow-api-proxy
+        - image: bitflowstream/bitflow-api-proxy
           name: bitflow-api-proxy
           args: [ "-l", ":8080" ]
           ports:

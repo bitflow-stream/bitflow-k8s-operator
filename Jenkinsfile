@@ -4,8 +4,8 @@ pipeline {
     }
     agent none
     environment {
-        registryController = 'teambitflow/bitflow-controller'
-        registryProxy = 'teambitflow/bitflow-api-proxy'
+        registryController = 'bitflowstream/bitflow-controller'
+        registryProxy = 'bitflowstream/bitflow-api-proxy'
         registryCredential = 'dockerhub'
         controllerImage = '' // Empty variables must be declared here to allow passing an object between the stages.
         proxyImage = ''
@@ -14,7 +14,7 @@ pipeline {
         stage('Build & test') {
             agent {
                 docker {
-                    image 'teambitflow/golang-build:debian'
+                    image 'bitflowstream/golang-build:debian'
                     args '-v /tmp/go-mod-cache/debian:/go'
                 }
             }
@@ -104,7 +104,7 @@ pipeline {
         stage('Docker bitflow-api-proxy') {
             agent {
                 docker {
-                    image 'teambitflow/golang-build:alpine'
+                    image 'bitflowstream/golang-build:alpine'
                     args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
@@ -135,7 +135,7 @@ pipeline {
         stage('Docker bitflow-controller') {
             agent {
                 docker {
-                    image 'teambitflow/golang-build:alpine'
+                    image 'bitflowstream/golang-build:alpine'
                     args '-v /tmp/go-mod-cache/alpine:/go -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }

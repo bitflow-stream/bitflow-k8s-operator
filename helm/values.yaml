@@ -8,7 +8,7 @@ controller:
     livenessProbePeriod: 600
     readinessProbeDelay: 5
     image:
-      repository: teambitflow/bitflow-controller:latest
+      repository: bitflowstream/bitflow-controller:latest
       pullPolicy: Always
       pullSecrets: []
     config:
@@ -54,7 +54,7 @@ api_proxy:
     livenessProbePeriod: 60
     readinessProbeDelay: 5
     image:
-      repository: teambitflow/bitflow-api-proxy:latest
+      repository: bitflowstream/bitflow-api-proxy:latest
       pullPolicy: Always
       pullSecrets: []
     replicaCount: 1

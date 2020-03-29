@@ -15,7 +15,7 @@ spec:
       serviceAccountName: bitflow
       containers:
         - name: bitflow-controller
-          image: teambitflow/bitflow-controller
+          image: bitflowstream/bitflow-controller
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

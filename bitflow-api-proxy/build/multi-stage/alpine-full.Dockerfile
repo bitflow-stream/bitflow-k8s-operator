@@ -1,5 +1,5 @@
-# teambitflow/bitflow-api-proxy
-# docker build -t teambitflow/bitflow-api-proxy -f bitflow-api-proxy/build/multi-stage/alpine-full.Dockerfile .
+# bitflowstream/bitflow-api-proxy
+# docker build -t bitflowstream/bitflow-api-proxy -f bitflow-api-proxy/build/multi-stage/alpine-full.Dockerfile .
 FROM golang:1.14.1-alpine as build
 ENV GO111MODULE=on
 RUN apk --no-cache add git gcc g++ musl-dev openssh-client mercurial
