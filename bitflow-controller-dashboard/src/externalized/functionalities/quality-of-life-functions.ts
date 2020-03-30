@@ -427,3 +427,24 @@ export function getGraphElementByIdentifier(identifier: string) {
   }
   return undefined;
 }
+
+export function getRawDataFromStep(step: Step): string {
+  let completeStep = JSON.parse(step.raw);
+  completeStep.spec.template = step.template;
+  completeStep.spec.ingest = step.ingests;
+  completeStep.spec.outputs = step.outputs;
+  return JSON.stringify(completeStep);
+}
+
+export function getRawDataFromPod(pod: Pod): string {
+  return pod.raw;
+}
+
+export function getRawDataFromDataSource(dataSource: DataSource): string {
+  let completeDataSource = JSON.parse(dataSource.raw);
+  dataSource.labels.forEach(label => {
+    completeDataSource.metadata.labels[label.key] = label.value;
+  });
+  completeDataSource.spec.url = dataSource.specUrl;
+  return JSON.stringify(completeDataSource);
+}
