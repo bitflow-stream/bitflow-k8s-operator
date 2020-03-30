@@ -1,7 +1,12 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {ModalDismissReasons, NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {GraphElement} from '../../../externalized/definitions/definitions';
-import {getGraphElementByIdentifier} from '../../../externalized/functionalities/quality-of-life-functions';
+import {
+  getGraphElementByIdentifier,
+  getRawDataFromDataSource,
+  getRawDataFromPod,
+  getRawDataFromStep
+} from '../../../externalized/functionalities/quality-of-life-functions';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
@@ -98,6 +103,22 @@ export class ConfigModalComponent implements AfterViewInit {
 
   filterGraph(graphElement: GraphElement) {
     this.sharedService.filterGraph(graphElement);
+  }
+
+  save(graphElement: GraphElement) {
+    if (graphElement == undefined) {
+      return;
+    }
+
+    if (graphElement.type === 'step') {
+      console.log(getRawDataFromStep(graphElement.step));
+    }
+    if (graphElement.type === 'data-source') {
+      console.log(getRawDataFromDataSource(graphElement.dataSource));
+    }
+    if (graphElement.type === 'pod') {
+      console.log(getRawDataFromPod(graphElement.pod));
+    }
   }
 
 }

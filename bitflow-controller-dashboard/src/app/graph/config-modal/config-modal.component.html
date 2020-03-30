@@ -486,12 +486,14 @@
   </div>
 
 
-  <div *ngIf="selectedElement() != undefined || currentGraphElement.type === 'step'">
+  <div *ngIf="selectedElement() != undefined">
     <div class="modal-footer">
-      <div *ngIf="currentGraphElement.type !== 'step'">
+      <div *ngIf="selectedElement().type !== 'step'">
         <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
       </div>
-      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
+      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click'); save(selectedElement());">
+        Save
+      </button>
     </div>
   </div>
 </ng-template>
