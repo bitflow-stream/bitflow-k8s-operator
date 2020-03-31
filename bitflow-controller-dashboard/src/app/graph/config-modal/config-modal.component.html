@@ -1,24 +1,17 @@
 <ng-template #content let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">
-      <span *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">
+  <!-- POD MODAL CONTENT -->
+  <div *ngIf="currentGraphElement.type === 'pod' || currentGraphElement.type === 'pod-stack'">
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title-pod">
         Pod configuration
-      </span>
-      <span *ngIf="currentGraphElement.type === 'data-source' || currentGraphElement.type === 'data-source-stack'">
-        DataSource configuration
-      </span>
-      <span *ngIf="currentGraphElement.type === 'step'">
-        Step configuration
-      </span>
-    </h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
+      </h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
   </div>
-  <div class="modal-body">
-
-    <!-- POD MODAL CONTENT -->
-    <div *ngIf="currentGraphElement.type === 'pod'">
+  <div *ngIf="selectedElement().type === 'pod'">
+    <div class="modal-body">
       <div class="container">
         <div class="row">
           <div class="col">
@@ -58,87 +51,112 @@
             </ng-template>
           </div>
         </div>
-
-
-        <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
-          <br>
-          <div class="row">
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  Name
-                </div>
-                <div class="card-body">
-                  <!--suppress HtmlFormInputWithoutLabel, HtmlFormInputWithoutLabel -->
-                  <input type="text" class="form-control" id="podName" disabled="disabled" [value]="selectedIdentifier">
+      </div>
+    </div>
+    <form [formGroup]="podFormData" (ngSubmit)="handleSubmit()">
+      <div class="modal-body">
+        <div class="container">
+          <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
+            <br>
+            <div class="row">
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    Name
+                  </div>
+                  <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel, HtmlFormInputWithoutLabel -->
+                    <input type="text" class="form-control" id="podName" disabled="disabled"
+                           [value]="selectedIdentifier">
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <br>
+            <br>
 
 
-          <div *ngIf="selectedElement().pod.phase != undefined && selectedElement().pod.phase !== ''">
+            <div *ngIf="selectedElement().pod.phase != undefined && selectedElement().pod.phase !== ''">
+              <div class="row">
+                <div class="col">
+                  <div class="card">
+                    <div class="card-header">
+                      Phase
+                    </div>
+                    <div class="card-body">
+                      <!--suppress HtmlFormInputWithoutLabel -->
+                      <input type="text" class="form-control" id="pod-phase" disabled="disabled"
+                             [value]="selectedElement().pod.phase">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+
+
+            <div *ngIf="selectedElement().pod.creatorDataSources.length > 0">
+              <div class="row">
+                <div class="col">
+
+                  <div class="card">
+                    <div class="card-header">
+                      Creator Data Sources
+                    </div>
+                    <div class="card-body">
+                      <table id="podCreatorDataSources" class="table">
+                        <tr *ngFor="let creatorDataSource of selectedElement().pod.creatorDataSources">
+                          <td><a href="/id/{{creatorDataSource.name}}">{{creatorDataSource.name}}</a></td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+
+
             <div class="row">
               <div class="col">
                 <div class="card">
                   <div class="card-header">
-                    Phase
+                    Raw Data
                   </div>
                   <div class="card-body">
                     <!--suppress HtmlFormInputWithoutLabel -->
-                    <input type="text" class="form-control" id="pod-phase" disabled="disabled"
-                           [value]="selectedElement().pod.phase">
+                    <textarea class="form-control" id="podRawData" rows="8"
+                              [value]="selectedElement().pod?.raw"
+                              formControlName="raw">
+                    </textarea>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <br>
-
-
-          <div *ngIf="selectedElement().pod.creatorDataSources.length > 0">
-            <div class="row">
-              <div class="col">
-
-                <div class="card">
-                  <div class="card-header">
-                    Creator Data Sources
-                  </div>
-                  <div class="card-body">
-                    <table id="podCreatorDataSources" class="table">
-                      <tr *ngFor="let creatorDataSource of selectedElement().pod.creatorDataSources">
-                        <td><a href="/id/{{creatorDataSource.name}}">{{creatorDataSource.name}}</a></td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <br>
-
-
-          <div class="row">
-            <div class="col">
-              <div class="card">
-                <div class="card-header">
-                  Raw Data
-                </div>
-                <div class="card-body">
-                  <!--suppress HtmlFormInputWithoutLabel -->
-                  <textarea class="form-control" id="podRawData" rows="8"
-                            [value]="selectedElement().pod?.raw"></textarea>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
+        <button type="submit" class="btn btn-outline-dark">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
 
-    <!--  DATA SOURCE MODAL CONTENT  -->
-    <div *ngIf="currentGraphElement.type === 'data-source'">
+  <!--  DATA SOURCE MODAL CONTENT  -->
+  <div *ngIf="currentGraphElement.type === 'data-source' || currentGraphElement.type === 'data-source-stack'">
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title-data-source">
+        Data Source configuration
+      </h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  </div>
+  <div *ngIf="currentGraphElement.type === 'data-source'">
+    <div class="modal-body">
       <div class="container">
         <div class="row">
           <div class="col">
@@ -179,67 +197,73 @@
             </ng-template>
           </div>
         </div>
-        <br>
+      </div>
+    </div>
 
-
-        <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
-          <div class="row">
-            <div class="col">
-              <div class="card">
-                <div class="card-header">
-                  Name
-                </div>
-                <div class="card-body">
-                  <!--suppress HtmlFormInputWithoutLabel -->
-                  <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
-                         [value]="selectedIdentifier">
-                </div>
-              </div>
-            </div>
-          </div>
+    <form [formGroup]="dataSourceFormData" (ngSubmit)="handleSubmit()">
+      <div class="modal-body">
+        <div class="container">
           <br>
-
-
-          <div
-            *ngIf="selectedElement().dataSource.labels != undefined && selectedElement().dataSource.labels.length !== 0">
-            <div class="card">
-              <div class="card-header">
-                Labels
-              </div>
-              <div class="card-body">
-                <div *ngFor="let label of selectedElement().dataSource.labels; index as i;">
-                  <div class="row">
-                    <div class="col">
-                      <label for="{{'data-source-label-key-' + i}}">Label {{i + 1}} Key:</label>
-                      <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
-                             [value]="label.key != undefined ? label.key : ''">
-                    </div>
-                    <div class="col">
-                      <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
-                      <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
-                             [value]="label.value != undefined ? label.value : ''">
-                    </div>
+          <div *ngIf="selectedIdentifier != undefined && selectedElement() != undefined">
+            <div class="row">
+              <div class="col">
+                <div class="card">
+                  <div class="card-header">
+                    Name
+                  </div>
+                  <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
+                    <input type="text" class="form-control" id="dataSourceName" disabled="disabled"
+                           [value]="selectedIdentifier">
                   </div>
                 </div>
               </div>
             </div>
             <br>
-          </div>
 
 
-          <div *ngIf="selectedElement().dataSource.specUrl != undefined && selectedElement().dataSource.specUrl !== ''">
-            <div class="row">
-              <div class="col">
-                <div class="card">
-                  <div class="card-header">
-                    Spec URL:
-                  </div>
-                  <div class="card-body">
-                    <!--suppress HtmlFormInputWithoutLabel -->
-                    <input type="text" class="form-control" id="data-source-spec-url"
-                           [value]="selectedElement().dataSource.specUrl">
+            <div
+              *ngIf="selectedElement().dataSource.labels != undefined && selectedElement().dataSource.labels.length !== 0">
+              <div class="card">
+                <div class="card-header">
+                  Labels
+                </div>
+                <div class="card-body">
+                  <div *ngFor="let label of selectedElement().dataSource.labels; index as i;">
+                    <div class="row">
+                      <div class="col">
+                        <label for="{{'data-source-label-key-' + i}}">Label {{i + 1}} Key:</label>
+                        <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
+                               [value]="label.key != undefined ? label.key : ''">
+                      </div>
+                      <div class="col">
+                        <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
+                        <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                               [value]="label.value != undefined ? label.value : ''">
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </div>
+              <br>
+            </div>
+
+
+            <div
+              *ngIf="selectedElement().dataSource.specUrl != undefined && selectedElement().dataSource.specUrl !== ''">
+              <div class="row">
+                <div class="col">
+                  <div class="card">
+                    <div class="card-header">
+                      Spec URL:
+                    </div>
+                    <div class="card-body">
+                      <!--suppress HtmlFormInputWithoutLabel -->
+                      <input type="text" class="form-control" id="data-source-spec-url"
+                             [value]="selectedElement().dataSource.specUrl"
+                             formControlName="specUrl">
+                    </div>
+                  </div>
               </div>
             </div>
             <br>
@@ -321,42 +345,61 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!--  STEP MODAL CONTENT  -->
-    <div *ngIf="currentGraphElement.type === 'step'">
-      <div class="row">
-        <div class="col">
-          <div class="card">
-            <div class="card-header">
-              Name
-            </div>
-            <div class="card-body">
-              <!--suppress HtmlFormInputWithoutLabel -->
-              <input type="text" class="form-control" disabled="disabled"
-                     [value]="currentGraphElement.step.name">
-            </div>
           </div>
         </div>
       </div>
-      <br>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
+        <button type="submit" class="btn btn-outline-dark">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
 
+  <!--  STEP MODAL CONTENT  -->
+  <div *ngIf="currentGraphElement.type === 'step'">
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title-step">
+        Step configuration
+      </h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
 
-      <div class="row">
-        <div class="col">
-          <div class="card">
-            <div class="card-header">
-              Ingests
+    <form [formGroup]="stepFormData" (ngSubmit)="handleSubmit()">
+      <div class="modal-body">
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-header">
+                Name
+              </div>
+              <div class="card-body">
+                <!--suppress HtmlFormInputWithoutLabel -->
+                <input type="text" class="form-control" disabled="disabled"
+                       [value]="currentGraphElement.step.name">
+              </div>
             </div>
-            <div class="card-body">
-              <div *ngFor="let ingest of currentGraphElement.step.ingests; index as i;">
-                <div class="row">
-                  <div class="col">
-                    <label for="{{'ingest-key-' + i}}">Key:</label>
-                    <input type="text" class="form-control" id="{{'ingest-key-' + i}}"
-                           [value]="ingest.key != undefined ? ingest.key : ''">
+          </div>
+        </div>
+        <br>
+
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-header">
+                Ingests
+              </div>
+              <div class="card-body">
+                <div *ngFor="let ingest of currentGraphElement.step.ingests; index as i;">
+                  <div class="row">
+                    <div class="col">
+                      <label for="{{'ingest-key-' + i}}">Key:</label>
+                      <input type="text" class="form-control" id="{{'ingest-key-' + i}}"
+                             [value]="ingest.key != undefined ? ingest.key : ''">
                   </div>
                   <div class="col">
                     <label for="{{'ingest-value-' + i}}">Value:</label>
@@ -458,7 +501,9 @@
             <div class="card-body">
               <!--suppress HtmlFormInputWithoutLabel -->
               <textarea class="form-control" id="step-template" rows="8"
-                        [value]="currentGraphElement.step?.template"></textarea>
+                        [value]="currentGraphElement.step?.template"
+                        formControlName="template">
+              </textarea>
             </div>
           </div>
         </div>
@@ -482,18 +527,14 @@
       </div>
 
 
-    </div>
-  </div>
-
-
-  <div *ngIf="selectedElement() != undefined">
-    <div class="modal-footer">
-      <div *ngIf="selectedElement().type !== 'step'">
-        <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
       </div>
-      <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click'); save(selectedElement());">
-        Save
-      </button>
-    </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-outline-dark">
+          Save
+        </button>
+      </div>
+    </form>
   </div>
+
+
 </ng-template>

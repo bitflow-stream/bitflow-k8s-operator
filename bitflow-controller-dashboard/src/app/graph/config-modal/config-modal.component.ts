@@ -3,13 +3,12 @@ import {ModalDismissReasons, NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {GraphElement} from '../../../externalized/definitions/definitions';
 import {
   getGraphElementByIdentifier,
-  getRawDataFromDataSource,
-  getRawDataFromPod,
-  getRawDataFromStep
+  getRawDataFromDataSource, getRawDataFromPod, getRawDataFromStep
 } from '../../../externalized/functionalities/quality-of-life-functions';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
+import {FormBuilder} from '@angular/forms';
 
 @Component({
   selector: 'app-config-modal',
@@ -23,7 +22,8 @@ export class ConfigModalComponent implements AfterViewInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private location: Location,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private fb: FormBuilder
   ) {
   }
 
@@ -111,14 +111,52 @@ export class ConfigModalComponent implements AfterViewInit {
     }
 
     if (graphElement.type === 'step') {
-      console.log(getRawDataFromStep(graphElement.step));
+      let step = graphElement.step;
+
+      let template: string = this.stepFormData.value['template'];
+      if (template != undefined && template.length !== 0) {
+        step.template = template;
+      }
+
+      console.log(getRawDataFromStep(step));
     }
     if (graphElement.type === 'data-source') {
-      console.log(getRawDataFromDataSource(graphElement.dataSource));
+      let dataSource = graphElement.dataSource;
+
+      let specUrl: string = this.dataSourceFormData.value['specUrl'];
+      if (specUrl != undefined && specUrl.length !== 0) {
+        dataSource.specUrl = specUrl;
+      }
+
+      console.log(getRawDataFromDataSource(dataSource));
     }
     if (graphElement.type === 'pod') {
-      console.log(getRawDataFromPod(graphElement.pod));
+      let pod = graphElement.pod;
+
+      let raw: string = this.podFormData.value['raw'];
+      if (raw != undefined && raw.length !== 0) {
+        pod.raw = raw;
+      }
+
+      console.log(getRawDataFromPod(pod));
     }
+  }
+
+  podFormData = this.fb.group({
+    raw: ['']
+  });
+
+  dataSourceFormData = this.fb.group({
+    specUrl: ['']
+  });
+
+  stepFormData = this.fb.group({
+    template: ['']
+  });
+
+  handleSubmit() {
+    this.modalService.dismissAll();
+    this.save(this.selectedElement())
   }
 
 }
