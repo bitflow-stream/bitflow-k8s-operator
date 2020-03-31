@@ -3,7 +3,9 @@ import {ModalDismissReasons, NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {GraphElement} from '../../../externalized/definitions/definitions';
 import {
   getGraphElementByIdentifier,
-  getRawDataFromDataSource, getRawDataFromPod, getRawDataFromStep
+  getRawDataFromDataSource,
+  getRawDataFromPod,
+  getRawDataFromStep
 } from '../../../externalized/functionalities/quality-of-life-functions';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Location} from '@angular/common';
@@ -148,10 +150,16 @@ export class ConfigModalComponent implements AfterViewInit {
 
   dataSourceFormData = this.fb.group({
     specUrl: ['']
+    // TODO labels
+    // TODO removing / adding labels
   });
 
   stepFormData = this.fb.group({
     template: ['']
+    // TODO ingests
+    // TODO removing / adding ingests
+    // TODO outputs
+    // TODO removing / adding outputs
   });
 
   handleSubmit() {
