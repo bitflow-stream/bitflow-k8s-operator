@@ -27,7 +27,7 @@ spec:
       labels:
         run: bitflow-api-proxy
     spec:
-      serviceAccountName: bitflow-controller
+      serviceAccountName: bitflow
       containers:
         - image: bitflowstream/bitflow-api-proxy
           name: bitflow-api-proxy

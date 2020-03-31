@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	// In addition to these env vars, the variable WATCH_NAMESPACE is important for the Operator framework
-	EnvControllerName      = "CONTROLLER_NAME"
+	// In addition to these env vars, the variable WATCH_NAMESPACE and POD_NAME are important for the Operator framework
+	EnvOperatorName        = "OPERATOR_NAME" // This variable is also used internally by the Kubernetes SDK
 	EnvConfigMapName       = "CONFIG_MAP"
 	EnvOwnPodIp            = "POD_IP"
 	EnvRestApiPort         = "API_LISTEN_PORT"
@@ -21,7 +21,7 @@ const (
 )
 
 type ControllerParameters struct {
-	controllerName      string
+	operatorName        string
 	ownPodIP            string
 	apiPort             int
 	configMapName       string
@@ -34,7 +34,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	var r ControllerParameters
 
 	// Required variables
-	r.controllerName = os.Getenv(EnvControllerName)
+	r.operatorName = os.Getenv(EnvOperatorName)
 	r.configMapName = os.Getenv(EnvConfigMapName)
 	r.ownPodIP = os.Getenv(EnvOwnPodIp)
 	apiPortStr := os.Getenv(EnvRestApiPort)
@@ -46,8 +46,8 @@ func readControllerEnvVars() (ControllerParameters, error) {
 
 	// Make sure the required variables are present
 	var missing []string
-	if r.controllerName == "" {
-		missing = append(missing, EnvControllerName)
+	if r.operatorName == "" {
+		missing = append(missing, EnvOperatorName)
 	}
 	if r.configMapName == "" {
 		missing = append(missing, EnvConfigMapName)
@@ -95,6 +95,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	}
 
 	log.Infof("Loaded configuration from environment variables:")
+	log.Infof("%v: %v = %v", "OperatorName", EnvOperatorName, r.operatorName)
 	log.Infof("%v: %v = %v", "ConfigMap", EnvConfigMapName, r.configMapName)
 	log.Infof("%v: %v = %v", "Controller ID labels", EnvPodIdLabels, r.controllerIdLabels)
 	log.Infof("%v: %v = %v", "Pod IP", EnvOwnPodIp, r.ownPodIP)

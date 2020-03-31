@@ -125,7 +125,7 @@ func (r *BitflowReconciler) startWatchers(mgr manager.Manager, params Controller
 	}
 
 	// Create a new controller
-	c, err := controller.New(params.controllerName, mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: params.concurrentReconcile})
+	c, err := controller.New(params.operatorName, mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: params.concurrentReconcile})
 	if err != nil {
 		return err
 	}

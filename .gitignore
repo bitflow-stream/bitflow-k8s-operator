@@ -1,3 +1,4 @@
+helm/*-values.yml
 reports/
 go.sum
 requirements.lock
