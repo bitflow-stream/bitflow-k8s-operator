@@ -21,7 +21,7 @@ const (
 )
 
 type ControllerParameters struct {
-	controllerName      string
+	operatorName        string
 	ownPodIP            string
 	apiPort             int
 	configMapName       string
@@ -34,7 +34,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	var r ControllerParameters
 
 	// Required variables
-	r.controllerName = os.Getenv(EnvOperatorName)
+	r.operatorName = os.Getenv(EnvOperatorName)
 	r.configMapName = os.Getenv(EnvConfigMapName)
 	r.ownPodIP = os.Getenv(EnvOwnPodIp)
 	apiPortStr := os.Getenv(EnvRestApiPort)
@@ -46,7 +46,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 
 	// Make sure the required variables are present
 	var missing []string
-	if r.controllerName == "" {
+	if r.operatorName == "" {
 		missing = append(missing, EnvOperatorName)
 	}
 	if r.configMapName == "" {
@@ -95,6 +95,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	}
 
 	log.Infof("Loaded configuration from environment variables:")
+	log.Infof("%v: %v = %v", "OperatorName", EnvOperatorName, r.operatorName)
 	log.Infof("%v: %v = %v", "ConfigMap", EnvConfigMapName, r.configMapName)
 	log.Infof("%v: %v = %v", "Controller ID labels", EnvPodIdLabels, r.controllerIdLabels)
 	log.Infof("%v: %v = %v", "Pod IP", EnvOwnPodIp, r.ownPodIP)
