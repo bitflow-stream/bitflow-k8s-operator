@@ -8,6 +8,7 @@ import (
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -99,4 +100,12 @@ func (s *ProxyServer) registerEndpoints(gin *gin.Engine) {
 	// gin.GET("/node/:nodeName/resources/:namespace", s.getNodeResources)
 
 	s.metrics.registerEndpoints(gin)
+}
+
+func (s *ProxyServer) getRequestLogLevel(ctx *gin.Context) (log.Level, string, bool) {
+	if len(ctx.Errors) == 0 && ctx.Request.URL.Path == "/health" {
+		// Hide health requests from the default logs, as they occur frequently
+		return log.DebugLevel, "", true
+	}
+	return log.InfoLevel, "", false
 }

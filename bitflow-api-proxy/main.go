@@ -27,7 +27,7 @@ func executeMain() int {
 		return 1
 	}
 
-	g := golib.NewGinTask(*endpoint)
+	g := golib.NewGinTaskWithHandler(*endpoint, &golib.GinLogHandler{Logger: golib.Log, Handler: server.getRequestLogLevel})
 	g.Use(cors.Default())
 	server.registerEndpoints(g.Engine)
 
