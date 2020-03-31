@@ -116,7 +116,7 @@ export class ConfigModalComponent implements AfterViewInit {
       let step = graphElement.step;
 
       let template: string = this.stepFormData.value['template'];
-      if (template != undefined && template.length !== 0) {
+      if (template != undefined) {
         step.template = template;
       }
 
@@ -126,7 +126,7 @@ export class ConfigModalComponent implements AfterViewInit {
       let dataSource = graphElement.dataSource;
 
       let specUrl: string = this.dataSourceFormData.value['specUrl'];
-      if (specUrl != undefined && specUrl.length !== 0) {
+      if (specUrl != undefined) {
         dataSource.specUrl = specUrl;
       }
 
@@ -136,7 +136,7 @@ export class ConfigModalComponent implements AfterViewInit {
       let pod = graphElement.pod;
 
       let raw: string = this.podFormData.value['raw'];
-      if (raw != undefined && raw.length !== 0) {
+      if (raw != undefined) {
         pod.raw = raw;
       }
 
@@ -145,17 +145,17 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   podFormData = this.fb.group({
-    raw: ['']
+    raw: []
   });
 
   dataSourceFormData = this.fb.group({
-    specUrl: ['']
+    specUrl: []
     // TODO labels
     // TODO removing / adding labels
   });
 
   stepFormData = this.fb.group({
-    template: ['']
+    template: []
     // TODO ingests
     // TODO removing / adding ingests
     // TODO outputs
