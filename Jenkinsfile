@@ -111,7 +111,7 @@ pipeline {
                         script {
                             image = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build/_output/bin'
                         }
-                        sh 'bitflow-api-proxy/build/test-images.sh $BRANCH_NAME-build-$BUILD_NUMBER'
+                        sh 'bitflow-api-proxy/build/test-image.sh $BRANCH_NAME-build-$BUILD_NUMBER'
                     }
                 }
                 stage('Docker push') {
@@ -143,7 +143,7 @@ pipeline {
                         script {
                             image = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build/_output/bin'
                         }
-                        sh 'bitflow-controller/build/test-images.sh $BRANCH_NAME-build-$BUILD_NUMBER'
+                        sh 'bitflow-controller/build/test-image.sh $BRANCH_NAME-build-$BUILD_NUMBER'
                     }
                 }
                 stage('Docker push') {
