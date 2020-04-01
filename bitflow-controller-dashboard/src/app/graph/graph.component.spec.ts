@@ -2,7 +2,7 @@ import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 import {getGraphVisualization, GraphComponent} from './graph.component';
 import {ConfigModalComponent} from "./config-modal/config-modal.component";
 import {AppRoutingModule} from "../app-routing.module";
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {SharedService} from "../../shared-service";
 import {DebugElement} from "@angular/core";
 import {
@@ -21,7 +21,8 @@ describe('GraphComponent', () => {
     TestBed.configureTestingModule({
       imports: [
         AppRoutingModule,
-        FormsModule
+        FormsModule,
+        ReactiveFormsModule
       ],
       providers: [
         SharedService

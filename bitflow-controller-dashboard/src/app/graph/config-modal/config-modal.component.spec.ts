@@ -1,7 +1,7 @@
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
 import {ConfigModalComponent} from './config-modal.component';
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {SharedService} from "../../../shared-service";
 import {AppRoutingModule} from "../../app-routing.module";
 
@@ -13,7 +13,8 @@ describe('ConfigModalComponent', () => {
     TestBed.configureTestingModule({
       imports: [
         AppRoutingModule,
-        FormsModule
+        FormsModule,
+        ReactiveFormsModule
       ],
       providers: [
         SharedService
