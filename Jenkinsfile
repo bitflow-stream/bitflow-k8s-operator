@@ -63,6 +63,13 @@ pipeline {
                         }
                     }
                 }
+                stage('Test dashboard') {
+                    steps {
+                        dir ('bitflow-controller-dashboard') {
+                            sh 'docker run -u $(id -u) --rm -v "$(pwd):/app" trion/ng-cli-karma ng test --watch false'
+                        }
+                    }
+                }
                 stage('SonarQube') {
                     steps {
                         script {
