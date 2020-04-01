@@ -99,10 +99,10 @@ func (main *Main) executeMain() int {
 
 	// Serve default metrics and metrics about custom resource objects
 	if err := main.serveCRMetrics(cfg); err != nil {
-		log.Warn("Failed to generate and serve custom resource metrics:", err)
+		log.Warnln("Failed to generate and serve custom resource metrics:", err)
 	}
 	if err := main.serveMetrics(namespace, ctx, cfg); err != nil {
-		log.Warn("Failed to serve metrics:", err)
+		log.Warnln("Failed to serve metrics:", err)
 	}
 
 	log.Infoln("Starting the operator")
