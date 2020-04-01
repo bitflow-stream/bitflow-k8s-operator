@@ -7,8 +7,7 @@ pipeline {
         registryController = 'bitflowstream/bitflow-controller'
         registryProxy = 'bitflowstream/bitflow-api-proxy'
         registryCredential = 'dockerhub'
-        controllerImage = '' // Empty variables must be declared here to allow passing an object between the stages.
-        proxyImage = ''
+        image = '' // Empty variable for sharing between stages
     }
     stages {
         stage('Build & test') {
@@ -22,10 +21,7 @@ pipeline {
                 stage('Git') {
                     steps {
                         script {
-                            env.GIT_COMMITTER_EMAIL = sh(
-                                script: "git --no-pager show -s --format='%ae'",
-                                returnStdout: true
-                                ).trim()
+                            env.GIT_COMMITTER_EMAIL = sh(script: "git --no-pager show -s --format='%ae'", returnStdout: true).trim()
                         }
                     }
                 }
@@ -113,8 +109,9 @@ pipeline {
                     steps {
                         sh 'bitflow-api-proxy/build/native-build.sh'
                         script {
-                            proxyImage = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build/_output/bin'
+                            image = docker.build registryProxy + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-api-proxy/build/alpine-prebuilt.Dockerfile bitflow-api-proxy/build/_output/bin'
                         }
+                        sh 'bitflow-api-proxy/build/test-images.sh $BRANCH_NAME-build-$BUILD_NUMBER'
                     }
                 }
                 stage('Docker push') {
@@ -124,8 +121,8 @@ pipeline {
                     steps {
                         script {
                             docker.withRegistry('', registryCredential) {
-                                proxyImage.push("build-$BUILD_NUMBER")
-                                proxyImage.push("latest")
+                                image.push("build-$BUILD_NUMBER")
+                                image.push("latest")
                             }
                         }
                     }
@@ -144,8 +141,9 @@ pipeline {
                     steps {
                         sh 'bitflow-controller/build/native-build.sh'
                         script {
-                            controllerImage = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build/_output/bin'
+                            image = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build/_output/bin'
                         }
+                        sh 'bitflow-controller/build/test-images.sh $BRANCH_NAME-build-$BUILD_NUMBER'
                     }
                 }
                 stage('Docker push') {
@@ -155,8 +153,8 @@ pipeline {
                     steps {
                         script {
                             docker.withRegistry('', registryCredential) {
-                                controllerImage.push("build-$BUILD_NUMBER")
-                                controllerImage.push("latest")
+                                image.push("build-$BUILD_NUMBER")
+                                image.push("latest")
                             }
                         }
                     }
