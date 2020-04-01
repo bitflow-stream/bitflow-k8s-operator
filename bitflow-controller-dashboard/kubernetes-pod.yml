@@ -8,7 +8,7 @@ spec:
   serviceAccount: bitflow-controller
   restartPolicy: Always
   containers:
-  - image: teambitflow/bitflow-controller-dashboard:v1
+  - image: bitflowstream/bitflow-controller-dashboard:v1
     tty: true
     imagePullPolicy: Always
     name: aggregator
