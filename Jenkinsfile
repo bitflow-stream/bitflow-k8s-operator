@@ -6,6 +6,7 @@ pipeline {
     environment {
         registryController = 'bitflowstream/bitflow-controller'
         registryProxy = 'bitflowstream/bitflow-api-proxy'
+        registryDashboard = 'bitflowstream/bitflow-controller-dashboard'
         registryCredential = 'dockerhub'
         image = '' // Empty variable for sharing between stages
     }
@@ -66,7 +67,16 @@ pipeline {
                 stage('Test dashboard') {
                     steps {
                         dir ('bitflow-controller-dashboard') {
-                            sh 'docker run -u $(id -u) --rm -v "$(pwd):/app" trion/ng-cli-karma ng test --watch false'
+                            script {
+                                // TODO mount npm dependency cache folder to reduce build time
+                                docker.image('trion/ng-cli-karma:1.4.2').inside {
+                                    withEnv(["NPM_CONFIG_LOGLEVEL=warn"]) {
+                                        sh 'npm install'
+                                    }
+                                    sh 'ng test --progress=false --watch false'
+                                    junit '**/test-results.xml'
+                               }
+                            }
                         }
                     }
                 }
@@ -151,6 +161,35 @@ pipeline {
                             image = docker.build registryController + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller/build/alpine-prebuilt.Dockerfile bitflow-controller/build/_output/bin'
                         }
                         sh 'bitflow-controller/build/test-image.sh $BRANCH_NAME-build-$BUILD_NUMBER'
+                    }
+                }
+                stage('Docker push') {
+                    when {
+                        branch 'master'
+                    }
+                    steps {
+                        script {
+                            docker.withRegistry('', registryCredential) {
+                                image.push("build-$BUILD_NUMBER")
+                                image.push("latest")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Docker bitflow-controller-dashboard') {
+            agent {
+                label 'master'
+            }
+            stages {
+                stage('Prepare and build container') {
+                    steps {
+                        script {
+                            image = docker.build registryDashboard + ':$BRANCH_NAME-build-$BUILD_NUMBER', '-f bitflow-controller-dashboard/Dockerfile bitflow-controller-dashboard'
+                        }
+                        // TODO add a test-image.sh script
+                        // sh 'bitflow-controller-dashboard/build/test-image.sh $BRANCH_NAME-build-$BUILD_NUMBER'
                     }
                 }
                 stage('Docker push') {
