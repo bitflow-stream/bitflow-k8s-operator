@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bitflow-controller-dashboard
+  labels:
+    app: bitflow-controller-dashboard
+spec:
+  serviceAccount: bitflow-controller
+  restartPolicy: Always
+  containers:
+  - image: bitflowstream/bitflow-controller-dashboard:v1
+    tty: true
+    imagePullPolicy: Always
+    name: aggregator
+    ports:
+        - name: http
+          containerPort: 80
+    #command: []
+
