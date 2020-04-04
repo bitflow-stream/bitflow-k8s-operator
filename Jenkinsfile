@@ -69,7 +69,7 @@ pipeline {
                         dir ('bitflow-controller-dashboard') {
                             script {
                                 // TODO mount npm dependency cache folder to reduce build time
-                                docker.image('trion/ng-cli-karma:1.4.2').inside {
+                                docker.image('trion/ng-cli-karma:9.1.0').inside {
                                     withEnv(["NPM_CONFIG_LOGLEVEL=warn"]) {
                                         sh 'npm install'
                                     }
