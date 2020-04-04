@@ -1,7 +1,8 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {ModalDismissReasons, NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {AfterViewInit, Component, ElementRef, Input, NgZone, ViewChild} from '@angular/core';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {GraphElement} from '../../../externalized/definitions/definitions';
 import {
+  getAllCurrentGraphElementsWithStacks,
   getGraphElementByIdentifier,
   getRawDataFromDataSource,
   getRawDataFromPod,
@@ -25,7 +26,8 @@ export class ConfigModalComponent implements AfterViewInit {
     private readonly router: Router,
     private location: Location,
     private sharedService: SharedService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private ngZone: NgZone
   ) {
   }
 
@@ -36,28 +38,21 @@ export class ConfigModalComponent implements AfterViewInit {
 
   @ViewChild('content', {static: false}) theModal: ElementRef | undefined;
 
-  closeResult: string | undefined;
-
-  private static getDismissReason(reason: any): string {
-    if (reason === ModalDismissReasons.ESC) {
-      return 'by pressing ESC';
-    } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
-      return 'by clicking on a backdrop';
-    } else {
-      return `with: ${reason}`;
-    }
-  }
-
   selectedElement = () => getGraphElementByIdentifier(this.selectedIdentifier);
 
-  ngAfterViewInit(): void {
-    // TODO URL params don't open modals since commit 24c2f58b8aaa8b591b10101fcdc4c0938bee8279, probably has to do with async functions
+  async ngAfterViewInit() {
     this.route.paramMap.subscribe(params => {
-      let idParam = params.get('id');
-      if (idParam == null) {
-        return;
-      }
-      this.openModal(idParam);
+      this.ngZone.run(async () => {
+        let idParam = params.get('id');
+        if (idParam == null) {
+          return;
+        }
+
+        await new Promise(resolve => setTimeout(() => {
+          this.openModal(idParam);
+          resolve();
+        }, getAllCurrentGraphElementsWithStacks().length === 0 ? 500 : 0));
+      });
     });
   }
 
@@ -74,9 +69,12 @@ export class ConfigModalComponent implements AfterViewInit {
     });
   }
 
-  openModal(identifier: string) {
+  async openModal(identifier: string) {
+    this.selectedIdentifier = identifier;
+
     this.modalService.dismissAll();
     this.currentGraphElement = getGraphElementByIdentifier(identifier);
+
     if (this.currentGraphElement === undefined || this.currentGraphElement === null) {
       return;
     }
@@ -90,16 +88,9 @@ export class ConfigModalComponent implements AfterViewInit {
       return;
     }
 
-    this.selectedIdentifier = identifier;
-
-    this.modalService.open(this.theModal, {ariaLabelledBy: 'modal-basic-title', size: 'lg'}).result.then((result) => {
-      this.router.navigate(['']).then(() => {
-      });
-      this.closeResult = `Closed with: ${result}`;
-    }, (reason) => {
-      this.router.navigate(['']).then(() => {
-      });
-      this.closeResult = `Dismissed ${ConfigModalComponent.getDismissReason(reason)}`;
+    await this.modalService.open(this.theModal, {
+      ariaLabelledBy: 'modal-basic-title',
+      size: 'lg'
     });
   }
 
