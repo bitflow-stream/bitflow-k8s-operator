@@ -74,8 +74,7 @@ pipeline {
                                         sh 'npm install'
                                     }
                                     sh 'ng test --progress=false --watch false'
-                                    // TODO produce appropriate test results, archive them here, and import them into SonarQube
-                                    // junit '**/test-results.xml'
+                                    junit 'test-reports/*.xml'
                                }
                             }
                         }
