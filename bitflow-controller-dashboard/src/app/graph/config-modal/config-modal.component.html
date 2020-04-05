@@ -25,7 +25,7 @@
                   <select id="pod-select"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrlBySelectElement($event.target)">
+                          (change)="selectionChange($event.target)">
                     <option *ngFor="let pod of currentGraphElement.pod.podStack?.pods"
                             [value]="pod.name">{{pod.name}}</option>
                   </select>
@@ -43,7 +43,7 @@
                   <select id="pod-select-single"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrlBySelectElement($event.target)">
+                          (change)="selectionChange($event.target)">
                     <option [value]="currentGraphElement.pod?.name">{{currentGraphElement.pod?.name}}</option>
                   </select>
                 </div>
@@ -170,7 +170,7 @@
                   <select id="data-source-select"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrlBySelectElement($event.target)">
+                          (change)="selectionChange($event.target)">
                     <option *ngFor="let dataSource of currentGraphElement.dataSource.dataSourceStack?.dataSources"
                             [value]="dataSource.name">{{dataSource.name}}</option>
                   </select>
@@ -188,7 +188,7 @@
                   <select id="data-source-select-single"
                           [(ngModel)]="selectedIdentifier"
                           class="browser-default custom-select"
-                          (change)="updateUrlBySelectElement($event.target)">
+                          (change)="selectionChange($event.target)">
                     <option
                       [value]="currentGraphElement.dataSource?.name">{{currentGraphElement.dataSource?.name}}</option>
                   </select>
@@ -222,67 +222,60 @@
             <br>
 
 
-            <div
-              *ngIf="selectedElement().dataSource.labels != undefined && selectedElement().dataSource.labels.length !== 0">
-              <div class="card">
-                <div class="card-header">
-                  Labels
-                </div>
-                <div class="card-body">
-                  <div *ngFor="let label of selectedElement().dataSource.labels; index as i;">
-                    <div class="row">
-                      <div class="col">
-                        <label for="{{'data-source-label-key-' + i}}">Label {{i + 1}} Key:</label>
-                        <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
-                               [value]="label.key != undefined ? label.key : ''">
-                      </div>
-                      <div class="col">
-                        <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
-                        <div class="input-group">
-                          <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
-                                 [value]="label.value != undefined ? label.value : ''">
-                          <button type="button" class="btn btn-danger ml-3"
-                                  (click)="removeLabelFromDataSource(selectedElement(), i)"><i
-                            class="fa fa-trash"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+            <div class="card">
+              <div class="card-header">
+                Labels
+              </div>
+              <div class="card-body">
+                <div *ngFor="let labelGroup of dataSourceLabelsFormArray.controls; index as i">
                   <div class="row">
                     <div class="col">
-                      <button type="button" class="btn btn-block btn-success mt-3"
-                              (click)="addLabelToDataSource(selectedElement())"><i class="fa fa-plus-square"></i>
-                      </button>
-                      <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
-                        ignoriert.</small>
+                      <label for="{{'data-source-label-key-' + i}}">Label {{i + 1}} Key:</label>
+                      <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
+                             [formControl]="getControlFromGroup('key', labelGroup)">
+                    </div>
+                    <div class="col">
+                      <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                               [formControl]="getControlFromGroup('value', labelGroup)">
+                        <button type="button" class="btn btn-danger ml-3"
+                                (click)="removeLabelFromDataSourceForm(i)"><i
+                          class="fa fa-trash"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <br>
-            </div>
-
-
-            <div
-              *ngIf="selectedElement().dataSource.specUrl != undefined && selectedElement().dataSource.specUrl !== ''">
-              <div class="row">
-                <div class="col">
-                  <div class="card">
-                    <div class="card-header">
-                      Spec URL:
-                    </div>
-                    <div class="card-body">
-                      <!--suppress HtmlFormInputWithoutLabel -->
-                      <input type="text" class="form-control" id="data-source-spec-url"
-                             [value]="selectedElement().dataSource.specUrl"
-                             formControlName="specUrl">
-                    </div>
+                <div class="row">
+                  <div class="col">
+                    <button type="button" class="btn btn-block btn-success mt-3"
+                            (click)="addLabelToDataSourceForm()"><i class="fa fa-plus-square"></i>
+                    </button>
+                    <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
+                      ignoriert.</small>
                   </div>
                 </div>
               </div>
-              <br>
             </div>
+            <br>
+
+
+            <div class="row">
+              <div class="col">
+                <div class="card">
+                  <div class="card-header">
+                    Spec URL:
+                  </div>
+                  <div class="card-body">
+                    <!--suppress HtmlFormInputWithoutLabel -->
+                    <input type="text" class="form-control" id="data-source-spec-url"
+                           formControlName="specUrl">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
 
 
             <div

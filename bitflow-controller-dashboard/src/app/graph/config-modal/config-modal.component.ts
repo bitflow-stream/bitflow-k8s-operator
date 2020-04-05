@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, ElementRef, Input, NgZone, ViewChild} from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {GraphElement} from '../../../externalized/definitions/definitions';
+import {DataSource, GraphElement, Pod, Step} from '../../../externalized/definitions/definitions';
 import {
   getAllCurrentGraphElementsWithStacks,
   getGraphElementByIdentifier,
@@ -11,7 +11,7 @@ import {
 import {ActivatedRoute, Router} from '@angular/router';
 import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
-import {FormBuilder} from '@angular/forms';
+import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup} from '@angular/forms';
 
 @Component({
   selector: 'app-config-modal',
@@ -56,8 +56,13 @@ export class ConfigModalComponent implements AfterViewInit {
     });
   }
 
-  updateUrlBySelectElement(element: any) {
-    this.updateUrl('/id/' + element.value);
+  updateUrlBySelectElement(value: string) {
+    this.updateUrl('/id/' + value);
+  }
+
+  selectionChange(element: any) {
+    this.updateUrlBySelectElement(element.value);
+    this.fillForms();
   }
 
   updateUrl(url: string) {
@@ -87,6 +92,8 @@ export class ConfigModalComponent implements AfterViewInit {
       this.goto(this.currentGraphElement.podStack.pods[0].name);
       return;
     }
+
+    this.fillForms();
 
     await this.modalService.open(this.theModal, {
       ariaLabelledBy: 'modal-basic-title',
@@ -122,6 +129,16 @@ export class ConfigModalComponent implements AfterViewInit {
         dataSource.specUrl = specUrl;
       }
 
+      dataSource.labels = [];
+      let dataSourceLabelsFormArray = this.dataSourceLabelsFormArray;
+      for (let i = 0; i < dataSourceLabelsFormArray.length; i++) {
+        let dataSourceLabelsFormGroup = dataSourceLabelsFormArray.at(i);
+        dataSource.labels.push({
+          key: dataSourceLabelsFormGroup.value['key'],
+          value: dataSourceLabelsFormGroup.value['value']
+        });
+      }
+
       console.log(getRawDataFromDataSource(dataSource));
       // TODO save in kubernetes
     }
@@ -142,11 +159,11 @@ export class ConfigModalComponent implements AfterViewInit {
     raw: []
   });
 
-  dataSourceFormData = this.fb.group({
-    specUrl: []
-    // TODO labels
-    // TODO removing / adding labels
+  dataSourceFormData: FormGroup = this.fb.group({
+    'specUrl': this.fb.control(''),
+    'labels': this.fb.array([])
   });
+
 
   stepFormData = this.fb.group({
     template: []
@@ -156,17 +173,67 @@ export class ConfigModalComponent implements AfterViewInit {
     // TODO removing / adding outputs
   });
 
+  fillForms() {
+    let graphElement = this.selectedElement();
+    switch (graphElement.type) {
+      case "data-source":
+        this.fillDataSourceForm(graphElement.dataSource);
+        break;
+      case "pod":
+        this.fillPodForm(graphElement.pod);
+        break;
+      case "step":
+        this.fillStepForm(graphElement.step);
+        break;
+    }
+  }
+
   handleSubmit() {
     this.modalService.dismissAll();
     this.save(this.selectedElement())
   }
 
-  removeLabelFromDataSource(graphElement: GraphElement, index: number) {
-    graphElement.dataSource.labels.splice(index, 1);
+  removeLabelFromDataSourceForm(index: number) {
+    this.dataSourceLabelsFormArray.removeAt(index);
   }
 
-  addLabelToDataSource(graphElement: GraphElement) {
-    graphElement.dataSource.labels.push({key: '', value: ''})
+  addLabelToDataSourceForm() {
+    this.dataSourceLabelsFormArray.push(
+      this.fb.group({
+        key: this.fb.control(''),
+        value: this.fb.control('')
+      })
+    );
+  }
+
+  get dataSourceLabelsFormArray() {
+    return this.dataSourceFormData.get('labels') as FormArray;
+  }
+
+  getControlFromGroup(name: string, from: AbstractControl) {
+    return from.get(name) as FormControl;
+  }
+
+  private fillDataSourceForm(dataSource: DataSource) {
+    this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl));
+    let labels = this.fb.array([]);
+    for (let i = 0; i < dataSource.labels.length; i++) {
+      let label = dataSource.labels[i];
+      let labelGroup = this.fb.group({
+        key: this.fb.control(label.key),
+        value: this.fb.control(label.value)
+      });
+      labels.push(labelGroup);
+    }
+    this.dataSourceFormData.setControl('labels', labels);
+  }
+
+  // @ts-ignore
+  private fillPodForm(pod: Pod) {
+  }
+
+  // @ts-ignore
+  private fillStepForm(step: Step) {
   }
 
 }
