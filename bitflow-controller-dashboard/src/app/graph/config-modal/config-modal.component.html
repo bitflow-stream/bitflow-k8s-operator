@@ -279,87 +279,87 @@
                              formControlName="specUrl">
                     </div>
                   </div>
+                </div>
               </div>
+              <br>
             </div>
-            <br>
-          </div>
 
 
-          <div
-            *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
-            <div class="row">
-              <div class="col">
+            <div
+              *ngIf="selectedElement().dataSource.validationError != undefined && selectedElement().dataSource.validationError !== ''">
+              <div class="row">
+                <div class="col">
 
-                <div class="card">
-                  <div class="card-header">
-                    Validation Error
+                  <div class="card">
+                    <div class="card-header">
+                      Validation Error
+                    </div>
+                    <div class="card-body">
+                      <!--suppress HtmlFormInputWithoutLabel -->
+                      <input type="text" class="form-control" id="data-source-validation-error" disabled="disabled"
+                             [value]="selectedElement().dataSource.validationError">
+                    </div>
                   </div>
-                  <div class="card-body">
-                    <!--suppress HtmlFormInputWithoutLabel -->
-                    <input type="text" class="form-control" id="data-source-validation-error" disabled="disabled"
-                           [value]="selectedElement().dataSource.validationError">
+                </div>
+              </div>
+              <br>
+            </div>
+
+
+            <div *ngIf="selectedElement().dataSource.hasOutputName">
+              <div class="row">
+                <div class="col">
+                  <div class="card">
+                    <div class="card-header">
+                      Output Name
+                    </div>
+                    <div class="card-body">
+                      <!--suppress HtmlFormInputWithoutLabel -->
+                      <input type="text" class="form-control" id="dataSourceOutputName" disabled="disabled"
+                             [value]="selectedElement().dataSource.outputName">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <br>
+            </div>
+
+
+            <div *ngIf="selectedElement().dataSource.hasCreatorPod">
+              <div class="row">
+                <div class="col">
+
+                  <div class="card">
+                    <div class="card-header">
+                      Creator Pod Name
+                    </div>
+                    <div class="card-body">
+                      <!--suppress HtmlFormInputWithoutLabel -->
+                      <input type="text" class="form-control" id="dataSourceCreatorPodName" disabled="disabled"
+                             [value]="selectedElement().dataSource.creatorPod.name">
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             <br>
-          </div>
 
 
-          <div *ngIf="selectedElement().dataSource.hasOutputName">
             <div class="row">
               <div class="col">
                 <div class="card">
                   <div class="card-header">
-                    Output Name
+                    Raw Data
                   </div>
                   <div class="card-body">
                     <!--suppress HtmlFormInputWithoutLabel -->
-                    <input type="text" class="form-control" id="dataSourceOutputName" disabled="disabled"
-                           [value]="selectedElement().dataSource.outputName">
+                    <textarea class="form-control" id="dataSourceRawData" rows="8"
+                              disabled="disabled"
+                              [value]="selectedElement().dataSource?.raw"></textarea>
                   </div>
                 </div>
               </div>
             </div>
-            <br>
-          </div>
-
-
-          <div *ngIf="selectedElement().dataSource.hasCreatorPod">
-            <div class="row">
-              <div class="col">
-
-                <div class="card">
-                  <div class="card-header">
-                    Creator Pod Name
-                  </div>
-                  <div class="card-body">
-                    <!--suppress HtmlFormInputWithoutLabel -->
-                    <input type="text" class="form-control" id="dataSourceCreatorPodName" disabled="disabled"
-                           [value]="selectedElement().dataSource.creatorPod.name">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <br>
-
-
-          <div class="row">
-            <div class="col">
-              <div class="card">
-                <div class="card-header">
-                  Raw Data
-                </div>
-                <div class="card-body">
-                  <!--suppress HtmlFormInputWithoutLabel -->
-                  <textarea class="form-control" id="dataSourceRawData" rows="8"
-                            disabled="disabled"
-                            [value]="selectedElement().dataSource?.raw"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
           </div>
         </div>
       </div>
