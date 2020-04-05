@@ -112,6 +112,7 @@ export class ConfigModalComponent implements AfterViewInit {
       }
 
       console.log(getRawDataFromStep(step));
+      // TODO save in kubernetes
     }
     if (graphElement.type === 'data-source') {
       let dataSource = graphElement.dataSource;
@@ -122,6 +123,7 @@ export class ConfigModalComponent implements AfterViewInit {
       }
 
       console.log(getRawDataFromDataSource(dataSource));
+      // TODO save in kubernetes
     }
     if (graphElement.type === 'pod') {
       let pod = graphElement.pod;
@@ -132,6 +134,7 @@ export class ConfigModalComponent implements AfterViewInit {
       }
 
       console.log(getRawDataFromPod(pod));
+      // TODO save in kubernetes
     }
   }
 
@@ -156,6 +159,14 @@ export class ConfigModalComponent implements AfterViewInit {
   handleSubmit() {
     this.modalService.dismissAll();
     this.save(this.selectedElement())
+  }
+
+  removeLabelFromDataSource(graphElement: GraphElement, index: number) {
+    graphElement.dataSource.labels.splice(index, 1);
+  }
+
+  addLabelToDataSource(graphElement: GraphElement) {
+    graphElement.dataSource.labels.push({key: '', value: ''})
   }
 
 }

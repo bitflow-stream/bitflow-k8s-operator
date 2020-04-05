@@ -238,9 +238,24 @@
                       </div>
                       <div class="col">
                         <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
-                        <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
-                               [value]="label.value != undefined ? label.value : ''">
+                        <div class="input-group">
+                          <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                                 [value]="label.value != undefined ? label.value : ''">
+                          <button type="button" class="btn btn-danger ml-3"
+                                  (click)="removeLabelFromDataSource(selectedElement(), i)"><i
+                            class="fa fa-trash"></i>
+                          </button>
+                        </div>
                       </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <button type="button" class="btn btn-block btn-success mt-3"
+                              (click)="addLabelToDataSource(selectedElement())"><i class="fa fa-plus-square"></i>
+                      </button>
+                      <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
+                        ignoriert.</small>
                     </div>
                   </div>
                 </div>
