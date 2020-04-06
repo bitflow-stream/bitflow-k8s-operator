@@ -229,10 +229,14 @@
                       <div class="col">
                         <div class="input-group">
                           <label style="position: relative; top: 7px;" for="{{'data-source-label-key-' + i}}">{{i + 1}}.&nbsp;</label>
-                          <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
+                          <input type="text"
+                                 [ngClass]="{'is-valid': !selectedElement().readOnly && getControlFromGroup('key', labelGroup).valid, 'is-invalid': !selectedElement().readOnly && getControlFromGroup('key', labelGroup).invalid}"
+                                 class="form-control" id="{{'data-source-label-key-' + i}}"
                                  [formControl]="getControlFromGroup('key', labelGroup)">
                           <label style="position: relative; top: 7px;" for="{{'data-source-label-value-' + i}}">&nbsp;=&nbsp;</label>
-                          <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                          <input type="text"
+                                 [ngClass]="{'is-valid': !selectedElement().readOnly && getControlFromGroup('value', labelGroup).valid, 'is-invalid': !selectedElement().readOnly && getControlFromGroup('value', labelGroup).invalid}"
+                                 class="form-control" id="{{'data-source-label-value-' + i}}"
                                  [formControl]="getControlFromGroup('value', labelGroup)">
                           <button *ngIf="!selectedElement().readOnly" type="button" class="btn btn-danger ml-3"
                                   (click)="removeLabelFromDataSourceForm(i)"><i
@@ -247,7 +251,9 @@
                   <div class="col">
                     <div *ngIf="!selectedElement().readOnly">
                       <button type="button" class="btn btn-block btn-success mt-3"
-                              (click)="addLabelToDataSourceForm()"><i class="fa fa-plus-square"></i>
+                              (click)="addLabelToDataSourceForm()"
+                              [disabled]="dataSourceLabelsFormArray.invalid">
+                        <i class="fa fa-plus-square"></i>
                       </button>
                       <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
                         ignoriert.</small>
@@ -268,6 +274,7 @@
                   <div class="card-body">
                     <!--suppress HtmlFormInputWithoutLabel -->
                     <input type="text" class="form-control" id="data-source-spec-url"
+                           [ngClass]="{'is-valid': !selectedElement().readOnly && dataSourceSpecUrlFormControl.valid, 'is-invalid': !selectedElement().readOnly && dataSourceSpecUrlFormControl.invalid}"
                            formControlName="specUrl">
                   </div>
                 </div>
@@ -356,7 +363,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
-        <button *ngIf="!selectedElement().readOnly" type="submit" class="btn btn-outline-dark">
+        <button *ngIf="!selectedElement().readOnly" type="submit" class="btn btn-outline-dark"
+                [disabled]="!dataSourceFormData.valid">
           Save
         </button>
       </div>
@@ -405,6 +413,7 @@
                     <div class="col">
                       <label for="{{'ingest-key-' + i}}">Key:</label>
                       <input type="text" class="form-control" id="{{'ingest-key-' + i}}"
+                             [ngClass]="getControlFromGroup('key', ingestGroup).valid ? 'is-valid':'is-invalid'"
                              [formControl]="getControlFromGroup('key', ingestGroup)">
                     </div>
                     <div class="col">
@@ -428,7 +437,8 @@
                 <div class="row">
                   <div class="col">
                     <button type="button" class="btn btn-block btn-success mt-3"
-                            (click)="addIngestToStepForm()">
+                            (click)="addIngestToStepForm()"
+                            [disabled]="stepIngestsFormArray.invalid">
                       <i class="fa fa-plus-square"></i>
                     </button>
                     <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
@@ -454,6 +464,7 @@
                     <div class="col-4">
                       <label for="{{'output-name-' + i}}">Name:</label>
                       <input type="text" class="form-control" id="{{'output-name-' + i}}"
+                             [ngClass]="getControlFromGroup('name', outputGroup).valid ? 'is-valid':'is-invalid'"
                              [formControl]="getControlFromGroup('name', outputGroup)">
                     </div>
                     <div class="col-8">
@@ -462,6 +473,7 @@
                           <label for="{{'output-url-' + i}}">URL:</label>
                           <div class="input-group">
                             <input type="text" class="form-control" id="{{'output-url-' + i}}"
+                                   [ngClass]="getControlFromGroup('url', outputGroup).valid ? 'is-valid':'is-invalid'"
                                    [formControl]="getControlFromGroup('url', outputGroup)">
                             <button type="button" class="btn btn-danger ml-3"
                                     (click)="removeOutputFromStepForm(i)"><i
@@ -478,12 +490,15 @@
                                 <label style="position: relative; top: 7px;" for="{{'output-label-key-' + j}}">{{j + 1}}
                                   .&nbsp;</label>
                                 <input type="text" class="form-control" id="{{'output-label-key-' + j}}"
+                                       [ngClass]="getControlFromGroup('key', labelGroup).valid ? 'is-valid':'is-invalid'"
                                        [formControl]="getControlFromGroup('key', labelGroup)">
                                 <label style="position: relative; top: 7px;" for="{{'output-label-value-' + j}}">&nbsp;=&nbsp;</label>
                                 <input type="text" class="form-control" id="{{'output-label-value-' + j}}"
+                                       [ngClass]="getControlFromGroup('value', labelGroup).valid ? 'is-valid':'is-invalid'"
                                        [formControl]="getControlFromGroup('value', labelGroup)">
                                 <button type="button" class="btn btn-warning ml-3"
-                                        (click)="removeLabelFromStepOutputLabelsFormArray(getOutputLabelsFormArray(outputGroup), j)">
+                                        (click)="removeLabelFromStepOutputLabelsFormArray(getOutputLabelsFormArray(outputGroup), j)"
+                                        [disabled]="getOutputLabelsFormArray(outputGroup).length <= 1">
                                   <i class="fa fa-trash"></i>
                                 </button>
                               </div>
@@ -494,7 +509,8 @@
                       <div class="row">
                         <div class="col">
                           <button type="button" class="btn btn-block btn-success mt-3"
-                                  (click)="addLabelToStepOutput(getOutputLabelsFormArray(outputGroup))">
+                                  (click)="addLabelToStepOutput(getOutputLabelsFormArray(outputGroup))"
+                                  [disabled]="getOutputLabelsFormArray(outputGroup).invalid">
                             <i class="fa fa-plus-square"></i> Add Label
                           </button>
                           <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys
@@ -507,7 +523,8 @@
                 <div class="row">
                   <div class="col">
                     <button type="button" class="btn btn-block btn-success mt-3"
-                            (click)="addOutputToStepForm()">
+                            (click)="addOutputToStepForm()"
+                            [disabled]="stepOutputsFormArray.invalid">
                       <i class="fa fa-plus-square"></i>
                     </button>
                     <small class="form-text text-muted ml-2">Jeder Name darf nur 1x existieren. Doppelte Namen werden
@@ -554,6 +571,7 @@
             <div class="card-body">
               <!--suppress HtmlFormInputWithoutLabel -->
               <textarea class="form-control" id="step-template" rows="8"
+                        [ngClass]="stepTemplateFormControl.valid ? 'is-valid':'is-invalid'"
                         formControlName="template">
               </textarea>
             </div>
@@ -581,7 +599,8 @@
 
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-outline-dark">
+        <button type="submit" class="btn btn-outline-dark"
+                [disabled]="!stepFormData.valid">
           Save
         </button>
       </div>

@@ -11,7 +11,8 @@ import {
 import {ActivatedRoute, Router} from '@angular/router';
 import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
-import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup} from '@angular/forms';
+import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {RxwebValidators} from "@rxweb/reactive-form-validators";
 
 @Component({
   selector: 'app-config-modal',
@@ -291,8 +292,11 @@ export class ConfigModalComponent implements AfterViewInit {
   addLabelToDataSourceForm() {
     this.dataSourceLabelsFormArray.push(
       this.fb.group({
-        key: this.fb.control(''),
-        value: this.fb.control('')
+        key: this.fb.control('', [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
+        value: this.fb.control('', Validators.required)
       })
     );
   }
@@ -300,7 +304,10 @@ export class ConfigModalComponent implements AfterViewInit {
   addIngestToStepForm() {
     this.stepIngestsFormArray.push(
       this.fb.group({
-        key: this.fb.control(''),
+        key: this.fb.control('', [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
         value: this.fb.control(''),
         check: this.fb.control('')
       })
@@ -310,9 +317,20 @@ export class ConfigModalComponent implements AfterViewInit {
   addOutputToStepForm() {
     this.stepOutputsFormArray.push(
       this.fb.group({
-        name: this.fb.control(''),
-        url: this.fb.control(''),
-        labels: this.fb.array([])
+        name: this.fb.control('', [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
+        url: this.fb.control('', Validators.required),
+        labels: this.fb.array([
+          this.fb.group({
+            key: this.fb.control('', [
+              Validators.required,
+              RxwebValidators.unique()
+            ]),
+            value: this.fb.control('', Validators.required)
+          })
+        ])
       })
     );
   }
@@ -320,8 +338,11 @@ export class ConfigModalComponent implements AfterViewInit {
   addLabelToStepOutput(stepOutputLabelsFormArray: AbstractControl) {
     (<FormArray>stepOutputLabelsFormArray).push(
       this.fb.group({
-        key: this.fb.control(''),
-        value: this.fb.control('')
+        key: this.fb.control('', [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
+        value: this.fb.control('', Validators.required)
       })
     );
   }
@@ -330,12 +351,20 @@ export class ConfigModalComponent implements AfterViewInit {
     return this.dataSourceFormData.get('labels') as FormArray;
   }
 
+  get dataSourceSpecUrlFormControl() {
+    return this.dataSourceFormData.get('specUrl') as FormControl;
+  }
+
   get stepIngestsFormArray() {
     return this.stepFormData.get('ingests') as FormArray;
   }
 
   get stepOutputsFormArray() {
     return this.stepFormData.get('outputs') as FormArray;
+  }
+
+  get stepTemplateFormControl() {
+    return this.stepFormData.get('template') as FormControl;
   }
 
   getOutputLabelsFormArray(outputGroup: AbstractControl) {
@@ -347,7 +376,7 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   private fillDataSourceForm(dataSource: DataSource) {
-    this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl));
+    this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl, Validators.required));
     if (this.selectedElement().readOnly) {
       this.dataSourceFormData.controls['specUrl'].disable();
     }
@@ -356,8 +385,13 @@ export class ConfigModalComponent implements AfterViewInit {
     for (let i = 0; i < dataSource.labels?.length; i++) {
       let label = dataSource.labels[i];
       let labelGroup = this.fb.group({
-        key: this.fb.control(label.key != undefined ? label.key : ''),
-        value: this.fb.control(label.value != undefined ? label.value : '')
+        key: this.fb.control(label.key != undefined ? label.key : '', [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
+        value: this.fb.control(label.value != undefined ? label.value : '', [
+          Validators.required
+        ])
       });
       if (this.selectedElement().readOnly) {
         labelGroup.controls['key'].disable();
@@ -374,14 +408,19 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   private fillStepForm(step: Step) {
-    this.stepFormData.setControl('template', this.fb.control(step.template));
+    this.stepFormData.setControl('template', this.fb.control(step.template, [
+      Validators.required,
+    ]));
 
     let ingests = this.fb.array([]);
     for (let i = 0; i < step.ingests?.length; i++) {
       let ingest = step.ingests[i];
       let ingestGroup = this.fb.group({
         // TODO Should empty fields be '', null, or non-existent? Currently ''. Check what API provides.
-        key: this.fb.control(ingest.key == undefined ? '' : ingest.key),
+        key: this.fb.control(ingest.key == undefined ? '' : ingest.key, [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
         value: this.fb.control(ingest.value == undefined ? '' : ingest.value),
         check: this.fb.control(ingest.check == undefined ? '' : ingest.check)
       });
@@ -393,15 +432,21 @@ export class ConfigModalComponent implements AfterViewInit {
     for (let i = 0; i < step.outputs?.length; i++) {
       let output = step.outputs[i];
       let outputGroup = this.fb.group({
-        name: this.fb.control(output.name == undefined ? '' : output.name),
-        url: this.fb.control(output.url == undefined ? '' : output.url)
+        name: this.fb.control(output.name == undefined ? '' : output.name, [
+          Validators.required,
+          RxwebValidators.unique()
+        ]),
+        url: this.fb.control(output.url == undefined ? '' : output.url, Validators.required)
       });
       let outputLabels = this.fb.array([]);
       for (let j = 0; j < output.labels?.length; j++) {
         let label = output.labels[j];
         let labelGroup = this.fb.group({
-          key: this.fb.control(label.key == undefined ? '' : label.key),
-          value: this.fb.control(label.value == undefined ? '' : label.value)
+          key: this.fb.control(label.key == undefined ? '' : label.key, [
+            Validators.required,
+            RxwebValidators.unique()
+          ]),
+          value: this.fb.control(label.value == undefined ? '' : label.value, Validators.required)
         });
         outputLabels.push(labelGroup);
       }
