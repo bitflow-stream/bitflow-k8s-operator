@@ -136,9 +136,6 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
-        <button type="submit" class="btn btn-outline-dark">
-          Save
-        </button>
       </div>
     </form>
   </div>
@@ -227,32 +224,34 @@
               </div>
               <div class="card-body">
                 <div *ngFor="let labelGroup of dataSourceLabelsFormArray.controls; index as i">
-                  <div class="row">
-                    <div class="col">
-                      <label for="{{'data-source-label-key-' + i}}">Label {{i + 1}} Key:</label>
-                      <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
-                             [formControl]="getControlFromGroup('key', labelGroup)">
-                    </div>
-                    <div class="col">
-                      <label for="{{'data-source-label-value-' + i}}">Label {{i + 1}} Value:</label>
-                      <div class="input-group">
-                        <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
-                               [formControl]="getControlFromGroup('value', labelGroup)">
-                        <button type="button" class="btn btn-danger ml-3"
-                                (click)="removeLabelFromDataSourceForm(i)"><i
-                          class="fa fa-trash"></i>
-                        </button>
+                  <div class="mt-1">
+                    <div class="row">
+                      <div class="col">
+                        <div class="input-group">
+                          <label style="position: relative; top: 7px;" for="{{'data-source-label-key-' + i}}">{{i + 1}}.&nbsp;</label>
+                          <input type="text" class="form-control" id="{{'data-source-label-key-' + i}}"
+                                 [formControl]="getControlFromGroup('key', labelGroup)">
+                          <label style="position: relative; top: 7px;" for="{{'data-source-label-value-' + i}}">&nbsp;=&nbsp;</label>
+                          <input type="text" class="form-control" id="{{'data-source-label-value-' + i}}"
+                                 [formControl]="getControlFromGroup('value', labelGroup)">
+                          <button *ngIf="!selectedElement().readOnly" type="button" class="btn btn-danger ml-3"
+                                  (click)="removeLabelFromDataSourceForm(i)"><i
+                            class="fa fa-trash"></i>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <button type="button" class="btn btn-block btn-success mt-3"
-                            (click)="addLabelToDataSourceForm()"><i class="fa fa-plus-square"></i>
-                    </button>
-                    <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
-                      ignoriert.</small>
+                    <div *ngIf="!selectedElement().readOnly">
+                      <button type="button" class="btn btn-block btn-success mt-3"
+                              (click)="addLabelToDataSourceForm()"><i class="fa fa-plus-square"></i>
+                      </button>
+                      <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
+                        ignoriert.</small>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -333,8 +332,8 @@
                   </div>
                 </div>
               </div>
+              <br>
             </div>
-            <br>
 
 
             <div class="row">
@@ -357,7 +356,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-dark" (click)="filterGraph(selectedElement())">Filter</button>
-        <button type="submit" class="btn btn-outline-dark">
+        <button *ngIf="!selectedElement().readOnly" type="submit" class="btn btn-outline-dark">
           Save
         </button>
       </div>
@@ -472,21 +471,22 @@
                         </div>
                       </div>
                       <div *ngFor="let labelGroup of getOutputLabelsFormArray(outputGroup).controls; index as j;">
-                        <div class="row">
-                          <div class="col">
-                            <label for="{{'output-label-key-' + j}}">Label {{j + 1}} Key:</label>
-                            <input type="text" class="form-control" id="{{'output-label-key-' + j}}"
-                                   [formControl]="getControlFromGroup('key', labelGroup)">
-                          </div>
-                          <div class="col">
-                            <label for="{{'output-label-value-' + j}}">Label {{j + 1}} Value:</label>
-                            <div class="input-group">
-                              <input type="text" class="form-control" id="{{'output-label-value-' + j}}"
-                                     [formControl]="getControlFromGroup('value', labelGroup)">
-                              <button type="button" class="btn btn-warning ml-3"
-                                      (click)="removeLabelFromStepOutputLabelsFormArray(getOutputLabelsFormArray(outputGroup), j)">
-                                <i class="fa fa-trash"></i>
-                              </button>
+                        <div class="mt-1">
+                          <div class="row">
+                            <div class="col">
+                              <div class="input-group">
+                                <label style="position: relative; top: 7px;" for="{{'output-label-key-' + j}}">{{j + 1}}
+                                  .&nbsp;</label>
+                                <input type="text" class="form-control" id="{{'output-label-key-' + j}}"
+                                       [formControl]="getControlFromGroup('key', labelGroup)">
+                                <label style="position: relative; top: 7px;" for="{{'output-label-value-' + j}}">&nbsp;=&nbsp;</label>
+                                <input type="text" class="form-control" id="{{'output-label-value-' + j}}"
+                                       [formControl]="getControlFromGroup('value', labelGroup)">
+                                <button type="button" class="btn btn-warning ml-3"
+                                        (click)="removeLabelFromStepOutputLabelsFormArray(getOutputLabelsFormArray(outputGroup), j)">
+                                  <i class="fa fa-trash"></i>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -498,7 +498,7 @@
                             <i class="fa fa-plus-square"></i> Add Label
                           </button>
                           <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys
-                            werden ignoriert.</small>
+                            werden ignoriert. Es muss mindestens ein Label existieren.</small>
                         </div>
                       </div>
                     </div>

@@ -38,7 +38,48 @@ export class ConfigModalComponent implements AfterViewInit {
 
   @ViewChild('content', {static: false}) theModal: ElementRef | undefined;
 
-  selectedElement = () => getGraphElementByIdentifier(this.selectedIdentifier);
+  selectedElementCache: GraphElement;
+
+  selectedElement = () => {
+    let selectedElement: GraphElement;
+    if (this.selectedElementCache != undefined) {
+      if (this.selectedElementCache.type === 'step') {
+        if (this.selectedElementCache.step.name === this.selectedIdentifier) {
+          selectedElement = this.selectedElementCache;
+        }
+      }
+      if (this.selectedElementCache.type === 'data-source') {
+        if (this.selectedElementCache.dataSource.name === this.selectedIdentifier) {
+          selectedElement = this.selectedElementCache;
+        }
+      }
+      if (this.selectedElementCache.type === 'pod') {
+        if (this.selectedElementCache.pod.name === this.selectedIdentifier) {
+          selectedElement = this.selectedElementCache;
+        }
+      }
+      if (this.selectedElementCache.type === 'data-source-stack') {
+        alert('selectedElementCache is DataSourceStack')
+      }
+      if (this.selectedElementCache.type === 'pod-stack') {
+        alert('selectedElementCache is PodStack')
+      }
+    }
+
+    if (selectedElement == undefined) {
+      selectedElement = getGraphElementByIdentifier(this.selectedIdentifier);
+    }
+
+
+    selectedElement.readOnly = selectedElement.type !== 'step';
+    if (selectedElement.type === 'data-source') {
+      if (selectedElement.dataSource.hasCreatorPod === false) {
+        selectedElement.readOnly = false;
+      }
+    }
+
+    return selectedElement;
+  };
 
   async ngAfterViewInit() {
     this.route.paramMap.subscribe(params => {
@@ -307,6 +348,9 @@ export class ConfigModalComponent implements AfterViewInit {
 
   private fillDataSourceForm(dataSource: DataSource) {
     this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl));
+    if (this.selectedElement().readOnly) {
+      this.dataSourceFormData.controls['specUrl'].disable();
+    }
 
     let labels = this.fb.array([]);
     for (let i = 0; i < dataSource.labels?.length; i++) {
@@ -315,6 +359,10 @@ export class ConfigModalComponent implements AfterViewInit {
         key: this.fb.control(label.key != undefined ? label.key : ''),
         value: this.fb.control(label.value != undefined ? label.value : '')
       });
+      if (this.selectedElement().readOnly) {
+        labelGroup.controls['key'].disable();
+        labelGroup.controls['value'].disable();
+      }
       labels.push(labelGroup);
     }
     this.dataSourceFormData.setControl('labels', labels);
@@ -322,6 +370,7 @@ export class ConfigModalComponent implements AfterViewInit {
 
   private fillPodForm(pod: Pod) {
     this.podFormData.setControl('raw', this.fb.control(pod.raw));
+    this.podFormData.controls['raw'].disable();
   }
 
   private fillStepForm(step: Step) {

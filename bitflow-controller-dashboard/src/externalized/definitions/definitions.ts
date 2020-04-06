@@ -45,6 +45,7 @@ export interface GraphElement {
   pod?: Pod;
   dataSourceStack?: DataSourceStack
   podStack?: PodStack;
+  readOnly?: boolean;
 }
 
 export interface DataSourceStack {
