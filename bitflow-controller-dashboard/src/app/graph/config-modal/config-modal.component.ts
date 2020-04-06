@@ -175,8 +175,8 @@ export class ConfigModalComponent implements AfterViewInit {
   });
 
   dataSourceFormData: FormGroup = this.fb.group({
-    'specUrl': this.fb.control(''),
-    'labels': this.fb.array([])
+    specUrl: this.fb.control(''),
+    labels: this.fb.array([])
   });
 
 
