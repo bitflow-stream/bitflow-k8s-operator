@@ -122,6 +122,17 @@ export class ConfigModalComponent implements AfterViewInit {
         step.template = template;
       }
 
+      step.ingests = [];
+      let stepIngestsFormArray = this.stepIngestsFormArray;
+      for (let i = 0; i < stepIngestsFormArray.length; i++) {
+        let stepIngestsFormGroup = stepIngestsFormArray.at(i);
+        step.ingests.push({
+          key: stepIngestsFormGroup.value['key'],
+          value: stepIngestsFormGroup.value['value'],
+          check: stepIngestsFormGroup.value['check']
+        });
+      }
+
       console.log(getRawDataFromStep(step));
       // TODO save in kubernetes
     }
@@ -170,7 +181,8 @@ export class ConfigModalComponent implements AfterViewInit {
 
 
   stepFormData = this.fb.group({
-    template: this.fb.control('')
+    template: this.fb.control(''),
+    ingests: this.fb.array([])
   });
 
   fillForms() {
@@ -210,12 +222,17 @@ export class ConfigModalComponent implements AfterViewInit {
     return this.dataSourceFormData.get('labels') as FormArray;
   }
 
+  get stepIngestsFormArray() {
+    return this.stepFormData.get('ingests') as FormArray;
+  }
+
   getControlFromGroup(name: string, from: AbstractControl) {
     return from.get(name) as FormControl;
   }
 
   private fillDataSourceForm(dataSource: DataSource) {
     this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl));
+
     let labels = this.fb.array([]);
     for (let i = 0; i < dataSource.labels.length; i++) {
       let label = dataSource.labels[i];
@@ -234,6 +251,18 @@ export class ConfigModalComponent implements AfterViewInit {
 
   private fillStepForm(step: Step) {
     this.stepFormData.setControl('template', this.fb.control(step.template));
+
+    let ingests = this.fb.array([]);
+    for (let i = 0; i < step.ingests.length; i++) {
+      let ingest = step.ingests[i];
+      let ingestGroup = this.fb.group({
+        key: this.fb.control(ingest.key),
+        value: this.fb.control(ingest.value),
+        check: this.fb.control(ingest.check),
+      });
+      ingests.push(ingestGroup);
+    }
+    this.stepFormData.setControl('ingests', ingests);
   }
 
 }

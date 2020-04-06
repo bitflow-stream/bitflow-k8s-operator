@@ -401,22 +401,22 @@
                 Ingests
               </div>
               <div class="card-body">
-                <div *ngFor="let ingest of currentGraphElement.step.ingests; index as i;">
+                <div *ngFor="let ingestGroup of stepIngestsFormArray.controls; index as i;">
                   <div class="row">
                     <div class="col">
                       <label for="{{'ingest-key-' + i}}">Key:</label>
                       <input type="text" class="form-control" id="{{'ingest-key-' + i}}"
-                             [value]="ingest.key != undefined ? ingest.key : ''">
-                  </div>
-                  <div class="col">
-                    <label for="{{'ingest-value-' + i}}">Value:</label>
-                    <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
-                           [value]="ingest.value != undefined ? ingest.value : ''">
+                             [formControl]="getControlFromGroup('key', ingestGroup)">
+                    </div>
+                    <div class="col">
+                      <label for="{{'ingest-value-' + i}}">Value:</label>
+                      <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
+                             [formControl]="getControlFromGroup('value', ingestGroup)">
                   </div>
                   <div class="col">
                     <label for="{{'ingest-check-' + i}}">Check:</label>
                     <input type="text" class="form-control" id="{{'ingest-check-' + i}}"
-                           [value]="ingest.check != undefined ? ingest.check : ''">
+                           [formControl]="getControlFromGroup('check', ingestGroup)">
                   </div>
                 </div>
               </div>
