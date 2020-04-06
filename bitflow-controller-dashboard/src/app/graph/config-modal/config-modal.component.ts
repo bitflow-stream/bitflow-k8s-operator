@@ -209,11 +209,25 @@ export class ConfigModalComponent implements AfterViewInit {
     this.dataSourceLabelsFormArray.removeAt(index);
   }
 
+  removeIngestFromStepForm(index: number) {
+    this.stepIngestsFormArray.removeAt(index);
+  }
+
   addLabelToDataSourceForm() {
     this.dataSourceLabelsFormArray.push(
       this.fb.group({
         key: this.fb.control(''),
         value: this.fb.control('')
+      })
+    );
+  }
+
+  addIngestToStepForm() {
+    this.stepIngestsFormArray.push(
+      this.fb.group({
+        key: this.fb.control(''),
+        value: this.fb.control(''),
+        check: this.fb.control('')
       })
     );
   }
@@ -237,8 +251,8 @@ export class ConfigModalComponent implements AfterViewInit {
     for (let i = 0; i < dataSource.labels.length; i++) {
       let label = dataSource.labels[i];
       let labelGroup = this.fb.group({
-        key: this.fb.control(label.key),
-        value: this.fb.control(label.value)
+        key: this.fb.control(label.key == undefined ? '' : label.key),
+        value: this.fb.control(label.value == undefined ? '' : label.value)
       });
       labels.push(labelGroup);
     }
@@ -256,9 +270,10 @@ export class ConfigModalComponent implements AfterViewInit {
     for (let i = 0; i < step.ingests.length; i++) {
       let ingest = step.ingests[i];
       let ingestGroup = this.fb.group({
-        key: this.fb.control(ingest.key),
-        value: this.fb.control(ingest.value),
-        check: this.fb.control(ingest.check),
+        // TODO Should empty fields be '', null, or non-existent? Currently ''. Check what API provides.
+        key: this.fb.control(ingest.key == undefined ? '' : ingest.key),
+        value: this.fb.control(ingest.value == undefined ? '' : ingest.value),
+        check: this.fb.control(ingest.check == undefined ? '' : ingest.check),
       });
       ingests.push(ingestGroup);
     }

@@ -415,12 +415,28 @@
                   </div>
                   <div class="col">
                     <label for="{{'ingest-check-' + i}}">Check:</label>
-                    <input type="text" class="form-control" id="{{'ingest-check-' + i}}"
-                           [formControl]="getControlFromGroup('check', ingestGroup)">
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="{{'ingest-check-' + i}}"
+                             [formControl]="getControlFromGroup('check', ingestGroup)">
+                      <button type="button" class="btn btn-danger ml-3"
+                              (click)="removeIngestFromStepForm(i)">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <button type="button" class="btn btn-block btn-success mt-3"
+                            (click)="addIngestToStepForm()">
+                      <i class="fa fa-plus-square"></i>
+                    </button>
+                    <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys werden
+                      ignoriert.</small>
                   </div>
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </div>
