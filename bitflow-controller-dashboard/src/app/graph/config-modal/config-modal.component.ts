@@ -98,6 +98,10 @@ export class ConfigModalComponent implements AfterViewInit {
     await this.modalService.open(this.theModal, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'lg'
+    }).result.then(() => {
+      this.router.navigate(['']);
+    }, () => {
+      this.router.navigate(['']);
     });
   }
 
