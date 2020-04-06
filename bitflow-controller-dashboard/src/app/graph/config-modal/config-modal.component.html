@@ -461,25 +461,58 @@
                       <div class="row">
                         <div class="col">
                           <label for="{{'output-url-' + i}}">URL:</label>
-                          <input type="text" class="form-control" id="{{'output-url-' + i}}"
-                                 [formControl]="getControlFromGroup('url', outputGroup)">
+                          <div class="input-group">
+                            <input type="text" class="form-control" id="{{'output-url-' + i}}"
+                                   [formControl]="getControlFromGroup('url', outputGroup)">
+                            <button type="button" class="btn btn-danger ml-3"
+                                    (click)="removeOutputFromStepForm(i)"><i
+                              class="fa fa-trash"></i>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <div *ngFor="let labelGroup of getOutputLabelsFormArray(outputGroup).controls; index as i;">
+                      <div *ngFor="let labelGroup of getOutputLabelsFormArray(outputGroup).controls; index as j;">
                         <div class="row">
                           <div class="col">
-                            <label for="{{'output-label-key-' + i}}">Label {{i + 1}} Key:</label>
-                            <input type="text" class="form-control" id="{{'output-label-key-' + i}}"
+                            <label for="{{'output-label-key-' + j}}">Label {{j + 1}} Key:</label>
+                            <input type="text" class="form-control" id="{{'output-label-key-' + j}}"
                                    [formControl]="getControlFromGroup('key', labelGroup)">
                           </div>
                           <div class="col">
-                            <label for="{{'output-label-value-' + i}}">Label {{i + 1}} Value:</label>
-                            <input type="text" class="form-control" id="{{'output-label-value-' + i}}"
-                                   [formControl]="getControlFromGroup('value', labelGroup)">
+                            <label for="{{'output-label-value-' + j}}">Label {{j + 1}} Value:</label>
+                            <div class="input-group">
+                              <input type="text" class="form-control" id="{{'output-label-value-' + j}}"
+                                     [formControl]="getControlFromGroup('value', labelGroup)">
+                              <button type="button" class="btn btn-warning ml-3"
+                                      (click)="removeLabelFromStepOutputLabelsFormArray(getOutputLabelsFormArray(outputGroup), j)">
+                                <i class="fa fa-trash"></i>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
+                      <div class="row">
+                        <div class="col">
+                          <button type="button" class="btn btn-block btn-success mt-3"
+                                  (click)="addLabelToStepOutput(getOutputLabelsFormArray(outputGroup))">
+                            <i class="fa fa-plus-square"></i> Add Label
+                          </button>
+                          <small class="form-text text-muted ml-2">Jeder Key darf nur 1x existieren. Doppelte Keys
+                            werden
+                            ignoriert.</small>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <button type="button" class="btn btn-block btn-success mt-3"
+                            (click)="addOutputToStepForm()">
+                      <i class="fa fa-plus-square"></i>
+                    </button>
+                    <small class="form-text text-muted ml-2">Jeder Name darf nur 1x existieren. Doppelte Namen werden
+                      ignoriert.</small>
                   </div>
                 </div>
               </div>

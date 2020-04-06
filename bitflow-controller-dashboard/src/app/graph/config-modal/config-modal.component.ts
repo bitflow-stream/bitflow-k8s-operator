@@ -239,6 +239,14 @@ export class ConfigModalComponent implements AfterViewInit {
     this.stepIngestsFormArray.removeAt(index);
   }
 
+  removeOutputFromStepForm(index: number) {
+    this.stepOutputsFormArray.removeAt(index);
+  }
+
+  removeLabelFromStepOutputLabelsFormArray(labelsFormArray: AbstractControl, index: number) {
+    (<FormArray>labelsFormArray).removeAt(index);
+  }
+
   addLabelToDataSourceForm() {
     this.dataSourceLabelsFormArray.push(
       this.fb.group({
@@ -254,6 +262,25 @@ export class ConfigModalComponent implements AfterViewInit {
         key: this.fb.control(''),
         value: this.fb.control(''),
         check: this.fb.control('')
+      })
+    );
+  }
+
+  addOutputToStepForm() {
+    this.stepOutputsFormArray.push(
+      this.fb.group({
+        name: this.fb.control(''),
+        url: this.fb.control(''),
+        labels: this.fb.array([])
+      })
+    );
+  }
+
+  addLabelToStepOutput(stepOutputLabelsFormArray: AbstractControl) {
+    (<FormArray>stepOutputLabelsFormArray).push(
+      this.fb.group({
+        key: this.fb.control(''),
+        value: this.fb.control('')
       })
     );
   }
