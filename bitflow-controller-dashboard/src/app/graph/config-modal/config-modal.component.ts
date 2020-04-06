@@ -166,11 +166,7 @@ export class ConfigModalComponent implements AfterViewInit {
 
 
   stepFormData = this.fb.group({
-    template: []
-    // TODO ingests
-    // TODO removing / adding ingests
-    // TODO outputs
-    // TODO removing / adding outputs
+    template: this.fb.control('')
   });
 
   fillForms() {
@@ -228,13 +224,12 @@ export class ConfigModalComponent implements AfterViewInit {
     this.dataSourceFormData.setControl('labels', labels);
   }
 
-  // @ts-ignore
   private fillPodForm(pod: Pod) {
     this.podFormData.setControl('raw', this.fb.control(pod.raw));
   }
 
-  // @ts-ignore
   private fillStepForm(step: Step) {
+    this.stepFormData.setControl('template', this.fb.control(step.template));
   }
 
 }
