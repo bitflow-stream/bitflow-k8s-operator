@@ -312,8 +312,8 @@ export class ConfigModalComponent implements AfterViewInit {
     for (let i = 0; i < dataSource.labels?.length; i++) {
       let label = dataSource.labels[i];
       let labelGroup = this.fb.group({
-        key: this.fb.control(label.key == undefined ? '' : label.key),
-        value: this.fb.control(label.value == undefined ? '' : label.value)
+        key: this.fb.control(label.key != undefined ? label.key : ''),
+        value: this.fb.control(label.value != undefined ? label.value : '')
       });
       labels.push(labelGroup);
     }
