@@ -156,7 +156,7 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   podFormData = this.fb.group({
-    raw: []
+    raw: this.fb.control('')
   });
 
   dataSourceFormData: FormGroup = this.fb.group({
@@ -230,6 +230,7 @@ export class ConfigModalComponent implements AfterViewInit {
 
   // @ts-ignore
   private fillPodForm(pod: Pod) {
+    this.podFormData.setControl('raw', this.fb.control(pod.raw));
   }
 
   // @ts-ignore
