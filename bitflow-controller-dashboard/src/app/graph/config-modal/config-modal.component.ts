@@ -133,6 +133,31 @@ export class ConfigModalComponent implements AfterViewInit {
         });
       }
 
+      step.outputs = [];
+      let stepOutputsFormArray = this.stepOutputsFormArray;
+      for (let i = 0; i < stepOutputsFormArray.length; i++) {
+        let stepOutputsFormGroup = stepOutputsFormArray.at(i);
+
+        let name = stepOutputsFormGroup.value['name'];
+        let url = stepOutputsFormGroup.value['url'];
+
+        let labels = [];
+        let outputLabelsFormArray = stepOutputsFormGroup.get('labels') as FormArray;
+        for (let j = 0; j < outputLabelsFormArray.length; j++) {
+          let labelFormGroup = outputLabelsFormArray.at(j) as FormGroup;
+          labels.push({
+            key: labelFormGroup.value['key'],
+            value: labelFormGroup.value['value']
+          });
+        }
+
+        step.outputs.push({
+          name: name,
+          url: url,
+          labels: labels
+        });
+      }
+
       console.log(getRawDataFromStep(step));
       // TODO save in kubernetes
     }
@@ -182,7 +207,8 @@ export class ConfigModalComponent implements AfterViewInit {
 
   stepFormData = this.fb.group({
     template: this.fb.control(''),
-    ingests: this.fb.array([])
+    ingests: this.fb.array([]),
+    outputs: this.fb.array([])
   });
 
   fillForms() {
@@ -240,6 +266,14 @@ export class ConfigModalComponent implements AfterViewInit {
     return this.stepFormData.get('ingests') as FormArray;
   }
 
+  get stepOutputsFormArray() {
+    return this.stepFormData.get('outputs') as FormArray;
+  }
+
+  getOutputLabelsFormArray(outputGroup: AbstractControl) {
+    return outputGroup.get('labels') as FormArray;
+  }
+
   getControlFromGroup(name: string, from: AbstractControl) {
     return from.get(name) as FormControl;
   }
@@ -248,7 +282,7 @@ export class ConfigModalComponent implements AfterViewInit {
     this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl));
 
     let labels = this.fb.array([]);
-    for (let i = 0; i < dataSource.labels.length; i++) {
+    for (let i = 0; i < dataSource.labels?.length; i++) {
       let label = dataSource.labels[i];
       let labelGroup = this.fb.group({
         key: this.fb.control(label.key == undefined ? '' : label.key),
@@ -267,17 +301,38 @@ export class ConfigModalComponent implements AfterViewInit {
     this.stepFormData.setControl('template', this.fb.control(step.template));
 
     let ingests = this.fb.array([]);
-    for (let i = 0; i < step.ingests.length; i++) {
+    for (let i = 0; i < step.ingests?.length; i++) {
       let ingest = step.ingests[i];
       let ingestGroup = this.fb.group({
         // TODO Should empty fields be '', null, or non-existent? Currently ''. Check what API provides.
         key: this.fb.control(ingest.key == undefined ? '' : ingest.key),
         value: this.fb.control(ingest.value == undefined ? '' : ingest.value),
-        check: this.fb.control(ingest.check == undefined ? '' : ingest.check),
+        check: this.fb.control(ingest.check == undefined ? '' : ingest.check)
       });
       ingests.push(ingestGroup);
     }
     this.stepFormData.setControl('ingests', ingests);
+
+    let outputs = this.fb.array([]);
+    for (let i = 0; i < step.outputs?.length; i++) {
+      let output = step.outputs[i];
+      let outputGroup = this.fb.group({
+        name: this.fb.control(output.name == undefined ? '' : output.name),
+        url: this.fb.control(output.url == undefined ? '' : output.url)
+      });
+      let outputLabels = this.fb.array([]);
+      for (let j = 0; j < output.labels?.length; j++) {
+        let label = output.labels[j];
+        let labelGroup = this.fb.group({
+          key: this.fb.control(label.key == undefined ? '' : label.key),
+          value: this.fb.control(label.value == undefined ? '' : label.value)
+        });
+        outputLabels.push(labelGroup);
+      }
+      outputGroup.setControl('labels', outputLabels);
+      outputs.push(outputGroup);
+    }
+    this.stepFormData.setControl('outputs', outputs);
   }
 
 }

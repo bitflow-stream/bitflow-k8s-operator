@@ -437,13 +437,12 @@
                   </div>
                 </div>
               </div>
+            </div>
           </div>
         </div>
-      </div>
-      <br>
+        <br>
 
 
-      <div *ngIf="currentGraphElement.step.outputs != undefined && currentGraphElement.step.outputs.length !== 0">
         <div class="row">
           <div class="col">
             <div class="card">
@@ -451,32 +450,32 @@
                 Outputs
               </div>
               <div class="card-body">
-                <div *ngFor="let output of currentGraphElement.step.outputs; index as i;">
+                <div *ngFor="let outputGroup of stepOutputsFormArray.controls; index as i;">
                   <div class="row">
                     <div class="col-4">
                       <label for="{{'output-name-' + i}}">Name:</label>
                       <input type="text" class="form-control" id="{{'output-name-' + i}}"
-                             [value]="output.name != undefined ? output.name : ''">
+                             [formControl]="getControlFromGroup('name', outputGroup)">
                     </div>
                     <div class="col-8">
                       <div class="row">
                         <div class="col">
                           <label for="{{'output-url-' + i}}">URL:</label>
                           <input type="text" class="form-control" id="{{'output-url-' + i}}"
-                                 [value]="output.url != undefined ? output.url : ''">
+                                 [formControl]="getControlFromGroup('url', outputGroup)">
                         </div>
                       </div>
-                      <div *ngFor="let label of output.labels; index as i;">
+                      <div *ngFor="let labelGroup of getOutputLabelsFormArray(outputGroup).controls; index as i;">
                         <div class="row">
                           <div class="col">
                             <label for="{{'output-label-key-' + i}}">Label {{i + 1}} Key:</label>
                             <input type="text" class="form-control" id="{{'output-label-key-' + i}}"
-                                   [value]="label.key != undefined ? label.key : ''">
+                                   [formControl]="getControlFromGroup('key', labelGroup)">
                           </div>
                           <div class="col">
                             <label for="{{'output-label-value-' + i}}">Label {{i + 1}} Value:</label>
                             <input type="text" class="form-control" id="{{'output-label-value-' + i}}"
-                                   [value]="label.value != undefined ? label.value : ''">
+                                   [formControl]="getControlFromGroup('value', labelGroup)">
                           </div>
                         </div>
                       </div>
@@ -488,17 +487,16 @@
           </div>
         </div>
         <br>
-      </div>
 
 
-      <div
-        *ngIf="currentGraphElement.step.validationError != undefined && currentGraphElement.step.validationError !== ''">
-        <div class="row">
-          <div class="col">
-            <div class="card">
-              <div class="card-header">
-                Validation Error
-              </div>
+        <div
+          *ngIf="currentGraphElement.step.validationError != undefined && currentGraphElement.step.validationError !== ''">
+          <div class="row">
+            <div class="col">
+              <div class="card">
+                <div class="card-header">
+                  Validation Error
+                </div>
               <div class="card-body">
                 <div class="row">
                   <div class="col">
