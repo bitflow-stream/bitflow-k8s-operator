@@ -417,15 +417,15 @@
                              [formControl]="getControlFromGroup('key', ingestGroup)">
                     </div>
                     <div class="col">
-                      <label for="{{'ingest-value-' + i}}">Value:</label>
-                      <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
-                             [formControl]="getControlFromGroup('value', ingestGroup)">
-                  </div>
-                  <div class="col">
-                    <label for="{{'ingest-check-' + i}}">Check:</label>
-                    <div class="input-group">
+                      <label for="{{'ingest-check-' + i}}">Check:</label>
                       <input type="text" class="form-control" id="{{'ingest-check-' + i}}"
                              [formControl]="getControlFromGroup('check', ingestGroup)">
+                    </div>
+                  <div class="col">
+                    <label for="{{'ingest-value-' + i}}">Value:</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
+                             [formControl]="getControlFromGroup('value', ingestGroup)">
                       <button type="button" class="btn btn-danger ml-3"
                               (click)="removeIngestFromStepForm(i)">
                         <i class="fa fa-trash"></i>
