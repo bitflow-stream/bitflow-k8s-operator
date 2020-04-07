@@ -12,7 +12,7 @@ These objects can be manipulated through the `kubectl` tool, using their abbrevi
 Read the documentation of `kubectl` for more commands and details.
 
 #### Getting the Bitflow Controller logs
-- `kubectl logs $(kubectl get pod -l app.kubernetes.io/name=bitflow-controller -o jsonpath='{.items[0].metadata.name}')`
+- `kubectl logs $(kubectl get pod -l app.kubernetes.io/name=bitflow-k8s-operator -o jsonpath='{.items[0].metadata.name}')`
 
 #### Accessing the Bitflow Controller REST API
 - Enable port forwarding:
