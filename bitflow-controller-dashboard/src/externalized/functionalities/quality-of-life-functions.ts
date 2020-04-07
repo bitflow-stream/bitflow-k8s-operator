@@ -442,6 +442,7 @@ export function getRawDataFromPod(pod: Pod): string {
 
 export function getRawDataFromDataSource(dataSource: DataSource): string {
   let completeDataSource = JSON.parse(dataSource.raw);
+  completeDataSource.metadata.labels = {};
   dataSource.labels.forEach(label => {
     completeDataSource.metadata.labels[label.key] = label.value;
   });
