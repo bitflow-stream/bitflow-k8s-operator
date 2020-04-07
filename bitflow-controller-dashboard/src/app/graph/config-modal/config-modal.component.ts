@@ -11,8 +11,24 @@ import {
 import {ActivatedRoute, Router} from '@angular/router';
 import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
-import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators} from '@angular/forms';
 import {RxwebValidators} from "@rxweb/reactive-form-validators";
+
+function arrayContains(needle, arrhaystack) {
+  return (arrhaystack.indexOf(needle) > -1);
+}
+
+const StepIngestValueRequiredValidator: ValidatorFn = (fg: FormGroup) => {
+  const checkValue = fg.get('check').value;
+  const valueValue = fg.get('value').value;
+  if (arrayContains(checkValue, ['wildcard', 'exact', 'regex'])) {
+    if (valueValue.toString().length === 0) {
+      return {valueRequired: true};
+    }
+    return null;
+  }
+  return null;
+};
 
 @Component({
   selector: 'app-config-modal',
@@ -168,11 +184,21 @@ export class ConfigModalComponent implements AfterViewInit {
       let stepIngestsFormArray = this.stepIngestsFormArray;
       for (let i = 0; i < stepIngestsFormArray.length; i++) {
         let stepIngestsFormGroup = stepIngestsFormArray.at(i);
-        step.ingests.push({
+
+        let check = stepIngestsFormGroup.value['check'];
+        let value = stepIngestsFormGroup.value['value'];
+
+        if (!arrayContains(check, ['wildcard', 'exact', 'regex'])) {
+          value = undefined;
+        }
+
+        let ingest = {
           key: stepIngestsFormGroup.value['key'],
-          value: stepIngestsFormGroup.value['value'],
-          check: stepIngestsFormGroup.value['check']
-        });
+          value: value,
+          check: check
+        };
+
+        step.ingests.push(ingest);
       }
 
       step.outputs = [];
@@ -302,6 +328,7 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   addIngestToStepForm() {
+
     this.stepIngestsFormArray.push(
       this.fb.group({
         key: this.fb.control('', [
@@ -309,8 +336,8 @@ export class ConfigModalComponent implements AfterViewInit {
           RxwebValidators.unique()
         ]),
         value: this.fb.control(''),
-        check: this.fb.control('')
-      })
+        check: this.fb.control('wildcard', Validators.pattern('^(wildcard|exact|regex|present|absent)$'))
+      }, {validator: StepIngestValueRequiredValidator})
     );
   }
 
@@ -375,6 +402,18 @@ export class ConfigModalComponent implements AfterViewInit {
     return from.get(name) as FormControl;
   }
 
+  getOptionsIngestsArrayFromControlForm(formControl: AbstractControl) {
+    return [...[formControl.value], ...['wildcard', 'exact', 'regex', 'present', 'absent']];
+  }
+
+  ingestCheckSelectionIsValid(selection: string) {
+    return arrayContains(selection, ['wildcard', 'exact', 'regex', 'present', 'absent']);
+  }
+
+  shouldDisplayIngestValue(ingestCheck: string) {
+    return ingestCheck != 'present' && ingestCheck != 'absent' && this.ingestCheckSelectionIsValid(ingestCheck);
+  }
+
   private fillDataSourceForm(dataSource: DataSource) {
     this.dataSourceFormData.setControl('specUrl', this.fb.control(dataSource.specUrl, Validators.required));
     if (this.selectedElement().readOnly) {
@@ -415,15 +454,37 @@ export class ConfigModalComponent implements AfterViewInit {
     let ingests = this.fb.array([]);
     for (let i = 0; i < step.ingests?.length; i++) {
       let ingest = step.ingests[i];
+
+      let keyValue = () => {
+        return ingest.key == undefined ? '' : ingest.key;
+      };
+
+      let valueValue = () => {
+        return ingest.value == undefined ? '' : ingest.value;
+      };
+
+      let checkValue = () => {
+
+        if (ingest.check == undefined || ingest.check === '') {
+          return 'wildcard';
+        }
+
+        if (arrayContains(ingest.check, ['wildcard', 'exact', 'regex', 'present', 'absent'])) {
+          return ingest.check;
+        }
+
+        return ingest.check;
+      };
+
       let ingestGroup = this.fb.group({
         // TODO Should empty fields be '', null, or non-existent? Currently ''. Check what API provides.
-        key: this.fb.control(ingest.key == undefined ? '' : ingest.key, [
+        key: this.fb.control(keyValue(), [
           Validators.required,
           RxwebValidators.unique()
         ]),
-        value: this.fb.control(ingest.value == undefined ? '' : ingest.value),
-        check: this.fb.control(ingest.check == undefined ? '' : ingest.check)
-      });
+        value: this.fb.control(valueValue()),
+        check: this.fb.control(checkValue(), Validators.pattern('^(wildcard|exact|regex|present|absent)$'))
+      }, {validator: StepIngestValueRequiredValidator});
       ingests.push(ingestGroup);
     }
     this.stepFormData.setControl('ingests', ingests);
