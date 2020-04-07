@@ -83,7 +83,7 @@ export async function getDataSourcesFromRawDataAndSaveToMap() {
       if (creatorPodName != undefined) {
         hasCreatorPod = true;
       }
-      let outputName = dataSourceRaw.metadata.labels['bitflow-output'];
+      let outputName = dataSourceRaw.metadata.labels['bitflow-pod-output'];
       let hasOutputName = outputName != undefined;
       return {
         name: name,
@@ -133,11 +133,11 @@ export async function getPodsAndStepsFromRawDataAndSaveToMap() {
       .map(podRaw => {
         let name: string = podRaw.metadata.name;
         let phase: string = podRaw.status.phase;
-        let creatorStepName = podRaw.metadata.labels['bitflow-analysis-step'];
+        let creatorStepName = podRaw.metadata.labels['bitflow-step-name'];
 
         let hasCreatorStep = creatorStepName != undefined;
 
-        let creatorDataSourceName = podRaw.metadata.labels['bitflow-data-source-name'];
+        let creatorDataSourceName = podRaw.metadata.labels['bitflow-source-name'];
         let creatorDataSourceNames: string[];
         if (creatorDataSourceName != undefined) {
           creatorDataSourceNames = [creatorDataSourceName];

@@ -109,7 +109,7 @@ export class ConfigModalComponent implements AfterViewInit {
         await new Promise(resolve => setTimeout(() => {
           this.openModal(idParam);
           resolve();
-        }, getAllCurrentGraphElementsWithStacks().length === 0 ? 500 : 0));
+        }, getAllCurrentGraphElementsWithStacks().length === 0 ? 1000 : 0));
       });
     });
   }

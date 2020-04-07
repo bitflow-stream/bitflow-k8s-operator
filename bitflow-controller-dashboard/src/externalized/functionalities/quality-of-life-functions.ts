@@ -81,7 +81,7 @@ export function getDepthOfPod(podName: string): number {
   if (element == undefined) {
     return 0;
   }
-  if (element.creatorDataSources == undefined || element.creatorDataSources.length === 0) {
+  if (element.creatorDataSources == undefined || element.creatorDataSources.length === 0 || !element.hasCreatorStep) {
     return 0;
   }
 
@@ -189,11 +189,46 @@ export function setCurrentGraphElements(dataSources, steps, pods) {
 }
 
 export function podShouldBeGroupedWithPodStack(pod: Pod, podStack: PodStack) {
-  return pod.hasCreatorStep && podStack.hasCreatorStep && pod.creatorStep.name === podStack.creatorStep.name;
+  return (!pod.hasCreatorStep && !podStack.hasCreatorStep) || (pod.hasCreatorStep && podStack.hasCreatorStep && pod.creatorStep.name === podStack.creatorStep.name);
+}
+
+function arraysEqual(_arr1, _arr2) {
+  if (!Array.isArray(_arr1) || !Array.isArray(_arr2) || _arr1.length !== _arr2.length)
+    return false;
+
+  var arr1 = _arr1.concat().sort();
+  var arr2 = _arr2.concat().sort();
+
+  for (var i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i])
+      return false;
+  }
+  return true;
+}
+
+function getCreatedPodsFromDataSourceStack(dataSourceStack: DataSourceStack): Pod[] {
+  let pods = [];
+  dataSourceStack.dataSources.forEach(dataSource => {
+    pods = [...pods, ...dataSource.createdPods];
+  });
+  return [...new Set(pods)];
+}
+
+function podsToPodAndPodCreatorStepNames(pods: Pod[]) {
+  let podAndPodStackNames = [];
+  pods.forEach(pod => {
+    if (pod.creatorStep == undefined) {
+      podAndPodStackNames = [...podAndPodStackNames, ...[pod.name]];
+    } else {
+      podAndPodStackNames = [...podAndPodStackNames, ...[pod.creatorStep.name]];
+    }
+  });
+  return [...new Set(podAndPodStackNames)];
 }
 
 export function dataSourceShouldBeGroupedWithDataSourceStack(dataSource: DataSource, dataSourceStack: DataSourceStack) {
-  return (dataSourceStack.outputName === dataSource.outputName) &&
+  return (dataSourceStack.outputName === dataSource.outputName || (!dataSourceStack.hasSourceGraphElement && !dataSource.hasCreatorPod)) &&
+    arraysEqual(podsToPodAndPodCreatorStepNames(dataSource.createdPods), podsToPodAndPodCreatorStepNames(getCreatedPodsFromDataSourceStack(dataSourceStack))) &&
     (
       (!dataSourceStack.hasSourceGraphElement && !dataSource.hasCreatorPod) ||
       (
@@ -257,12 +292,6 @@ export function setAllCurrentGraphElementsWithStacks() {
   let currentPods: Pod[] = getCurrentPods();
 
   currentPods.forEach(pod => {
-    if (!pod.hasCreatorStep) {
-      podGraphElements.push({type: 'pod', pod: pod});
-    }
-  });
-
-  currentPods.filter(pod => pod.hasCreatorStep).forEach(pod => {
     for (let i = 0; i < podGraphElements.length; i++) {
       let podGraphElement = podGraphElements[i];
       if (podGraphElement.type != "pod-stack") {
@@ -278,7 +307,7 @@ export function setAllCurrentGraphElementsWithStacks() {
       podStack: {
         stackId: uuidv4(),
         hasCreatorStep: pod.hasCreatorStep,
-        creatorStep: pod.creatorStep,
+        creatorStep: pod.hasCreatorStep ? pod.creatorStep : undefined,
         pods: [pod]
       }
     };
@@ -307,12 +336,7 @@ export function setAllCurrentGraphElementsWithStacks() {
 
   let dataSourceGraphElements: GraphElement[] = [];
   let currentDataSources: DataSource[] = getCurrentDataSources();
-  currentDataSources.forEach(dataSource => {
-    if (!dataSource.hasOutputName) {
-      dataSourceGraphElements.push({type: "data-source", dataSource: dataSource});
-    }
-  });
-  currentDataSources.filter(dataSource => dataSource.hasOutputName).forEach(dataSource => {
+  currentDataSources.filter(dataSource => dataSource.hasOutputName || dataSource.creatorPod == undefined).forEach(dataSource => {
     for (let i = 0; i < dataSourceGraphElements.length; i++) {
       let dataSourceGraphElement = dataSourceGraphElements[i];
       if (dataSourceGraphElement.type != "data-source-stack") {
