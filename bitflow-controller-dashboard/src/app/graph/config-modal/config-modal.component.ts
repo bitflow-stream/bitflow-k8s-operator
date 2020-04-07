@@ -503,11 +503,11 @@ export class ConfigModalComponent implements AfterViewInit {
       for (let j = 0; j < output.labels?.length; j++) {
         let label = output.labels[j];
         let labelGroup = this.fb.group({
-          key: this.fb.control(label.key == undefined ? '' : label.key, [
+          key: this.fb.control(label.key != undefined ? label.key : '', [
             Validators.required,
             RxwebValidators.unique()
           ]),
-          value: this.fb.control(label.value == undefined ? '' : label.value, Validators.required)
+          value: this.fb.control(label.value != undefined ? label.value : '', Validators.required)
         });
         outputLabels.push(labelGroup);
       }
