@@ -572,7 +572,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",
@@ -598,7 +598,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-000002fb",
         "layer": "virtual",
@@ -625,7 +625,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally178-instance-00000301",
         "layer": "virtual",
@@ -652,7 +652,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000030a",
         "layer": "virtual",
@@ -679,7 +679,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000030b",
         "layer": "virtual",
@@ -706,7 +706,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000031d",
         "layer": "virtual",
@@ -733,7 +733,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000031e",
         "layer": "virtual",
@@ -760,7 +760,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179",
         "layer": "physical",
@@ -786,7 +786,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-000002ff",
         "layer": "virtual",
@@ -813,7 +813,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-00000311",
         "layer": "virtual",
@@ -840,7 +840,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-0000031b",
         "layer": "virtual",
@@ -867,7 +867,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-00000322",
         "layer": "virtual",
@@ -894,7 +894,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180",
         "layer": "physical",
@@ -920,7 +920,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002f8",
         "layer": "virtual",
@@ -947,7 +947,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
@@ -974,7 +974,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000310",
         "layer": "virtual",
@@ -1001,7 +1001,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000316",
         "layer": "virtual",
@@ -1028,7 +1028,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000317",
         "layer": "virtual",
@@ -1055,7 +1055,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-0000032f",
         "layer": "virtual",
@@ -1082,7 +1082,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally192",
         "layer": "physical",
@@ -1108,7 +1108,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally192-instance-00000329",
         "layer": "virtual",
@@ -1135,7 +1135,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally192-instance-0000032a",
         "layer": "virtual",
@@ -1162,7 +1162,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193",
         "layer": "physical",
@@ -1188,7 +1188,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-000002fc",
         "layer": "virtual",
@@ -1215,7 +1215,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-0000030c",
         "layer": "virtual",
@@ -1242,7 +1242,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-00000313",
         "layer": "virtual",
@@ -1269,7 +1269,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-00000321",
         "layer": "virtual",
@@ -1296,7 +1296,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-0000032e",
         "layer": "virtual",
@@ -1323,7 +1323,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194",
         "layer": "physical",
@@ -1349,7 +1349,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-000002f6",
         "layer": "virtual",
@@ -1376,7 +1376,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000314",
         "layer": "virtual",
@@ -1403,7 +1403,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000318",
         "layer": "virtual",
@@ -1430,7 +1430,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000320",
         "layer": "virtual",
@@ -1457,7 +1457,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000325",
         "layer": "virtual",
@@ -1484,7 +1484,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195",
         "layer": "physical",
@@ -1510,7 +1510,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-000002f9",
         "layer": "virtual",
@@ -1537,7 +1537,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000312",
         "layer": "virtual",
@@ -1564,7 +1564,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-0000031c",
         "layer": "virtual",
@@ -1591,7 +1591,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
@@ -1618,7 +1618,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000324",
         "layer": "virtual",
@@ -1645,7 +1645,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally196",
         "layer": "physical",
@@ -1671,7 +1671,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-000002fa",
         "layer": "virtual",
@@ -1698,7 +1698,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-0000030e",
         "layer": "virtual",
@@ -1725,7 +1725,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
@@ -1752,7 +1752,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally196-instance-0000031a",
         "layer": "virtual",
@@ -1779,7 +1779,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally196-instance-00000328",
         "layer": "virtual",
@@ -1806,7 +1806,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197",
         "layer": "physical",
@@ -1832,7 +1832,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000124",
         "layer": "virtual",
@@ -1859,7 +1859,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-000002fd",
         "layer": "virtual",
@@ -1886,7 +1886,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-0000030f",
         "layer": "virtual",
@@ -1913,7 +1913,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000315",
         "layer": "virtual",
@@ -1940,7 +1940,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000326",
         "layer": "virtual",
@@ -1967,7 +1967,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-0000032b",
         "layer": "virtual",
@@ -1994,7 +1994,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198",
         "layer": "physical",
@@ -2020,7 +2020,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
@@ -2047,7 +2047,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-00000300",
         "layer": "virtual",
@@ -2074,7 +2074,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-0000030d",
         "layer": "virtual",
@@ -2101,7 +2101,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-0000031f",
         "layer": "virtual",
@@ -2128,7 +2128,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-00000327",
         "layer": "virtual",
@@ -2155,7 +2155,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally198-instance-00000330",
         "layer": "virtual",
@@ -2182,7 +2182,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally199",
         "layer": "physical",
@@ -2208,7 +2208,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000302",
         "layer": "virtual",
@@ -2235,7 +2235,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000304",
         "layer": "virtual",
@@ -2262,7 +2262,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000307",
         "layer": "virtual",
@@ -2289,7 +2289,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally199-instance-00000309",
         "layer": "virtual",
@@ -2316,7 +2316,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally200",
         "layer": "physical",
@@ -2342,7 +2342,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:24Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000303",
         "layer": "virtual",
@@ -2369,7 +2369,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000305",
         "layer": "virtual",
@@ -2396,7 +2396,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000306",
         "layer": "virtual",
@@ -2423,7 +2423,7 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-16T12:10:25Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally200-instance-00000308",
         "layer": "virtual",
@@ -2450,14 +2450,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:15Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
         "node": "wally195",
         "type": "ad-opt",
         "vm": "instance-00000323",
-        "bitflow-analysis-step": "a-ad-opt",
+        "bitflow-step-name": "a-ad-opt",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-ad-opt",
@@ -2494,14 +2494,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:54Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-000002fd",
         "layer": "virtual",
         "node": "wally197",
         "type": "anomaly-detection",
         "vm": "instance-000002fd",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2538,14 +2538,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally194-instance-00000314",
         "layer": "virtual",
         "node": "wally194",
         "type": "anomaly-detection",
         "vm": "instance-00000314",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2582,14 +2582,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:56Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally180-instance-00000317",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-00000317",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2626,14 +2626,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally180-instance-00000310",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-00000310",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2670,13 +2670,13 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally193",
         "layer": "physical",
         "node": "wally193",
         "type": "anomaly-detection",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2713,14 +2713,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally179-instance-00000322",
         "layer": "virtual",
         "node": "wally179",
         "type": "anomaly-detection",
         "vm": "instance-00000322",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2757,14 +2757,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally197-instance-00000326",
         "layer": "virtual",
         "node": "wally197",
         "type": "anomaly-detection",
         "vm": "instance-00000326",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2801,14 +2801,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:00Z",
       "labels": {
-        "bitflow-output": "D",
+        "bitflow-pod-output": "D",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
         "node": "wally196",
         "type": "anomaly-detection",
         "vm": "instance-00000319",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2845,14 +2845,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:57Z",
       "labels": {
-        "bitflow-output": "D",
+        "bitflow-pod-output": "D",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
         "node": "wally198",
         "type": "anomaly-detection",
         "vm": "instance-000002f7",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2889,14 +2889,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:58Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-000002fe",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2933,13 +2933,13 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:55Z",
       "labels": {
-        "bitflow-output": "D",
+        "bitflow-pod-output": "D",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",
         "node": "wally178",
         "type": "anomaly-detection",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -2976,14 +2976,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:00Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally179-instance-000002ff",
         "layer": "virtual",
         "node": "wally179",
         "type": "anomaly-detection",
         "vm": "instance-000002ff",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3020,14 +3020,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally178-instance-0000031d",
         "layer": "virtual",
         "node": "wally178",
         "type": "anomaly-detection",
         "vm": "instance-0000031d",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3064,14 +3064,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:56Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally196-instance-000002fa",
         "layer": "virtual",
         "node": "wally196",
         "type": "anomaly-detection",
         "vm": "instance-000002fa",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3108,14 +3108,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:07:01Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally193-instance-00000313",
         "layer": "virtual",
         "node": "wally193",
         "type": "anomaly-detection",
         "vm": "instance-00000313",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3152,14 +3152,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:58Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
         "node": "wally195",
         "type": "anomaly-detection",
         "vm": "instance-00000323",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3196,14 +3196,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:59Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally180-instance-000002f8",
         "layer": "virtual",
         "node": "wally180",
         "type": "anomaly-detection",
         "vm": "instance-000002f8",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3240,14 +3240,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T14:06:56Z",
       "labels": {
-        "bitflow-output": "B",
+        "bitflow-pod-output": "B",
         "collector": "bitflow",
         "component": "wally194-instance-00000325",
         "layer": "virtual",
         "node": "wally194",
         "type": "anomaly-detection",
         "vm": "instance-00000325",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-2": "a-anomaly-detector",
@@ -3284,14 +3284,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:52Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000325",
         "layer": "virtual",
         "node": "wally194",
         "type": "pre-processing",
         "vm": "instance-00000325",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3327,13 +3327,13 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:42:58Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193",
         "layer": "physical",
         "node": "wally193",
         "type": "pre-processing",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3369,14 +3369,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:00Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000317",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-00000317",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3412,14 +3412,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:43:01Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-00000319",
         "layer": "virtual",
         "node": "wally196",
         "type": "pre-processing",
         "vm": "instance-00000319",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3455,14 +3455,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:58Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally197-instance-000002fd",
         "layer": "virtual",
         "node": "wally197",
         "type": "pre-processing",
         "vm": "instance-000002fd",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3498,13 +3498,13 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:54Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178",
         "layer": "physical",
         "node": "wally178",
         "type": "pre-processing",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3540,14 +3540,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:54Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-00000310",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-00000310",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3583,14 +3583,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:43:03Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally194-instance-00000314",
         "layer": "virtual",
         "node": "wally194",
         "type": "pre-processing",
         "vm": "instance-00000314",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3626,14 +3626,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:42:58Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-000002ff",
         "layer": "virtual",
         "node": "wally179",
         "type": "pre-processing",
         "vm": "instance-000002ff",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3669,14 +3669,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:56Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002fe",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-000002fe",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3712,14 +3712,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:42:58Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally197-instance-00000326",
         "layer": "virtual",
         "node": "wally197",
         "type": "pre-processing",
         "vm": "instance-00000326",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3755,14 +3755,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:06Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally195-instance-00000323",
         "layer": "virtual",
         "node": "wally195",
         "type": "pre-processing",
         "vm": "instance-00000323",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3798,14 +3798,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:40:25Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally180-instance-000002f8",
         "layer": "virtual",
         "node": "wally180",
         "type": "pre-processing",
         "vm": "instance-000002f8",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3841,14 +3841,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:12Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally198-instance-000002f7",
         "layer": "virtual",
         "node": "wally198",
         "type": "pre-processing",
         "vm": "instance-000002f7",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3884,14 +3884,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:40:33Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally193-instance-00000313",
         "layer": "virtual",
         "node": "wally193",
         "type": "pre-processing",
         "vm": "instance-00000313",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3927,14 +3927,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:57Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally178-instance-0000031d",
         "layer": "virtual",
         "node": "wally178",
         "type": "pre-processing",
         "vm": "instance-0000031d",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -3970,14 +3970,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:38:59Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally179-instance-00000322",
         "layer": "virtual",
         "node": "wally179",
         "type": "pre-processing",
         "vm": "instance-00000322",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -4013,14 +4013,14 @@ const dataSourcesRuntime = [
       "generation": 1,
       "creationTimestamp": "2020-01-17T11:39:00Z",
       "labels": {
-        "bitflow-output": "A",
+        "bitflow-pod-output": "A",
         "collector": "bitflow",
         "component": "wally196-instance-000002fa",
         "layer": "virtual",
         "node": "wally196",
         "type": "pre-processing",
         "vm": "instance-000002fa",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
         "bitflow-pipeline-1": "a-pre-proc",
         "bitflow-pipeline-depth": "1",
@@ -4058,9 +4058,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-ad-opt",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-ad-opt",
+        "bitflow-step-name": "a-ad-opt",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-b6034bac.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-b6034bac.results"
       }
     },
     "spec": {
@@ -4143,7 +4143,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "collector=bitflow, component=wally195-instance-00000323, node=wally195, type=pre-processing, bitflow-pod=a-pre-proc-pod-b6034bac, bitflow-analysis-step=a-pre-proc, bitflow-pipeline-depth=1, layer=virtual, vm=instance-00000323, bitflow-pipeline-1=a-pre-proc, bitflow-analysis-type=one-to-one"
+              "value": "collector=bitflow, component=wally195-instance-00000323, node=wally195, type=pre-processing, bitflow-pod=a-pre-proc-pod-b6034bac, bitflow-step-name=a-pre-proc, bitflow-pipeline-depth=1, layer=virtual, vm=instance-00000323, bitflow-pipeline-1=a-pre-proc, bitflow-analysis-type=one-to-one"
             }
           ],
           "resources": {
@@ -4302,9 +4302,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-5ab6e825.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-5ab6e825.results"
       }
     },
     "spec": {
@@ -4343,7 +4343,7 @@ const podsRuntime = [
           "env": [
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "layer=virtual, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, type=pre-processing, vm=instance-000002fd, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-5ab6e825, bitflow-analysis-type=one-to-one, collector=bitflow, component=wally197-instance-000002fd, node=wally197"
+              "value": "layer=virtual, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, type=pre-processing, vm=instance-000002fd, bitflow-step-name=a-pre-proc, bitflow-pod=a-pre-proc-pod-5ab6e825, bitflow-analysis-type=one-to-one, collector=bitflow, component=wally197-instance-000002fd, node=wally197"
             },
             {
               "name": "BITFLOW_REDIS_ENDPOINT",
@@ -4546,9 +4546,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-778a7588.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-778a7588.results"
       }
     },
     "spec": {
@@ -4607,7 +4607,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-pipeline-1=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, node=wally194, component=wally194-instance-00000314, layer=virtual, bitflow-pod=a-pre-proc-pod-778a7588, type=pre-processing, vm=instance-00000314, bitflow-analysis-step=a-pre-proc"
+              "value": "bitflow-pipeline-1=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, node=wally194, component=wally194-instance-00000314, layer=virtual, bitflow-pod=a-pre-proc-pod-778a7588, type=pre-processing, vm=instance-00000314, bitflow-step-name=a-pre-proc"
             },
             {
               "name": "BITFLOW_REDIS_ENDPOINT",
@@ -4790,9 +4790,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-3d51ff4f.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-3d51ff4f.results"
       }
     },
     "spec": {
@@ -4863,7 +4863,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, component=wally180-instance-00000317, type=pre-processing, node=wally180, bitflow-pipeline-1=a-pre-proc, collector=bitflow, vm=instance-00000317, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-3d51ff4f, layer=virtual"
+              "value": "bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, component=wally180-instance-00000317, type=pre-processing, node=wally180, bitflow-pipeline-1=a-pre-proc, collector=bitflow, vm=instance-00000317, bitflow-step-name=a-pre-proc, bitflow-pod=a-pre-proc-pod-3d51ff4f, layer=virtual"
             },
             {
               "name": "BITFLOW_ANALYSIS_TYPE",
@@ -5034,9 +5034,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-70fb342f.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-70fb342f.results"
       }
     },
     "spec": {
@@ -5107,7 +5107,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "vm=instance-00000310, bitflow-analysis-step=a-pre-proc, node=wally180, component=wally180-instance-00000310, bitflow-analysis-type=one-to-one, collector=bitflow, type=pre-processing, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-70fb342f, layer=virtual"
+              "value": "vm=instance-00000310, bitflow-step-name=a-pre-proc, node=wally180, component=wally180-instance-00000310, bitflow-analysis-type=one-to-one, collector=bitflow, type=pre-processing, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-70fb342f, layer=virtual"
             },
             {
               "name": "BITFLOW_DATA_SOURCE_URL",
@@ -5278,9 +5278,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-2b6b0164.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-2b6b0164.results"
       }
     },
     "spec": {
@@ -5323,7 +5323,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "layer=physical, bitflow-analysis-step=a-pre-proc, type=pre-processing, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-2b6b0164, collector=bitflow, component=wally193, node=wally193, bitflow-analysis-type=one-to-one"
+              "value": "layer=physical, bitflow-step-name=a-pre-proc, type=pre-processing, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-2b6b0164, collector=bitflow, component=wally193, node=wally193, bitflow-analysis-type=one-to-one"
             },
             {
               "name": "BITFLOW_DATA_SOURCE_URL",
@@ -5522,9 +5522,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-ef439502.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-ef439502.results"
       }
     },
     "spec": {
@@ -5599,7 +5599,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "layer=virtual, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-analysis-type=one-to-one, bitflow-pod=a-pre-proc-pod-ef439502, collector=bitflow, component=wally179-instance-00000322, node=wally179, type=pre-processing, bitflow-analysis-step=a-pre-proc, vm=instance-00000322"
+              "value": "layer=virtual, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, bitflow-analysis-type=one-to-one, bitflow-pod=a-pre-proc-pod-ef439502, collector=bitflow, component=wally179-instance-00000322, node=wally179, type=pre-processing, bitflow-step-name=a-pre-proc, vm=instance-00000322"
             },
             {
               "name": "BITFLOW_DATA_SOURCE_NAME",
@@ -5766,9 +5766,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-90efac01.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-90efac01.results"
       }
     },
     "spec": {
@@ -5839,7 +5839,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-pipeline-depth=1, type=pre-processing, bitflow-pod=a-pre-proc-pod-90efac01, collector=bitflow, layer=virtual, vm=instance-00000326, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, component=wally197-instance-00000326, node=wally197, bitflow-analysis-step=a-pre-proc"
+              "value": "bitflow-pipeline-depth=1, type=pre-processing, bitflow-pod=a-pre-proc-pod-90efac01, collector=bitflow, layer=virtual, vm=instance-00000326, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, component=wally197-instance-00000326, node=wally197, bitflow-step-name=a-pre-proc"
             },
             {
               "name": "BITFLOW_ANALYSIS_TYPE",
@@ -6010,9 +6010,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-58eaf87b.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-58eaf87b.results"
       }
     },
     "spec": {
@@ -6059,7 +6059,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "component=wally196-instance-00000319, vm=instance-00000319, bitflow-analysis-type=one-to-one, bitflow-analysis-step=a-pre-proc, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, type=pre-processing, layer=virtual, node=wally196, bitflow-pod=a-pre-proc-pod-58eaf87b, collector=bitflow"
+              "value": "component=wally196-instance-00000319, vm=instance-00000319, bitflow-analysis-type=one-to-one, bitflow-step-name=a-pre-proc, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, type=pre-processing, layer=virtual, node=wally196, bitflow-pod=a-pre-proc-pod-58eaf87b, collector=bitflow"
             },
             {
               "name": "BITFLOW_REDIS_ENDPOINT",
@@ -6254,9 +6254,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-be7d3b58.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-be7d3b58.results"
       }
     },
     "spec": {
@@ -6327,7 +6327,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-pipeline-depth=1, vm=instance-000002f7, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, collector=bitflow, node=wally198, type=pre-processing, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-be7d3b58, layer=virtual, component=wally198-instance-000002f7"
+              "value": "bitflow-pipeline-depth=1, vm=instance-000002f7, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, collector=bitflow, node=wally198, type=pre-processing, bitflow-step-name=a-pre-proc, bitflow-pod=a-pre-proc-pod-be7d3b58, layer=virtual, component=wally198-instance-000002f7"
             },
             {
               "name": "BITFLOW_ANALYSIS_TYPE",
@@ -6498,9 +6498,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-8ed76f37.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-8ed76f37.results"
       }
     },
     "spec": {
@@ -6579,7 +6579,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "layer=virtual, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, node=wally180, type=pre-processing, bitflow-pod=a-pre-proc-pod-8ed76f37, collector=bitflow, component=wally180-instance-000002fe, vm=instance-000002fe, bitflow-analysis-step=a-pre-proc"
+              "value": "layer=virtual, bitflow-analysis-type=one-to-one, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, node=wally180, type=pre-processing, bitflow-pod=a-pre-proc-pod-8ed76f37, collector=bitflow, component=wally180-instance-000002fe, vm=instance-000002fe, bitflow-step-name=a-pre-proc"
             },
             {
               "name": "BITFLOW_RABBITMQ_URI",
@@ -6742,9 +6742,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-7097b24b.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-7097b24b.results"
       }
     },
     "spec": {
@@ -6819,7 +6819,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "collector=bitflow, bitflow-analysis-step=a-pre-proc, component=wally178, node=wally178, bitflow-analysis-type=one-to-one, type=pre-processing, bitflow-pod=a-pre-proc-pod-7097b24b, layer=physical, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1"
+              "value": "collector=bitflow, bitflow-step-name=a-pre-proc, component=wally178, node=wally178, bitflow-analysis-type=one-to-one, type=pre-processing, bitflow-pod=a-pre-proc-pod-7097b24b, layer=physical, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1"
             },
             {
               "name": "BITFLOW_ANALYSIS_STEP",
@@ -6986,9 +6986,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-8490377c.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-8490377c.results"
       }
     },
     "spec": {
@@ -7055,7 +7055,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-pod=a-pre-proc-pod-8490377c, node=wally179, type=pre-processing, bitflow-pipeline-1=a-pre-proc, component=wally179-instance-000002ff, vm=instance-000002ff, bitflow-analysis-step=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, layer=virtual"
+              "value": "bitflow-pod=a-pre-proc-pod-8490377c, node=wally179, type=pre-processing, bitflow-pipeline-1=a-pre-proc, component=wally179-instance-000002ff, vm=instance-000002ff, bitflow-step-name=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, layer=virtual"
             },
             {
               "name": "BITFLOW_RABBITMQ_EXCHANGE_NAME",
@@ -7230,9 +7230,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-ed34aae5.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-ed34aae5.results"
       }
     },
     "spec": {
@@ -7315,7 +7315,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-pod=a-pre-proc-pod-ed34aae5, bitflow-analysis-type=one-to-one, vm=instance-0000031d, bitflow-analysis-step=a-pre-proc, layer=virtual, type=pre-processing, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, node=wally178, collector=bitflow, component=wally178-instance-0000031d"
+              "value": "bitflow-pod=a-pre-proc-pod-ed34aae5, bitflow-analysis-type=one-to-one, vm=instance-0000031d, bitflow-step-name=a-pre-proc, layer=virtual, type=pre-processing, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, node=wally178, collector=bitflow, component=wally178-instance-0000031d"
             }
           ],
           "resources": {
@@ -7474,9 +7474,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-f7ce31fb.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-f7ce31fb.results"
       }
     },
     "spec": {
@@ -7555,7 +7555,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "bitflow-analysis-type=one-to-one, node=wally196, bitflow-analysis-step=a-pre-proc, vm=instance-000002fa, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-f7ce31fb, bitflow-pipeline-1=a-pre-proc, collector=bitflow, layer=virtual, type=pre-processing, component=wally196-instance-000002fa"
+              "value": "bitflow-analysis-type=one-to-one, node=wally196, bitflow-step-name=a-pre-proc, vm=instance-000002fa, bitflow-pipeline-depth=1, bitflow-pod=a-pre-proc-pod-f7ce31fb, bitflow-pipeline-1=a-pre-proc, collector=bitflow, layer=virtual, type=pre-processing, component=wally196-instance-000002fa"
             },
             {
               "name": "BITFLOW_ANALYSIS_STEP",
@@ -7718,9 +7718,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-e1b57e20.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-e1b57e20.results"
       }
     },
     "spec": {
@@ -7795,7 +7795,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "collector=bitflow, component=wally193-instance-00000313, bitflow-pipeline-1=a-pre-proc, bitflow-analysis-step=a-pre-proc, bitflow-pod=a-pre-proc-pod-e1b57e20, type=pre-processing, vm=instance-00000313, bitflow-pipeline-depth=1, node=wally193, bitflow-analysis-type=one-to-one, layer=virtual"
+              "value": "collector=bitflow, component=wally193-instance-00000313, bitflow-pipeline-1=a-pre-proc, bitflow-step-name=a-pre-proc, bitflow-pod=a-pre-proc-pod-e1b57e20, type=pre-processing, vm=instance-00000313, bitflow-pipeline-depth=1, node=wally193, bitflow-analysis-type=one-to-one, layer=virtual"
             },
             {
               "name": "BITFLOW_REDIS_ENDPOINT",
@@ -7962,9 +7962,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-b6034bac.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-b6034bac.results"
       }
     },
     "spec": {
@@ -8035,7 +8035,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "vm=instance-00000323, bitflow-pipeline-1=a-pre-proc, layer=virtual, bitflow-analysis-step=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, component=wally195-instance-00000323, bitflow-pod=a-pre-proc-pod-b6034bac, node=wally195, type=pre-processing"
+              "value": "vm=instance-00000323, bitflow-pipeline-1=a-pre-proc, layer=virtual, bitflow-step-name=a-pre-proc, bitflow-analysis-type=one-to-one, bitflow-pipeline-depth=1, collector=bitflow, component=wally195-instance-00000323, bitflow-pod=a-pre-proc-pod-b6034bac, node=wally195, type=pre-processing"
             },
             {
               "name": "BITFLOW_DATA_SOURCE_NAME",
@@ -8206,9 +8206,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-bb454774.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-bb454774.results"
       }
     },
     "spec": {
@@ -8283,7 +8283,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "component=wally180-instance-000002f8, layer=virtual, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, type=pre-processing, bitflow-analysis-step=a-pre-proc, bitflow-analysis-type=one-to-one, vm=instance-000002f8, bitflow-pod=a-pre-proc-pod-bb454774, collector=bitflow, node=wally180"
+              "value": "component=wally180-instance-000002f8, layer=virtual, bitflow-pipeline-1=a-pre-proc, bitflow-pipeline-depth=1, type=pre-processing, bitflow-step-name=a-pre-proc, bitflow-analysis-type=one-to-one, vm=instance-000002f8, bitflow-pod=a-pre-proc-pod-bb454774, collector=bitflow, node=wally180"
             },
             {
               "name": "BITFLOW_RABBITMQ_SEND_HEADERS",
@@ -8450,9 +8450,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-anomaly-detector",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-anomaly-detector",
+        "bitflow-step-name": "a-anomaly-detector",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "output.a-pre-proc-pod-1de052f4.results"
+        "bitflow-source-name": "output.a-pre-proc-pod-1de052f4.results"
       }
     },
     "spec": {
@@ -8523,7 +8523,7 @@ const podsRuntime = [
             },
             {
               "name": "BITFLOW_DATA_SOURCE_LABELS",
-              "value": "type=pre-processing, vm=instance-00000325, bitflow-pod=a-pre-proc-pod-1de052f4, collector=bitflow, component=wally194-instance-00000325, bitflow-analysis-step=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, layer=virtual, node=wally194, bitflow-analysis-type=one-to-one"
+              "value": "type=pre-processing, vm=instance-00000325, bitflow-pod=a-pre-proc-pod-1de052f4, collector=bitflow, component=wally194-instance-00000325, bitflow-step-name=a-pre-proc, bitflow-pipeline-depth=1, bitflow-pipeline-1=a-pre-proc, layer=virtual, node=wally194, bitflow-analysis-type=one-to-one"
             },
             {
               "name": "BITFLOW_REDIS_ENDPOINT",
@@ -8694,7 +8694,7 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-brain",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-brain",
+        "bitflow-step-name": "a-brain",
         "bitflow-analysis-type": "all-to-one"
       }
     },
@@ -8913,7 +8913,7 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-influxdb-writer",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-influxdb-writer",
+        "bitflow-step-name": "a-influxdb-writer",
         "bitflow-analysis-type": "all-to-one"
       }
     },
@@ -9117,9 +9117,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally194-instance-00000325-c9bb637a"
+        "bitflow-source-name": "bitflow-collector-wally194-instance-00000325-c9bb637a"
       }
     },
     "spec": {
@@ -9361,9 +9361,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally193-4cd17737"
+        "bitflow-source-name": "bitflow-collector-wally193-4cd17737"
       }
     },
     "spec": {
@@ -9605,9 +9605,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally180-instance-00000317-fb20f985"
+        "bitflow-source-name": "bitflow-collector-wally180-instance-00000317-fb20f985"
       }
     },
     "spec": {
@@ -9849,9 +9849,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally196-instance-00000319-38b38f2d"
+        "bitflow-source-name": "bitflow-collector-wally196-instance-00000319-38b38f2d"
       }
     },
     "spec": {
@@ -10093,9 +10093,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally197-instance-000002fd-a6e2ff8c"
+        "bitflow-source-name": "bitflow-collector-wally197-instance-000002fd-a6e2ff8c"
       }
     },
     "spec": {
@@ -10337,9 +10337,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally178-c8519d82"
+        "bitflow-source-name": "bitflow-collector-wally178-c8519d82"
       }
     },
     "spec": {
@@ -10581,9 +10581,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally180-instance-00000310-ca57b521"
+        "bitflow-source-name": "bitflow-collector-wally180-instance-00000310-ca57b521"
       }
     },
     "spec": {
@@ -10825,9 +10825,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally194-instance-00000314-a9271b59"
+        "bitflow-source-name": "bitflow-collector-wally194-instance-00000314-a9271b59"
       }
     },
     "spec": {
@@ -11069,9 +11069,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally179-instance-000002ff-a57a8bb1"
+        "bitflow-source-name": "bitflow-collector-wally179-instance-000002ff-a57a8bb1"
       }
     },
     "spec": {
@@ -11313,9 +11313,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally180-instance-000002fe-f38aba87"
+        "bitflow-source-name": "bitflow-collector-wally180-instance-000002fe-f38aba87"
       }
     },
     "spec": {
@@ -11557,9 +11557,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally197-instance-00000326-bb09180e"
+        "bitflow-source-name": "bitflow-collector-wally197-instance-00000326-bb09180e"
       }
     },
     "spec": {
@@ -11801,9 +11801,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally195-instance-00000323-6c5b7b35"
+        "bitflow-source-name": "bitflow-collector-wally195-instance-00000323-6c5b7b35"
       }
     },
     "spec": {
@@ -12045,9 +12045,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally180-instance-000002f8-361affb8"
+        "bitflow-source-name": "bitflow-collector-wally180-instance-000002f8-361affb8"
       }
     },
     "spec": {
@@ -12289,9 +12289,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally198-instance-000002f7-60885c08"
+        "bitflow-source-name": "bitflow-collector-wally198-instance-000002f7-60885c08"
       }
     },
     "spec": {
@@ -12533,9 +12533,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally193-instance-00000313-16f400fe"
+        "bitflow-source-name": "bitflow-collector-wally193-instance-00000313-16f400fe"
       }
     },
     "spec": {
@@ -12777,9 +12777,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally178-instance-0000031d-75a47182"
+        "bitflow-source-name": "bitflow-collector-wally178-instance-0000031d-75a47182"
       }
     },
     "spec": {
@@ -13021,9 +13021,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally179-instance-00000322-705c39d0"
+        "bitflow-source-name": "bitflow-collector-wally179-instance-00000322-705c39d0"
       }
     },
     "spec": {
@@ -13265,9 +13265,9 @@ const podsRuntime = [
       "labels": {
         "app": "bitflow-pre-processing",
         "operator": "bitflow",
-        "bitflow-analysis-step": "a-pre-proc",
+        "bitflow-step-name": "a-pre-proc",
         "bitflow-analysis-type": "one-to-one",
-        "bitflow-data-source-name": "bitflow-collector-wally196-instance-000002fa-2bb67ac6"
+        "bitflow-source-name": "bitflow-collector-wally196-instance-000002fa-2bb67ac6"
       }
     },
     "spec": {

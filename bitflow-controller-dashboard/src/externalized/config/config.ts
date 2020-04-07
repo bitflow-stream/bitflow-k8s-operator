@@ -1,5 +1,5 @@
 // Flags
-export const offlineMode = false;
+export const offlineMode = true;
 export const useLocalDataSources = offlineMode || false;
 export const useLocalSteps = offlineMode || false;
 export const useLocalPods = offlineMode || false;
