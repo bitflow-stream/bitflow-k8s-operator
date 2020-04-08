@@ -12,7 +12,7 @@ import (
 )
 
 func (s schedulingTask) getAvailableNodes(cli client.Client) *corev1.NodeList {
-	nodes, err := common.RequestNodes(cli)
+	nodes, err := common.RequestReadyNodes(cli)
 	if err != nil {
 		s.logger.Errorln("Failed to request available nodes:", err)
 		return nil
@@ -35,7 +35,7 @@ func (s schedulingTask) listAllBitflowPods() ([]*corev1.Pod, error) {
 func (s schedulingTask) findNodeForDataSource(source *bitflowv1.BitflowSource) (*corev1.Node, error) {
 	nodeLabel := s.Config.GetStandaloneSourceLabel()
 	if nodeName, ok := source.Labels[nodeLabel]; ok {
-		node, err := common.RequestNode(s.Client, nodeName)
+		node, err := common.RequestReadyNode(s.Client, nodeName)
 		if err == nil {
 			s.logger.Debugf("%v has label %v=%v, scheduling on node %v", source, nodeLabel, nodeName, node.Name)
 			return node, nil
@@ -57,7 +57,7 @@ func (s schedulingTask) findNodeForDataSourcePod(source *bitflowv1.BitflowSource
 		return nil, fmt.Errorf("Error requesting pod '%v' based on label %v=%v of %v: %v",
 			podName, bitflowv1.SourceLabelPodName, podName, source, err)
 	}
-	return common.RequestNode(s.Client, common.GetNodeName(pod))
+	return common.RequestReadyNode(s.Client, common.GetNodeName(pod))
 }
 
 func (s schedulingTask) findNodeForDataSources(sources []*bitflowv1.BitflowSource) (*corev1.Node, error) {

@@ -76,6 +76,12 @@ func (suite *AbstractTestSuite) Node2(name string, labels, annotations map[strin
 		Spec: corev1.NodeSpec{},
 		Status: corev1.NodeStatus{
 			Allocatable: res,
+			Conditions: []corev1.NodeCondition{
+				{
+					Type:   corev1.NodeReady,
+					Status: corev1.ConditionTrue,
+				},
+			},
 		},
 	}
 }

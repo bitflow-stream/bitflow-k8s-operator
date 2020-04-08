@@ -38,9 +38,9 @@ func (r *BitflowReconciler) reconcileNodeResources() {
 }
 
 func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
-	nodes, err := common.RequestNodes(r.client)
+	nodes, err := common.RequestReadyNodes(r.client)
 	if err != nil {
-		log.Errorln("Failed to retrieve all nodes:", err)
+		log.Errorln("Failed to retrieve all ready nodes:", err)
 		return
 	}
 	for _, node := range nodes.Items {
