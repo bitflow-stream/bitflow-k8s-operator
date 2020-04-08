@@ -417,21 +417,32 @@
                              [formControl]="getControlFromGroup('key', ingestGroup)">
                     </div>
                     <div class="col">
-                      <label for="{{'ingest-value-' + i}}">Value:</label>
-                      <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
-                             [formControl]="getControlFromGroup('value', ingestGroup)">
-                  </div>
-                  <div class="col">
-                    <label for="{{'ingest-check-' + i}}">Check:</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control" id="{{'ingest-check-' + i}}"
-                             [formControl]="getControlFromGroup('check', ingestGroup)">
-                      <button type="button" class="btn btn-danger ml-3"
-                              (click)="removeIngestFromStepForm(i)">
-                        <i class="fa fa-trash"></i>
-                      </button>
+                      <label for="{{'ingest-check-select-' + i}}">Check:</label>
+                      <select class="browser-default custom-select" id="{{'ingest-check-select-' + i}}"
+                              [ngClass]="getControlFromGroup('check', ingestGroup).valid ? 'is-valid':'is-invalid'"
+                              [formControl]="getControlFromGroup('check', ingestGroup)">
+                        <option
+                          *ngFor="let option of getOptionsIngestsArrayFromControlForm(getControlFromGroup('check', ingestGroup)); index as k;"
+                          [value]="option"
+                          [disabled]="k === 0"
+                          [hidden]="k === 0">
+                          {{ option }}
+                        </option>
+                      </select>
                     </div>
-                  </div>
+                    <div class="col">
+                      <label for="{{'ingest-value-' + i}}">Value:</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="{{'ingest-value-' + i}}"
+                               [formControl]="getControlFromGroup('value', ingestGroup)"
+                               [attr.disabled]="shouldDisplayIngestValue(getControlFromGroup('check', ingestGroup).value) ? null : ''"
+                               [ngClass]="{'is-valid': shouldDisplayIngestValue(getControlFromGroup('check', ingestGroup).value) && !ingestGroup.hasError('valueRequired'), 'is-invalid': shouldDisplayIngestValue(getControlFromGroup('check', ingestGroup).value) && ingestGroup.hasError('valueRequired')}">
+                        <button type="button" class="btn btn-danger ml-3"
+                                (click)="removeIngestFromStepForm(i)">
+                          <i class="fa fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="row">

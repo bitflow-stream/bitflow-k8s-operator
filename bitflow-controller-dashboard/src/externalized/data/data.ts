@@ -471,6 +471,11 @@ const stepsRuntime = [
           "key": "component",
           "value": "wally180-instance-00000310|wally194-instance-00000325|wally197-instance-00000326|wally193-instance-00000313|wally194-instance-00000314|wally196-instance-00000319|wally180-instance-00000317|wally178-instance-0000031d|wally179-instance-00000322|wally180-instance-000002f8|wally198-instance-000002f7|wally196-instance-000002fa|wally179-instance-000002ff|wally197-instance-000002fd|wally180-instance-000002fe|wally195-instance-00000323|^wally178$|^wally193$",
           "check": "regex"
+        },
+        {
+          "key": "testKey",
+          "value": "testValue",
+          "check": "unknownCheck"
         }
       ],
       "template": {
