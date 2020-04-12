@@ -5,8 +5,8 @@ go 1.14
 require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/antongulenko/go-onlinestats v0.0.0-20160514060630-5ff69410145c
-	github.com/antongulenko/golib v0.0.24
-	github.com/bitflow-stream/go-bitflow v0.0.56
+	github.com/antongulenko/golib v0.0.25
+	github.com/bitflow-stream/go-bitflow v0.0.58
 	github.com/gin-gonic/gin v1.4.0
 	github.com/go-openapi/spec v0.19.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect

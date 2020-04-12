@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
+	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,7 +42,7 @@ type ConfigTestSuite struct {
 }
 
 func TestConfig(t *testing.T) {
-	new(ConfigTestSuite).Run(t)
+	suite.Run(t, new(ConfigTestSuite))
 }
 
 func (s *ConfigTestSuite) UpdateConfig(client client.Client, name string) {

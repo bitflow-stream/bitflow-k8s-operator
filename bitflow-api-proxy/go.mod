@@ -3,7 +3,7 @@ module github.com/bitflow-stream/bitflow-k8s-operator/bitflow-api-proxy
 go 1.14
 
 require (
-	github.com/antongulenko/golib v0.0.24
+	github.com/antongulenko/golib v0.0.25
 	github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller v0.0.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.5.0

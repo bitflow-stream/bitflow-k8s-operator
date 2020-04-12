@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
+	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -13,7 +14,7 @@ type ResourcesTestSuite struct {
 }
 
 func TestResources(t *testing.T) {
-	new(ResourcesTestSuite).Run(t)
+	suite.Run(t, new(ResourcesTestSuite))
 }
 
 func (s *ResourcesTestSuite) resourceList(cpu, mem int64) *corev1.ResourceList {

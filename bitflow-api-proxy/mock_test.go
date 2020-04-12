@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/antongulenko/golib"
+	"github.com/stretchr/testify/suite"
 )
 
 type RestProxyTestSuite struct {
@@ -11,9 +12,9 @@ type RestProxyTestSuite struct {
 }
 
 func TestMockTestSuite(t *testing.T) {
-	new(RestProxyTestSuite).Run(t)
+	suite.Run(t, new(RestProxyTestSuite))
 }
 
-func (suite *RestProxyTestSuite) testSomething() {
+func (suite *RestProxyTestSuite) TestSomething() {
 	// TODO write tests
 }

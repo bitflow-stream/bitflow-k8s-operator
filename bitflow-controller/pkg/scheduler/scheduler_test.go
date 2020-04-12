@@ -6,6 +6,7 @@ import (
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
+	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -15,7 +16,7 @@ type SchedulerTestSuite struct {
 }
 
 func TestScheduler(t *testing.T) {
-	new(SchedulerTestSuite).Run(t)
+	suite.Run(t, new(SchedulerTestSuite))
 }
 
 func (s *SchedulerTestSuite) getSchedulerNode() *corev1.Node {

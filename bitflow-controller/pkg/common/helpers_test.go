@@ -2,6 +2,8 @@ package common
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type HelpersTestSuite struct {
@@ -9,7 +11,7 @@ type HelpersTestSuite struct {
 }
 
 func TestHelpersSuite(t *testing.T) {
-	new(HelpersTestSuite).Run(t)
+	suite.Run(t, new(HelpersTestSuite))
 }
 
 func (s *HelpersTestSuite) TestGetNodeName() {
