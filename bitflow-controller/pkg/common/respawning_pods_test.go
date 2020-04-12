@@ -2,6 +2,8 @@ package common
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type RespawningPodsTestSuite struct {
@@ -9,7 +11,7 @@ type RespawningPodsTestSuite struct {
 }
 
 func TestRespawningPods(t *testing.T) {
-	new(RespawningPodsTestSuite).Run(t)
+	suite.Run(t, new(RespawningPodsTestSuite))
 }
 
 func (s *RespawningPodsTestSuite) TestAdd() {

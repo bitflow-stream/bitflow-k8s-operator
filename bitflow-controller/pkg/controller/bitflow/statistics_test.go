@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
+	"github.com/stretchr/testify/suite"
 )
 
 const (
@@ -18,7 +19,7 @@ type StatisticsTestSuite struct {
 }
 
 func TestStatistics(t *testing.T) {
-	new(StatisticsTestSuite).Run(t)
+	suite.Run(t, new(StatisticsTestSuite))
 }
 
 func (s *StatisticsTestSuite) writeStats(stat *ReconcileStatistics, numberOfLogs ...int) {
