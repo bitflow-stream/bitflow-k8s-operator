@@ -31,6 +31,7 @@ spec:
       containers:
         - image: bitflowstream/bitflow-api-proxy
           name: bitflow-api-proxy
+          imagePullPolicy: Always
           args: [ "-l", ":8080" ]
           ports:
             - containerPort: 8080
