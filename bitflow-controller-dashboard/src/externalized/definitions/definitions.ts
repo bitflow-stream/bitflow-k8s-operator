@@ -84,7 +84,7 @@ export interface Ingest {
 export interface Output {
   name: string;
   url: string;
-  "labels": Label[];
+  labels: Label[];
 }
 
 export interface Label {

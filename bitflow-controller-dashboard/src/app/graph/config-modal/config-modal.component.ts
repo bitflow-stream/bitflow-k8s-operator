@@ -13,6 +13,7 @@ import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
 import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators} from '@angular/forms';
 import {RxwebValidators} from "@rxweb/reactive-form-validators";
+import {useLocalSteps} from "../../../externalized/config/config";
 
 function arrayContains(needle, arrhaystack) {
   return (arrhaystack.indexOf(needle) > -1);
@@ -26,6 +27,15 @@ const StepIngestValueRequiredValidator: ValidatorFn = (fg: FormGroup) => {
       return {valueRequired: true};
     }
     return null;
+  }
+  return null;
+};
+
+const JsonValidator: ValidatorFn = (fc: FormControl) => {
+  try {
+    JSON.parse(fc.value);
+  } catch (e) {
+    return {jsonInvalid: true};
   }
   return null;
 };
@@ -109,7 +119,7 @@ export class ConfigModalComponent implements AfterViewInit {
         await new Promise(resolve => setTimeout(() => {
           this.openModal(idParam);
           resolve();
-        }, getAllCurrentGraphElementsWithStacks().length === 0 ? 500 : 0));
+        }, getAllCurrentGraphElementsWithStacks().length === 0 ? 2000 : 0));
       });
     });
   }
@@ -226,8 +236,16 @@ export class ConfigModalComponent implements AfterViewInit {
         });
       }
 
-      console.log(getRawDataFromStep(step));
-      // TODO save in kubernetes
+      if (!useLocalSteps) {
+        const Http = new XMLHttpRequest();
+        const url = 'http://localhost:8080/step/default';
+        Http.open("POST", url);
+        Http.send(getRawDataFromStep(step));
+
+        Http.onreadystatechange = () => {
+          location.reload();
+        }
+      }
     }
     if (graphElement.type === 'data-source') {
       let dataSource = graphElement.dataSource;
@@ -295,7 +313,6 @@ export class ConfigModalComponent implements AfterViewInit {
   }
 
   handleSubmit() {
-    this.modalService.dismissAll();
     this.save(this.selectedElement())
   }
 
@@ -449,6 +466,7 @@ export class ConfigModalComponent implements AfterViewInit {
   private fillStepForm(step: Step) {
     this.stepFormData.setControl('template', this.fb.control(step.template, [
       Validators.required,
+      JsonValidator
     ]));
 
     let ingests = this.fb.array([]);

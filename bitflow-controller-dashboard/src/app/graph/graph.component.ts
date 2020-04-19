@@ -65,7 +65,7 @@ export function getGraphVisualization() {
     let depth = getDepthOfGraphElement(element);
     let graphVisualizationColumn: GraphVisualizationColumn = graphVisualization.graphColumns[depth];
 
-    if ((element.type === 'pod' && element.pod.hasCreatorStep) || element.type === 'pod-stack') {
+    if ((element.type === 'pod' && element.pod.hasCreatorStep) || (element.type === 'pod-stack' && element.podStack.hasCreatorStep)) {
       return;
     }
 

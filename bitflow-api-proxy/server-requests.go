@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -38,6 +39,27 @@ func (s *ProxyServer) getConfig(c *gin.Context) {
 func (s *ProxyServer) getBitflowStep(c *gin.Context) {
 	step, err := common.GetStep(s.client, c.Param("stepName"), s.namespace(c))
 	bitflow.ReplyJSON(c, step, err)
+}
+
+func (s *ProxyServer) setBitflowStep(c *gin.Context) {
+	var step = bitflowv1.BitflowStep{}
+	if err := c.ShouldBindJSON(&step); err != nil {
+		bitflow.ReplyError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	currentStep, err := common.GetStep(s.client, step.Name, s.namespace(c))
+	if err != nil {
+		bitflow.ReplyJSON(c, nil, err)
+		return
+	}
+
+	step.SetResourceVersion(currentStep.GetResourceVersion())
+	step.SetUID(currentStep.GetUID())
+	updatedObject := step.DeepCopyObject()
+
+	err = s.client.Update(c, updatedObject)
+	bitflow.ReplyJSON(c, nil, err)
 }
 
 func (s *ProxyServer) getBitflowSteps(c *gin.Context) {
