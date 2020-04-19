@@ -54,7 +54,8 @@ func (s *ProxyServer) setBitflowStep(c *gin.Context) {
 		return
 	}
 
-	step.ResourceVersion = currentStep.ResourceVersion
+	step.SetResourceVersion(currentStep.GetResourceVersion())
+	step.SetUID(currentStep.GetUID())
 	updatedObject := step.DeepCopyObject()
 
 	err = s.client.Update(c, updatedObject)
