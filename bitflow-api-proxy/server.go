@@ -80,7 +80,7 @@ func (s *ProxyServer) registerEndpoints(gin *gin.Engine) {
 	gin.GET("/steps", s.getBitflowSteps)
 	gin.GET("/steps/:namespace", s.getBitflowSteps)
 	gin.GET("/step/:namespace/:stepName", s.getBitflowStep)
-	gin.POST("/step/:namespace/:stepName", s.setBitflowStep)
+	gin.POST("/step/:namespace", s.setBitflowStep)
 	gin.GET("/datasources", s.getBitflowSources)
 	gin.GET("/datasources/:namespace", s.getBitflowSources)
 	gin.GET("/datasource/:namespace/:sourceName", s.getBitflowSource)

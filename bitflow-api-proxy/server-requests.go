@@ -48,9 +48,9 @@ func (s *ProxyServer) setBitflowStep(c *gin.Context) {
 		return
 	}
 
-	currentStep, err := common.GetStep(s.client, c.Param("stepName"), s.namespace(c))
+	currentStep, err := common.GetStep(s.client, step.Name, s.namespace(c))
 	if err != nil {
-		bitflow.ReplyError(c, http.StatusBadRequest, err)
+		bitflow.ReplyJSON(c, nil, err)
 		return
 	}
 

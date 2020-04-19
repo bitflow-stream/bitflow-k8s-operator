@@ -238,7 +238,7 @@ export class ConfigModalComponent implements AfterViewInit {
 
       if (!useLocalSteps) {
         const Http = new XMLHttpRequest();
-        const url = 'http://localhost:8080/step/default/' + step.name;
+        const url = 'http://localhost:8080/step/default';
         Http.open("POST", url);
         Http.send(getRawDataFromStep(step));
 
