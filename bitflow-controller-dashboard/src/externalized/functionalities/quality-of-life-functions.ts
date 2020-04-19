@@ -454,9 +454,17 @@ export function getGraphElementByIdentifier(identifier: string) {
 
 export function getRawDataFromStep(step: Step): string {
   let completeStep = JSON.parse(step.raw);
-  completeStep.spec.template = step.template;
+  completeStep.spec.template = JSON.parse(step.template);
   completeStep.spec.ingest = step.ingests;
   completeStep.spec.outputs = step.outputs;
+  completeStep.spec.outputs.map(output => {
+    let outputLabels = {};
+    output.labels.forEach(label => {
+      outputLabels[label.key] = label.value;
+    });
+    output.labels = outputLabels;
+    return output;
+  });
   return JSON.stringify(completeStep);
 }
 
