@@ -13,7 +13,7 @@ import {Location} from '@angular/common';
 import {SharedService} from '../../../shared-service';
 import {AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators} from '@angular/forms';
 import {RxwebValidators} from "@rxweb/reactive-form-validators";
-import {useLocalSteps} from "../../../externalized/config/config";
+import {useLocalDataSources, useLocalSteps} from "../../../externalized/config/config";
 
 function arrayContains(needle, arrhaystack) {
   return (arrhaystack.indexOf(needle) > -1);
@@ -265,8 +265,16 @@ export class ConfigModalComponent implements AfterViewInit {
         });
       }
 
-      console.log(getRawDataFromDataSource(dataSource));
-      // TODO save in kubernetes
+      if (!useLocalDataSources) {
+        const Http = new XMLHttpRequest();
+        const url = 'http://localhost:8080/datasource/default';
+        Http.open("POST", url);
+        Http.send(getRawDataFromDataSource(dataSource));
+
+        Http.onreadystatechange = () => {
+          location.reload();
+        }
+      }
     }
     if (graphElement.type === 'pod') {
       let pod = graphElement.pod;

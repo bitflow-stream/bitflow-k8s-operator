@@ -41,6 +41,11 @@ func (s *ProxyServer) getBitflowStep(c *gin.Context) {
 	bitflow.ReplyJSON(c, step, err)
 }
 
+func (s *ProxyServer) getBitflowSteps(c *gin.Context) {
+	steps, err := common.GetSteps(s.client, s.namespace(c))
+	bitflow.ReplyJSON(c, steps, err)
+}
+
 func (s *ProxyServer) setBitflowStep(c *gin.Context) {
 	var step = bitflowv1.BitflowStep{}
 	if err := c.ShouldBindJSON(&step); err != nil {
@@ -62,11 +67,6 @@ func (s *ProxyServer) setBitflowStep(c *gin.Context) {
 	bitflow.ReplyJSON(c, nil, err)
 }
 
-func (s *ProxyServer) getBitflowSteps(c *gin.Context) {
-	steps, err := common.GetSteps(s.client, s.namespace(c))
-	bitflow.ReplyJSON(c, steps, err)
-}
-
 func (s *ProxyServer) getBitflowSource(c *gin.Context) {
 	source, err := common.GetSource(s.client, c.Param("sourceName"), s.namespace(c))
 	bitflow.ReplyJSON(c, source, err)
@@ -75,6 +75,27 @@ func (s *ProxyServer) getBitflowSource(c *gin.Context) {
 func (s *ProxyServer) getBitflowSources(c *gin.Context) {
 	sources, err := common.GetSources(s.client, s.namespace(c))
 	bitflow.ReplyJSON(c, sources, err)
+}
+
+func (s *ProxyServer) setBitflowSource(c *gin.Context) {
+	var source = bitflowv1.BitflowSource{}
+	if err := c.ShouldBindJSON(&source); err != nil {
+		bitflow.ReplyError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	currentSource, err := common.GetSource(s.client, source.Name, s.namespace(c))
+	if err != nil {
+		bitflow.ReplyJSON(c, nil, err)
+		return
+	}
+
+	source.SetResourceVersion(currentSource.GetResourceVersion())
+	source.SetUID(currentSource.GetUID())
+	updatedObject := source.DeepCopyObject()
+
+	err = s.client.Update(c, updatedObject)
+	bitflow.ReplyJSON(c, nil, err)
 }
 
 func (s *ProxyServer) getMatchingSources(c *gin.Context) {
