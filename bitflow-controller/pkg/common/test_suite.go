@@ -64,9 +64,13 @@ func (suite *AbstractTestSuite) Node(name string) *corev1.Node {
 }
 
 func (suite *AbstractTestSuite) Node2(name string, labels, annotations map[string]string) *corev1.Node {
+	return suite.NodeWithResources(name, labels, annotations, TestNodeCpu, TestNodeMem)
+}
+
+func (suite *AbstractTestSuite) NodeWithResources(name string, labels, annotations map[string]string, cpu int64, memory int64) *corev1.Node {
 	var res = make(corev1.ResourceList)
-	res[corev1.ResourceCPU] = *resource.NewMilliQuantity(TestNodeCpu, resource.DecimalSI)
-	res[corev1.ResourceMemory] = *resource.NewQuantity(TestNodeMem, resource.BinarySI)
+	res[corev1.ResourceCPU] = *resource.NewMilliQuantity(cpu, resource.DecimalSI)
+	res[corev1.ResourceMemory] = *resource.NewQuantity(memory, resource.BinarySI)
 	return &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
