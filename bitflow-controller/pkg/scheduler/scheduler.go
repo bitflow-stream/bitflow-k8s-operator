@@ -26,7 +26,7 @@ func (s *Scheduler) SchedulePod(pod *corev1.Pod, step *bitflowv1.BitflowStep, so
 	var node *corev1.Node
 	successfulScheduler := ""
 	for _, schedulerName := range schedulers {
-		node = task.schedule(schedulerName)
+		node = task.schedule(schedulerName, step)
 		successfulScheduler = schedulerName
 		if node != nil {
 			break
@@ -54,7 +54,7 @@ type schedulingTask struct {
 	sources []*bitflowv1.BitflowSource
 }
 
-func (s schedulingTask) schedule(schedulerName string) *corev1.Node {
+func (s schedulingTask) schedule(schedulerName string, step *bitflowv1.BitflowStep) *corev1.Node {
 	switch schedulerName {
 	case "first":
 		return s.getFirstNode()
@@ -68,6 +68,12 @@ func (s schedulingTask) schedule(schedulerName string) *corev1.Node {
 		return s.getNodeWithMostFreeMemory()
 	case "sourceAffinity":
 		return s.getNodeNearSource()
+	case "nodeLabels":
+		if step.Spec.NodeLabels == nil {
+			s.logger.Debugln("No nodeLabels set in step description")
+			return nil
+		}
+		return s.getNodeWithLabels(step.Spec.NodeLabels)
 	default:
 		s.logger.Debugln("Unknown scheduler:", schedulerName)
 		return nil

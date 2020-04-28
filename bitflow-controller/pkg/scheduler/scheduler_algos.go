@@ -109,3 +109,12 @@ func (s schedulingTask) getNodeNearSource() *corev1.Node {
 	}
 	return node
 }
+
+func (s schedulingTask) getNodeWithLabels(labels map[string][]string) *corev1.Node {
+	nodes := s.getAvailableNodesWithLabels(s.Client, labels)
+	if nodes == nil {
+		return nil
+	}
+	// return random node of list
+	return &nodes.Items[nodePickerRand.Intn(len(nodes.Items))]
+}
