@@ -18,7 +18,7 @@ spec:
     shortNames:
     - bst
     - bfst
-    singular: bitflowstep
+    singular: bitflow-step
   scope: Namespaced
   subresources:
     status: {}
