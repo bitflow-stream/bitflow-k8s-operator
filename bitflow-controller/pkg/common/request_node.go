@@ -3,8 +3,9 @@ package common
 import (
 	"context"
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -61,4 +62,22 @@ func IsNodeReady(node *corev1.Node) bool {
 		}
 	}
 	return false
+}
+
+func RequestNodesByLabels(cli client.Client, nodeLabels map[string][]string) (*corev1.NodeList, error) {
+	nodeList := &corev1.NodeList{}
+
+	selector := labels.NewSelector()
+	for label, values := range nodeLabels {
+		req, err := labels.NewRequirement(label, selection.In, values)
+		if err != nil {
+			return nodeList, err
+		}
+		selector.Add(*req)
+	}
+	nodeError := cli.List(context.TODO(), &client.ListOptions{LabelSelector: selector}, nodeList)
+	if nodeError != nil {
+		return nodeList, nodeError
+	}
+	return nodeList, nil
 }
