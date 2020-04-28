@@ -88,7 +88,7 @@ func (s schedulingTask) getNodeWithMostFreeMemory(nodes *corev1.NodeList) *corev
 	return &nodes.Items[maxIndex]
 }
 
-func (s schedulingTask) getNodeNearSource() *corev1.Node {
+func (s schedulingTask) getNodeNearSource(nodes *corev1.NodeList) *corev1.Node {
 	var node *corev1.Node
 	var err error
 	switch len(s.sources) {
@@ -101,6 +101,12 @@ func (s schedulingTask) getNodeNearSource() *corev1.Node {
 	}
 	if err != nil {
 		s.logger.Errorln("Failed to query node for data source(s)", err)
+	}
+
+	for _, n := range nodes.Items {
+		if n.Name == node.Name {
+			return node
+		}
 	}
 	return node
 }

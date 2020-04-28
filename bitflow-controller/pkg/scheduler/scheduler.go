@@ -80,7 +80,7 @@ func (s schedulingTask) schedule(schedulerName string, nodeList *corev1.NodeList
 	case "mostMem":
 		return s.getNodeWithMostFreeMemory(nodeList)
 	case "sourceAffinity":
-		return s.getNodeNearSource()
+		return s.getNodeNearSource(nodeList)
 	default:
 		s.logger.Debugln("Unknown scheduler:", schedulerName)
 		return nil
