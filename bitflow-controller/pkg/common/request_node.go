@@ -37,12 +37,7 @@ func RequestNodes(cli client.Client) (*corev1.NodeList, error) {
 	return nodeList, nil
 }
 
-func RequestReadyNodes(cli client.Client) (*corev1.NodeList, error) {
-	nodes, err := RequestNodes(cli)
-	if err != nil {
-		return nodes, err
-	}
-
+func FilterReadyNodes(nodes *corev1.NodeList) *corev1.NodeList {
 	// Remove the nodes from the slice, that are not marked as ready
 	for i := 0; i < len(nodes.Items) && len(nodes.Items) > 0; {
 		if !IsNodeReady(&nodes.Items[i]) {
@@ -52,7 +47,16 @@ func RequestReadyNodes(cli client.Client) (*corev1.NodeList, error) {
 			i++
 		}
 	}
-	return nodes, nil
+	return nodes
+}
+
+func RequestReadyNodes(cli client.Client) (*corev1.NodeList, error) {
+	nodes, err := RequestNodes(cli)
+	if err != nil {
+		return nodes, err
+	}
+	readyNodes := FilterReadyNodes(nodes)
+	return readyNodes, nil
 }
 
 func IsNodeReady(node *corev1.Node) bool {
@@ -64,7 +68,7 @@ func IsNodeReady(node *corev1.Node) bool {
 	return false
 }
 
-func RequestNodesByLabels(cli client.Client, nodeLabels map[string][]string) (*corev1.NodeList, error) {
+func RequestReadyNodesByLabels(cli client.Client, nodeLabels map[string][]string) (*corev1.NodeList, error) {
 	nodeList := &corev1.NodeList{}
 
 	selector := labels.NewSelector()
@@ -76,8 +80,6 @@ func RequestNodesByLabels(cli client.Client, nodeLabels map[string][]string) (*c
 		selector.Add(*req)
 	}
 	nodeError := cli.List(context.TODO(), &client.ListOptions{LabelSelector: selector}, nodeList)
-	if nodeError != nil {
-		return nodeList, nodeError
-	}
-	return nodeList, nil
+	readyNodes := FilterReadyNodes(nodeList)
+	return readyNodes, nodeError
 }

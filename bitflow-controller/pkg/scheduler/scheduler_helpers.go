@@ -23,18 +23,6 @@ func (s schedulingTask) getAvailableNodes(cli client.Client) *corev1.NodeList {
 	return nodes
 }
 
-func (s schedulingTask) getAvailableNodesWithLabels(cli client.Client, labels map[string][]string) *corev1.NodeList {
-	nodes, err := common.RequestNodesByLabels(cli, labels)
-	if err != nil {
-		s.logger.Errorln("Failed to request available nodes with given labels:", err)
-		return nil
-	} else if len(nodes.Items) == 0 {
-		s.logger.Errorln("Zero nodes found with given labels")
-		return nil
-	}
-	return nodes
-}
-
 func (s schedulingTask) listAllBitflowPods() ([]*corev1.Pod, error) {
 	podList := &corev1.PodList{}
 	err := s.Client.List(context.TODO(), &client.ListOptions{

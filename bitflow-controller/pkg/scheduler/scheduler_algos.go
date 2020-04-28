@@ -10,8 +10,7 @@ import (
 
 var nodePickerRand = rand.New(rand.NewSource(int64(time.Now().Nanosecond())))
 
-func (s schedulingTask) getFirstNode() *corev1.Node {
-	nodes := s.getAvailableNodes(s.Client)
+func (s schedulingTask) getFirstNode(nodes *corev1.NodeList) *corev1.Node {
 	if nodes == nil {
 		return nil
 	}
@@ -19,8 +18,7 @@ func (s schedulingTask) getFirstNode() *corev1.Node {
 	return &nodes.Items[0]
 }
 
-func (s schedulingTask) getRandomNode() *corev1.Node {
-	nodes := s.getAvailableNodes(s.Client)
+func (s schedulingTask) getRandomNode(nodes *corev1.NodeList) *corev1.Node {
 	if nodes == nil {
 		return nil
 	}
@@ -28,8 +26,7 @@ func (s schedulingTask) getRandomNode() *corev1.Node {
 	return &nodes.Items[nodePickerRand.Intn(len(nodes.Items))]
 }
 
-func (s schedulingTask) getNodeWithLeastContainers() *corev1.Node {
-	nodes := s.getAvailableNodes(s.Client)
+func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *corev1.Node {
 	if nodes == nil {
 		return nil
 	}
@@ -59,8 +56,7 @@ func (s schedulingTask) getNodeWithLeastContainers() *corev1.Node {
 	return minNode
 }
 
-func (s schedulingTask) getNodeWithMostFreeCPU() *corev1.Node {
-	nodes := s.getAvailableNodes(s.Client)
+func (s schedulingTask) getNodeWithMostFreeCPU(nodes *corev1.NodeList) *corev1.Node {
 	if nodes == nil {
 		return nil
 	}
@@ -76,8 +72,7 @@ func (s schedulingTask) getNodeWithMostFreeCPU() *corev1.Node {
 	return &nodes.Items[maxIndex]
 }
 
-func (s schedulingTask) getNodeWithMostFreeMemory() *corev1.Node {
-	nodes := s.getAvailableNodes(s.Client)
+func (s schedulingTask) getNodeWithMostFreeMemory(nodes *corev1.NodeList) *corev1.Node {
 	if nodes == nil {
 		return nil
 	}
@@ -108,13 +103,4 @@ func (s schedulingTask) getNodeNearSource() *corev1.Node {
 		s.logger.Errorln("Failed to query node for data source(s)", err)
 	}
 	return node
-}
-
-func (s schedulingTask) getNodeWithLabels(labels map[string][]string) *corev1.Node {
-	nodes := s.getAvailableNodesWithLabels(s.Client, labels)
-	if nodes == nil {
-		return nil
-	}
-	// return random node of list
-	return &nodes.Items[nodePickerRand.Intn(len(nodes.Items))]
 }
