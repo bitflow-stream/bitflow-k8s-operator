@@ -3,7 +3,6 @@ module github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller
 go 1.14
 
 require (
-	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/antongulenko/go-onlinestats v0.0.0-20160514060630-5ff69410145c
 	github.com/antongulenko/golib v0.0.25
 	github.com/bitflow-stream/go-bitflow v0.0.58
@@ -13,7 +12,6 @@ require (
 	github.com/operator-framework/operator-sdk v0.10.1-0.20191009222911-fd528e8ec03b
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8 // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
