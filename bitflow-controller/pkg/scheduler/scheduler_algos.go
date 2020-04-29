@@ -103,9 +103,11 @@ func (s schedulingTask) getNodeNearSource(nodes *corev1.NodeList) *corev1.Node {
 		s.logger.Errorln("Failed to query node for data source(s)", err)
 	}
 
-	for _, n := range nodes.Items {
-		if n.Name == node.Name {
-			return node
+	if node != nil {
+		for _, n := range nodes.Items {
+			if n.Name == node.Name {
+				return node
+			}
 		}
 	}
 	return node
