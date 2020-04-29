@@ -34,6 +34,7 @@ func (s *Scheduler) SchedulePod(pod *corev1.Pod, step *bitflowv1.BitflowStep, so
 
 	if err != nil {
 		logger.Errorln("Failed to request available nodes:", err)
+		return nil, ""
 	}
 
 	var node *corev1.Node
