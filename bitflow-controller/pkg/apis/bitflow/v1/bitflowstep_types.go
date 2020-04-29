@@ -56,6 +56,7 @@ type BitflowStepSpec struct {
 	// +kubebuilder:validation:Enum=one-to-one;all-to-one;"";singleton
 	Type         string              `json:"type,omitempty"`
 	Scheduler    string              `json:"scheduler,omitempty"`
+	NodeLabels   map[string][]string `json:"nodeLabels,omitempty"`
 	Ingest       []*IngestMatch      `json:"ingest,omitempty"`
 	Outputs      []*StepOutput       `json:"outputs,omitempty"`
 	MinResources corev1.ResourceList `json:"minResources,omitempty"`
