@@ -3,6 +3,7 @@ package scheduler
 import (
 	"github.com/antongulenko/golib"
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -23,10 +24,28 @@ func (s *Scheduler) SchedulePod(pod *corev1.Pod, step *bitflowv1.BitflowStep, so
 	schedulers := s.getSchedulerList(step)
 	logger.Debugln("Running schedulers:", schedulers)
 
+	var nodeList *corev1.NodeList
+	var err error
+	if step.Spec.NodeLabels != nil {
+		nodeList, err = common.RequestReadyNodesByLabels(s.Client, step.Spec.NodeLabels)
+	} else {
+		nodeList, err = common.RequestReadyNodes(s.Client)
+	}
+
+	if err != nil {
+		logger.Errorf("Failed to request available nodes: %v", err)
+		return nil, ""
+	}
+
+	if len(nodeList.Items) == 0 {
+		logger.Errorln("List of available nodes is empty")
+		return nil, ""
+	}
+
 	var node *corev1.Node
 	successfulScheduler := ""
 	for _, schedulerName := range schedulers {
-		node = task.schedule(schedulerName)
+		node = task.schedule(schedulerName, nodeList)
 		successfulScheduler = schedulerName
 		if node != nil {
 			break
@@ -54,20 +73,20 @@ type schedulingTask struct {
 	sources []*bitflowv1.BitflowSource
 }
 
-func (s schedulingTask) schedule(schedulerName string) *corev1.Node {
+func (s schedulingTask) schedule(schedulerName string, nodeList *corev1.NodeList) *corev1.Node {
 	switch schedulerName {
 	case "first":
-		return s.getFirstNode()
+		return s.getFirstNode(nodeList)
 	case "random":
-		return s.getRandomNode()
+		return s.getRandomNode(nodeList)
 	case "leastContainers":
-		return s.getNodeWithLeastContainers()
+		return s.getNodeWithLeastContainers(nodeList)
 	case "mostCPU":
-		return s.getNodeWithMostFreeCPU()
+		return s.getNodeWithMostFreeCPU(nodeList)
 	case "mostMem":
-		return s.getNodeWithMostFreeMemory()
+		return s.getNodeWithMostFreeMemory(nodeList)
 	case "sourceAffinity":
-		return s.getNodeNearSource()
+		return s.getNodeNearSource(nodeList)
 	default:
 		s.logger.Debugln("Unknown scheduler:", schedulerName)
 		return nil
