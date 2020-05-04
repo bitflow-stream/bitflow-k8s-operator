@@ -42,18 +42,22 @@ func (s *SchedulerTestSuite) getScheduler(objects ...runtime.Object) *Scheduler 
 	return &Scheduler{cl, conf, common.TestNamespace, map[string]string{"bitflow": "true"}}
 }
 
-func (s *SchedulerTestSuite) testSchedulerMultipleNodes(testName string, expectedSuccessfulScheduler string, schedulerList string, expectedNode *corev1.Node, nodes ...*corev1.Node) {
+func (s *SchedulerTestSuite) testSchedulerMultipleNodes(testName string, expectedSuccessfulScheduler string, schedulerList string, expectedNode *corev1.Node, nodes []*corev1.Node, pods []*corev1.Pod) {
 	s.SubTest(testName, func() {
 		// Setup
 		sources := []*bitflowv1.BitflowSource(nil)
 		scheduledPod := s.Pod("scheduled-pod")
 		step := s.Step("test-step", bitflowv1.StepTypeOneToOne)
 
-		var runtimeObjectNodes = make([]runtime.Object, len(nodes))
+		var runtimeObjects = make([]runtime.Object, len(nodes)+len(pods))
 		for i, node := range nodes {
-			runtimeObjectNodes[i] = node
+			runtimeObjects[i] = node
 		}
-		scheduler := s.getScheduler(runtimeObjectNodes...)
+		for i, pod := range pods {
+			runtimeObjects[i+len(nodes)] = pod
+		}
+
+		scheduler := s.getScheduler(runtimeObjects...)
 		step.Spec.Scheduler = schedulerList
 
 		//Execution
@@ -73,6 +77,21 @@ func (s *SchedulerTestSuite) TestSchedulersMultipleNodes() {
 	mostCpuNode := s.getNodeWithResources("mostCpuNode", 1000, 1)
 	modeMemNode := s.getNodeWithResources("modeMemNode", 100, 100)
 
+	nodeWithoutPods := s.getNodeWithResources("nodeWithoutPods", 10, 1)
+
+	nodeWithPods1 := s.getNodeWithResources("nodeWithPods1", 10, 1)
+	nodeWithPods2 := s.getNodeWithResources("nodeWithPods2", 10, 1)
+	nodeWithPods3 := s.getNodeWithResources("nodeWithPods3", 10, 1)
+	pod1 := s.PodInitializingLabels("pod1")
+	pod1.Spec.NodeName = "nodeWithPods1"
+	pod1.Labels["bitflow"] = "true"
+	pod2 := s.PodInitializingLabels("pod2")
+	pod2.Spec.NodeName = "nodeWithPods2"
+	pod2.Labels["bitflow"] = "true"
+	pod3 := s.PodInitializingLabels("pod3")
+	pod3.Spec.NodeName = "nodeWithPods3"
+	pod3.Labels["bitflow"] = "true"
+
 	otherNode1 := s.getNodeWithResources("otherNode1", 564, 99)
 	otherNode2 := s.getNodeWithResources("otherNode2", 239, 12)
 	otherNode3 := s.getNodeWithResources("otherNode3", 0, 2)
@@ -81,24 +100,38 @@ func (s *SchedulerTestSuite) TestSchedulersMultipleNodes() {
 
 	s.testSchedulerMultipleNodes("mostCPU",
 		"mostCPU", "mostCPU,mostMem,first,random", mostCpuNode,
-		mostCpuNode, modeMemNode, otherNode1, otherNode2, otherNode3, otherNode4, otherNode5)
+		[]*corev1.Node{
+			mostCpuNode, modeMemNode, otherNode1, otherNode2, otherNode3, otherNode4, otherNode5},
+		nil)
 
 	s.testSchedulerMultipleNodes("mostMem",
 		"mostMem", "mostMem,mostCPU,first,random", modeMemNode,
-		mostCpuNode, modeMemNode, otherNode1, otherNode2, otherNode3, otherNode4, otherNode5)
+		[]*corev1.Node{
+			mostCpuNode, modeMemNode, otherNode1, otherNode2, otherNode3, otherNode4, otherNode5},
+		nil)
 
 	s.testSchedulerMultipleNodes("first",
 		"first", "first,mostCPU,mostMem,random", firstNode,
-		firstNode, mostCpuNode, modeMemNode, otherNode1, otherNode2, otherNode3, otherNode4)
+		[]*corev1.Node{
+			firstNode, mostCpuNode, modeMemNode, otherNode1, otherNode2, otherNode3, otherNode4},
+		nil)
+
+	s.testSchedulerMultipleNodes("leastContainers",
+		"leastContainers", "leastContainers,random", nodeWithoutPods,
+		[]*corev1.Node{
+			nodeWithoutPods, nodeWithPods1, nodeWithPods2, nodeWithPods3},
+		[]*corev1.Pod{
+			pod1, pod2, pod3})
 
 	s.testSchedulerMultipleNodes("randomOnlyOneNode",
 		"random", "random,first", otherNode1,
-		otherNode1)
+		[]*corev1.Node{
+			otherNode1},
+		nil)
 
 	s.testSchedulerMultipleNodes("noNodesShouldNotFindScheduler",
-		"", "random", nil)
+		"", "random", nil, nil, nil)
 
-	// TODO test leastContainers scheduler
 	// TODO test sourceAffinity scheduler
 }
 

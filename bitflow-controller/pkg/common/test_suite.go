@@ -38,6 +38,10 @@ func (suite *AbstractTestSuite) Pod(name string) *corev1.Pod {
 	return suite.PodLabels(name, nil)
 }
 
+func (suite *AbstractTestSuite) PodInitializingLabels(name string) *corev1.Pod {
+	return suite.PodLabels(name, make(map[string]string))
+}
+
 func (suite *AbstractTestSuite) PodLabels(name string, labels map[string]string) *corev1.Pod {
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{

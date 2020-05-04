@@ -27,7 +27,7 @@ func (s schedulingTask) getRandomNode(nodes *corev1.NodeList) *corev1.Node {
 }
 
 func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *corev1.Node {
-	if nodes == nil {
+	if nodes == nil || len(nodes.Items) == 0 {
 		return nil
 	}
 
@@ -47,9 +47,9 @@ func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *core
 	var min = math.MaxInt32
 	var minNode *corev1.Node
 	for _, node := range nodes.Items {
-		if nodeCountMap[node.Name] < min {
+		if minNode == nil || nodeCountMap[node.Name] < min {
 			min = nodeCountMap[node.Name]
-			minNode = &node
+			minNode = node.DeepCopy()
 		}
 	}
 
