@@ -123,8 +123,15 @@ func (s *SchedulerTestSuite) TestSchedulersMultipleNodes() {
 		[]*corev1.Pod{
 			pod1, pod2, pod3})
 
+	s.testSchedulerMultipleNodes("leastContainersNodeWithoutPodsLast",
+		"leastContainers", "leastContainers,random", nodeWithoutPods,
+		[]*corev1.Node{
+			nodeWithPods1, nodeWithPods2, nodeWithPods3, nodeWithoutPods},
+		[]*corev1.Pod{
+			pod1, pod2, pod3})
+
 	s.testSchedulerMultipleNodes("randomOnlyOneNode",
-		"random", "random,first", otherNode1,
+		"random", "random", otherNode1,
 		[]*corev1.Node{
 			otherNode1},
 		nil)
