@@ -27,7 +27,7 @@ func (s *ResourcesTestSuite) TestResourceAssignment1() {
 	node := "node1"
 	sourceLabels := map[string]string{"nodename": node, "x": "y"}
 	r := s.initReconciler(
-		s.Node(node), s.Step(stepName, "", "x", "y"), s.Source("source1", sourceLabels))
+		s.Node(node), s.DefaultSchedulersStep(stepName, "", "x", "y"), s.Source("source1", sourceLabels))
 
 	s.testReconcile(r, stepName)
 	s.assertPodsForStep(r.client, stepName, 1)
@@ -207,7 +207,7 @@ func (s *ResourcesTestSuite) TestResourceAssignment5() {
 	s.testReconcile(r, stepName)
 	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
 
-	s.NoError(r.client.Delete(context.TODO(), s.Step(stepName, "")))
+	s.NoError(r.client.Delete(context.TODO(), s.DefaultSchedulersStep(stepName, "")))
 	s.testReconcile(r, stepName)
 	s.assertRespawningPods(r, 0)
 	s.assertPodsForStep(r.client, stepName, 0)

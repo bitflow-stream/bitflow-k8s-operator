@@ -47,7 +47,7 @@ func (s *SchedulerTestSuite) testSchedulerMultipleNodes(testName string, expecte
 		// Setup
 		sources := []*bitflowv1.BitflowSource(nil)
 		scheduledPod := s.Pod("scheduled-pod")
-		step := s.Step("test-step", bitflowv1.StepTypeOneToOne)
+		step := s.DefaultSchedulersStep("test-step", bitflowv1.StepTypeOneToOne)
 
 		var runtimeObjects = make([]runtime.Object, len(nodes)+len(pods))
 		for i, node := range nodes {
@@ -145,7 +145,7 @@ func (s *SchedulerTestSuite) TestSchedulersMultipleNodes() {
 func (s *SchedulerTestSuite) testSimpleScheduler(scheduler *Scheduler, schedulerList string, sources []*bitflowv1.BitflowSource, expectedSuccessfulScheduler string, expectedNode *corev1.Node) {
 	s.SubTest(schedulerList, func() {
 		scheduledPod := s.Pod("scheduled-pod")
-		step := s.Step("test-step", bitflowv1.StepTypeOneToOne)
+		step := s.DefaultSchedulersStep("test-step", bitflowv1.StepTypeOneToOne)
 		step.Spec.Scheduler = schedulerList
 		node, successfulScheduler := scheduler.SchedulePod(scheduledPod, step, sources)
 		s.Equal(expectedSuccessfulScheduler, successfulScheduler)

@@ -18,7 +18,7 @@ func (s *BitflowControllerTestSuite) TestValidation() {
 
 func (s *ValidationTestSuite) TestValidation() {
 	stepName := "bitflow-step-1"
-	step := s.Step(stepName, bitflowv1.StepTypeOneToOne, "case", "one")
+	step := s.DefaultSchedulersStep(stepName, bitflowv1.StepTypeOneToOne, "case", "one")
 
 	r := s.initReconciler(step, s.Node("node1"))
 	s.testReconcile(r, stepName)
@@ -33,7 +33,7 @@ func (s *ValidationTestSuite) TestValidation() {
 
 func (s *ValidationTestSuite) TestValidationCorruptOutput() {
 	stepName := "bitflow-step-1"
-	step := s.Step(stepName, "", "case", "one")
+	step := s.DefaultSchedulersStep(stepName, "", "case", "one")
 	s.AddStepOutput(step, "out", make(map[string]string))
 
 	// corrupt URL
@@ -50,7 +50,7 @@ func (s *ValidationTestSuite) TestValidationCorruptOutput() {
 
 func (s *ValidationTestSuite) TestValidationSingletonWithIngest() {
 	stepName := "bitflow-step-1"
-	step := s.Step(stepName, bitflowv1.StepTypeSingleton, "case", "one")
+	step := s.DefaultSchedulersStep(stepName, bitflowv1.StepTypeSingleton, "case", "one")
 	source := s.Source("source-1", map[string]string{"case": "one"})
 
 	r := s.initReconciler(step, source, s.Node("node1"))

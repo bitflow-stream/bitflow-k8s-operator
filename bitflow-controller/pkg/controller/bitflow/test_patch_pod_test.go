@@ -18,7 +18,7 @@ func (s *BitflowControllerTestSuite) TestPatchOneToOne() {
 
 func (s *PatchPodTestSuite) TestPatchOneToOne() {
 	pod := s.Pod("pod1")
-	step := s.Step("step11", "")
+	step := s.DefaultSchedulersStep("step11", "")
 	source := s.Source("source11", map[string]string{"expectLabel": "Hello"})
 
 	port := 6666
@@ -44,7 +44,7 @@ func (s *PatchPodTestSuite) TestPatchOneToOne() {
 func (s *PatchPodTestSuite) TestPatchSingleton() {
 	fmt.Println("Running TestPatchSingleton")
 	pod := s.Pod("pod1")
-	step := s.Step("step11", bitflowv1.StepTypeAllToOne)
+	step := s.DefaultSchedulersStep("step11", bitflowv1.StepTypeAllToOne)
 
 	port := 6666
 	ip := "127.0.0.2"
@@ -63,7 +63,7 @@ func (s *PatchPodTestSuite) TestPatchSingleton() {
 
 func (s *PatchPodTestSuite) TestPatchSingleton2() {
 	pod := s.Pod("pod1")
-	step := s.Step("step11", bitflowv1.StepTypeSingleton)
+	step := s.DefaultSchedulersStep("step11", bitflowv1.StepTypeSingleton)
 
 	port := 6666
 	ip := "127.0.0.2"

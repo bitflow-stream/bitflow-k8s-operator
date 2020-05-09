@@ -203,6 +203,7 @@ func (r *BitflowReconciler) createNewPod(model *PodCreation) *corev1.Pod {
 	assignedNode, _ := r.scheduler.SchedulePod(pod, model.step, model.sources)
 	if assignedNode != nil {
 		scheduler.SetPodNodeAffinityRequired(assignedNode, pod)
+		pod.Spec.NodeName = assignedNode.Name
 		r.resourceLimiter.AssignResources(pod, assignedNode)
 	}
 	logger := model.Log(assignedNode)

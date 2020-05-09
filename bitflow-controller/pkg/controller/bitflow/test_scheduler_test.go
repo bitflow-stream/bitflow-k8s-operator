@@ -16,6 +16,19 @@ func (s *BitflowControllerTestSuite) TestScheduler() {
 	s.SubTestSuite(new(SchedulerTestSuite))
 }
 
+func (s *SchedulerTestSuite) TestLeastContainersScheduler() {
+	labels := map[string]string{"hello": "world"}
+	r := s.initReconciler(
+		s.Node("node1"), s.Node("node2"),
+		s.Source("source1", labels), s.Source("source2", labels),
+		s.Source("source3", labels), s.Source("source4", labels),
+		s.Step("step1", "", "leastContainers", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	s.assertNumberOfPodsForNode(r.client, "node1", 2)
+	s.assertNumberOfPodsForNode(r.client, "node2", 2)
+}
+
 func (s *SchedulerTestSuite) TestScheduling2StandaloneSources() {
 	doTest := func(sourceNode string) {
 		s.SubTest(sourceNode, func() {
@@ -23,7 +36,7 @@ func (s *SchedulerTestSuite) TestScheduling2StandaloneSources() {
 			r := s.initReconciler(
 				s.Node("node1"), s.Node("node2"), s.Node("node3"),
 				s.Source("source1", labels), s.Source("source2", labels), s.Source("source3", labels),
-				s.Step("step1", "", "hello", "world"))
+				s.DefaultSchedulersStep("step1", "", "hello", "world"))
 			s.testReconcile(r, "step1")
 
 			s.assertPodsForStep(r.client, "step1", 3)
@@ -69,7 +82,7 @@ func (s *SchedulerTestSuite) TestSchedulingOutputSource() {
 	r := s.initReconciler(
 		pod, source,
 		s.Node("node1"), s.Node("node2"), s.Node("node3"),
-		s.Step(stepName, "", "hello", "world"))
+		s.DefaultSchedulersStep(stepName, "", "hello", "world"))
 
 	s.testReconcile(r, stepName)
 	s.assertPodsForStep(r.client, stepName, 1)

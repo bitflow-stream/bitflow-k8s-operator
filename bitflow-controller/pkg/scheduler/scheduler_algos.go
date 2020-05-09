@@ -36,12 +36,11 @@ func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *core
 		s.logger.Errorln("Failed to get Bitflow pods", err)
 		return nil
 	}
+
 	nodeCountMap := make(map[string]int)
 
-	var nodeName string
 	for _, pod := range pods {
-		nodeName = pod.Spec.NodeName
-		nodeCountMap[nodeName] = nodeCountMap[nodeName] + 1
+		nodeCountMap[pod.Spec.NodeName] += 1
 	}
 
 	var min = math.MaxInt32
