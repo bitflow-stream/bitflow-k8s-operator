@@ -16,7 +16,7 @@ func (s *CalculatePenaltyTestSuite) TestCalculatePenaltyForNode() {
 		s.Node("node1"),
 		s.Source("source1", labels), s.Source("source2", labels),
 		s.Source("source3", labels), s.Source("source4", labels),
-		s.DefaultSchedulersStep("step1", "", "hello", "world"))
+		s.Step("step1", "", "hello", "world"))
 	s.testReconcile(r, "step1")
 
 	penalty, err := calculatePenaltyForNode(r.client, "node1")

@@ -111,11 +111,11 @@ func (suite *AbstractTestSuite) ConfigMap(name string) *corev1.ConfigMap {
 	}
 }
 
-func (suite *AbstractTestSuite) DefaultSchedulersStep(name string, stepType string, ingestMatches ...string) *bitflowv1.BitflowStep {
-	return suite.Step(name, stepType, "sourceAffinity,first", ingestMatches...)
+func (suite *AbstractTestSuite) Step(name string, stepType string, ingestMatches ...string) *bitflowv1.BitflowStep {
+	return suite.StepCustomSchedulers(name, stepType, "sourceAffinity,first", ingestMatches...)
 }
 
-func (suite *AbstractTestSuite) Step(name string, stepType string, schedulerList string, ingestMatches ...string) *bitflowv1.BitflowStep {
+func (suite *AbstractTestSuite) StepCustomSchedulers(name string, stepType string, schedulerList string, ingestMatches ...string) *bitflowv1.BitflowStep {
 	step := &bitflowv1.BitflowStep{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -132,7 +132,7 @@ func (suite *AbstractTestSuite) Step(name string, stepType string, schedulerList
 }
 
 func (suite *AbstractTestSuite) StepWithOutput(name string, stepType string, outputName string, outputLabels map[string]string, ingestMatches ...string) *bitflowv1.BitflowStep {
-	step := suite.DefaultSchedulersStep(name, stepType)
+	step := suite.Step(name, stepType)
 	suite.AddStepOutput(step, outputName, outputLabels)
 	suite.AddStepIngest(step, ingestMatches...)
 	return step
