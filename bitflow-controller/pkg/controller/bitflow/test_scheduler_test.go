@@ -2,6 +2,7 @@ package bitflow
 
 import (
 	"context"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,36 @@ type SchedulerTestSuite struct {
 
 func (s *BitflowControllerTestSuite) TestScheduler() {
 	s.SubTestSuite(new(SchedulerTestSuite))
+}
+
+func (s *SchedulerTestSuite) TestGetAllNodes() {
+	r := s.initReconciler(
+		s.Node("node1"),
+		s.Node("node2"),
+		s.Node("node3"),
+		s.Node("node4"),
+		s.Node("node5"))
+
+	var nodeList *corev1.NodeList
+	var err error
+	nodeList, err = common.RequestReadyNodes(r.client)
+	s.NoError(err)
+	s.Equal(5, len(nodeList.Items))
+}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodsForNode() {
+	labels := map[string]string{"hello": "world"}
+	r := s.initReconciler(
+		s.Node("node1"),
+		s.Source("source1", labels), s.Source("source2", labels),
+		s.Source("source3", labels), s.Source("source4", labels),
+		s.DefaultSchedulersStep("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	count, err := common.GetNumberOfPodsForNode(r.client, "node1")
+
+	s.NoError(err)
+	s.Equal(4, count)
 }
 
 func (s *SchedulerTestSuite) TestLeastContainersScheduler() {

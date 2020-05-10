@@ -82,15 +82,12 @@ func (s *SchedulerTestSuite) TestSchedulersMultipleNodes() {
 	nodeWithPods1 := s.getNodeWithResources("nodeWithPods1", 10, 1)
 	nodeWithPods2 := s.getNodeWithResources("nodeWithPods2", 10, 1)
 	nodeWithPods3 := s.getNodeWithResources("nodeWithPods3", 10, 1)
-	pod1 := s.PodInitializingLabels("pod1")
+	pod1 := s.PodInitializingLabelsSettingDefaultLabel("pod1")
 	pod1.Spec.NodeName = "nodeWithPods1"
-	pod1.Labels["bitflow"] = "true"
-	pod2 := s.PodInitializingLabels("pod2")
+	pod2 := s.PodInitializingLabelsSettingDefaultLabel("pod2")
 	pod2.Spec.NodeName = "nodeWithPods2"
-	pod2.Labels["bitflow"] = "true"
-	pod3 := s.PodInitializingLabels("pod3")
+	pod3 := s.PodInitializingLabelsSettingDefaultLabel("pod3")
 	pod3.Spec.NodeName = "nodeWithPods3"
-	pod3.Labels["bitflow"] = "true"
 
 	otherNode1 := s.getNodeWithResources("otherNode1", 564, 99)
 	otherNode2 := s.getNodeWithResources("otherNode2", 239, 12)

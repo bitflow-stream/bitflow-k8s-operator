@@ -203,13 +203,7 @@ func (s *BitflowControllerTestHelpers) assertNumberOfPodsForNode(cl client.Clien
 	err := cl.List(context.TODO(), &client.ListOptions{}, &list)
 	s.NoError(err)
 
-	actualNumberOfPods := 0
-	for _, pod := range list.Items {
-		if pod.Spec.Affinity != nil {
-			if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0].Values[0] == nodeName {
-				actualNumberOfPods++
-			}
-		}
-	}
+	actualNumberOfPods, err := common.GetNumberOfPodsForNode(cl, nodeName)
+	s.NoError(err)
 	s.Equal(expectedNumberOfPods, actualNumberOfPods)
 }

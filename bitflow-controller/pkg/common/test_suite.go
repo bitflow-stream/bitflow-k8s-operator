@@ -38,8 +38,10 @@ func (suite *AbstractTestSuite) Pod(name string) *corev1.Pod {
 	return suite.PodLabels(name, nil)
 }
 
-func (suite *AbstractTestSuite) PodInitializingLabels(name string) *corev1.Pod {
-	return suite.PodLabels(name, make(map[string]string))
+func (suite *AbstractTestSuite) PodInitializingLabelsSettingDefaultLabel(name string) *corev1.Pod {
+	pod := suite.PodLabels(name, make(map[string]string))
+	pod.Labels["bitflow"] = "true"
+	return pod
 }
 
 func (suite *AbstractTestSuite) PodLabels(name string, labels map[string]string) *corev1.Pod {
