@@ -88,6 +88,7 @@ func (respawning *RespawningPods) IsPodRestartingOnNode(podName, nodeName string
 	respawning.RLock()
 	defer respawning.RUnlock()
 	for key, value := range respawning.elements {
+		// Direktzugriff auf Spec.NodeName anstelle von GetNodeName(), da die Scheduling Affinity nicht berücksichtigt werden soll
 		if podName == key && value.Pod.Spec.NodeName == nodeName {
 			return value, true
 		}
@@ -117,6 +118,7 @@ func (respawning *RespawningPods) CountRestarting(pods []*corev1.Pod, currentPod
 				found = true
 			}
 		}
+		// Direktzugriff auf Spec.NodeName anstelle von GetNodeName(), da die Scheduling Affinity nicht berücksichtigt werden soll
 		if !found && key != currentPod && value.Pod.Spec.NodeName == currentNode {
 			log.Debugln("count containers ", key)
 			count += value.CountContainer()
