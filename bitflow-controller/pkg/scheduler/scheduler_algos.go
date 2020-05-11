@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"math"
 	"math/rand"
 	"time"
@@ -40,7 +41,7 @@ func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *core
 	nodeCountMap := make(map[string]int)
 
 	for _, pod := range pods {
-		nodeCountMap[pod.Spec.NodeName] += 1
+		nodeCountMap[common.GetNodeName(pod)] += 1
 	}
 
 	var min = math.MaxInt32

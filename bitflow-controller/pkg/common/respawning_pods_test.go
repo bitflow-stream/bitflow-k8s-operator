@@ -131,5 +131,5 @@ func (s *RespawningPodsTestSuite) TestRespawningOnNode() {
 
 	podStatus, ok := pods.IsPodRestartingOnNode(name, node)
 	s.True(ok)
-	s.Equal(node, podStatus.Pod.Spec.NodeName)
+	s.Equal(node, GetNodeName(podStatus.Pod))
 }

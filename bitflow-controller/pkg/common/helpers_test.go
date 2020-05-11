@@ -14,13 +14,6 @@ func TestHelpersSuite(t *testing.T) {
 	suite.Run(t, new(HelpersTestSuite))
 }
 
-// TODO remove
-//func (s *HelpersTestSuite) getSchedulerNode() *corev1.Node {
-//	return s.Node2("node1",
-//		map[string]string{"test-node": "yes", HostnameLabel: "node1"},
-//		map[string]string{"bitflow-resource-limit": "0.1"})
-//}
-
 func (s *HelpersTestSuite) TestGetNodeName() {
 	pod := s.Pod("pod")
 	s.Empty(GetNodeName(pod), "Expected no node to be found for new pod")

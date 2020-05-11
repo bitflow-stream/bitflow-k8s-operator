@@ -21,13 +21,6 @@ func TestScheduler(t *testing.T) {
 
 const HostnameLabel = "kubernetes.io/hostname"
 
-// TODO remove
-//func (s *SchedulerTestSuite) getSchedulerNode() *corev1.Node {
-//	return s.Node2("node1",
-//		map[string]string{"test-node": "yes", HostnameLabel: "node1"},
-//		map[string]string{"bitflow-resource-limit": "0.1"})
-//}
-
 func (s *SchedulerTestSuite) getNodeWithResources(name string, cpu int64, memory int64) *corev1.Node {
 	return s.NodeWithResources(name,
 		map[string]string{"test-node": "yes", HostnameLabel: name},

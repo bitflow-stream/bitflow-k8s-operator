@@ -88,7 +88,7 @@ func (respawning *RespawningPods) IsPodRestartingOnNode(podName, nodeName string
 	respawning.RLock()
 	defer respawning.RUnlock()
 	for key, value := range respawning.elements {
-		if podName == key && value.Pod.Spec.NodeName == nodeName {
+		if podName == key && GetNodeName(value.Pod) == nodeName {
 			return value, true
 		}
 	}
