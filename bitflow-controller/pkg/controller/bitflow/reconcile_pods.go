@@ -6,7 +6,6 @@ import (
 
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/scheduler"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -202,7 +201,7 @@ func (r *BitflowReconciler) createNewPod(model *PodCreation) *corev1.Pod {
 
 	assignedNode, _ := r.scheduler.SchedulePod(pod, model.step, model.sources)
 	if assignedNode != nil {
-		scheduler.SetPodNodeAffinityRequired(assignedNode, pod)
+		common.SetTargetNode(assignedNode, pod)
 		r.resourceLimiter.AssignResources(pod, assignedNode)
 	}
 	logger := model.Log(assignedNode)

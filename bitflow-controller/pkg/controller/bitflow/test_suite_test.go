@@ -197,3 +197,13 @@ func (s *BitflowControllerTestHelpers) assertOutputSources(cl client.Client, cou
 func (s *BitflowControllerTestHelpers) assertRespawningPods(r *BitflowReconciler, count int) {
 	s.Equal(count, r.respawning.Size(), "Wrong number of respawning pods")
 }
+
+func (s *BitflowControllerTestHelpers) assertNumberOfPodsForNode(cl client.Client, nodeName string, expectedNumberOfPods int) {
+	var list corev1.PodList
+	err := cl.List(context.TODO(), &client.ListOptions{}, &list)
+	s.NoError(err)
+
+	actualNumberOfPods, err := common.GetNumberOfPodsForNode(cl, nodeName)
+	s.NoError(err)
+	s.Equal(expectedNumberOfPods, actualNumberOfPods)
+}

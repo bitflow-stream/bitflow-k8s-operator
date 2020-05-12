@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"math"
 	"math/rand"
 	"time"
@@ -27,7 +28,7 @@ func (s schedulingTask) getRandomNode(nodes *corev1.NodeList) *corev1.Node {
 }
 
 func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *corev1.Node {
-	if nodes == nil {
+	if nodes == nil || len(nodes.Items) == 0 {
 		return nil
 	}
 
@@ -36,20 +37,19 @@ func (s schedulingTask) getNodeWithLeastContainers(nodes *corev1.NodeList) *core
 		s.logger.Errorln("Failed to get Bitflow pods", err)
 		return nil
 	}
+
 	nodeCountMap := make(map[string]int)
 
-	var nodeName string
 	for _, pod := range pods {
-		nodeName = pod.Spec.NodeName
-		nodeCountMap[nodeName] = nodeCountMap[nodeName] + 1
+		nodeCountMap[common.GetNodeName(pod)] += 1
 	}
 
 	var min = math.MaxInt32
 	var minNode *corev1.Node
 	for _, node := range nodes.Items {
-		if nodeCountMap[node.Name] < min {
+		if minNode == nil || nodeCountMap[node.Name] < min {
 			min = nodeCountMap[node.Name]
-			minNode = &node
+			minNode = node.DeepCopy()
 		}
 	}
 

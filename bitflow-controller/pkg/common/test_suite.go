@@ -38,6 +38,10 @@ func (suite *AbstractTestSuite) Pod(name string) *corev1.Pod {
 	return suite.PodLabels(name, nil)
 }
 
+func (suite *AbstractTestSuite) PodInitializingLabelsSettingDefaultLabel(name string) *corev1.Pod {
+	return suite.PodLabels(name, map[string]string{"bitflow": "true"})
+}
+
 func (suite *AbstractTestSuite) PodLabels(name string, labels map[string]string) *corev1.Pod {
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -64,9 +68,19 @@ func (suite *AbstractTestSuite) Node(name string) *corev1.Node {
 }
 
 func (suite *AbstractTestSuite) Node2(name string, labels, annotations map[string]string) *corev1.Node {
+	return suite.NodeWithResources(name, labels, annotations, TestNodeCpu, TestNodeMem)
+}
+
+func (suite *AbstractTestSuite) SchedulerNode() *corev1.Node {
+	return suite.Node2("node1",
+		map[string]string{"test-node": "yes", HostnameLabel: "node1"},
+		map[string]string{"bitflow-resource-limit": "0.1"})
+}
+
+func (suite *AbstractTestSuite) NodeWithResources(name string, labels, annotations map[string]string, cpu int64, memory int64) *corev1.Node {
 	var res = make(corev1.ResourceList)
-	res[corev1.ResourceCPU] = *resource.NewMilliQuantity(TestNodeCpu, resource.DecimalSI)
-	res[corev1.ResourceMemory] = *resource.NewQuantity(TestNodeMem, resource.BinarySI)
+	res[corev1.ResourceCPU] = *resource.NewMilliQuantity(cpu, resource.DecimalSI)
+	res[corev1.ResourceMemory] = *resource.NewQuantity(memory, resource.BinarySI)
 	return &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -102,6 +116,10 @@ func (suite *AbstractTestSuite) ConfigMap(name string) *corev1.ConfigMap {
 }
 
 func (suite *AbstractTestSuite) Step(name string, stepType string, ingestMatches ...string) *bitflowv1.BitflowStep {
+	return suite.StepCustomSchedulers(name, stepType, "sourceAffinity,first", ingestMatches...)
+}
+
+func (suite *AbstractTestSuite) StepCustomSchedulers(name string, stepType string, schedulerList string, ingestMatches ...string) *bitflowv1.BitflowStep {
 	step := &bitflowv1.BitflowStep{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -109,7 +127,7 @@ func (suite *AbstractTestSuite) Step(name string, stepType string, ingestMatches
 		},
 		Spec: bitflowv1.BitflowStepSpec{
 			Type:      stepType,
-			Scheduler: "sourceAffinity,first",
+			Scheduler: schedulerList,
 			Template:  suite.PodLabels("", map[string]string{"step": name}),
 		},
 	}

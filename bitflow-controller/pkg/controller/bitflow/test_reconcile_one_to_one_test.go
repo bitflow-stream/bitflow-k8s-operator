@@ -20,7 +20,7 @@ func (s *BitflowControllerTestSuite) TestReconcileOneToOne() {
 func (s *ReconcileOneToOneTestSuite) TestOnlyStep() {
 	name := "bitflow-step-1"
 	r := s.initReconciler(s.Node("node1"),
-		s.StepWithOutput(name, "", "out", map[string]string{"a": "b"}, "x", "y"), )
+		s.StepWithOutput(name, "", "out", map[string]string{"a": "b"}, "x", "y"))
 
 	s.testReconcile(r, name)
 	s.assertNoPodsExist(r.client)
@@ -136,7 +136,7 @@ func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceCheckRespawning1() 
 
 	s.NoError(r.client.Delete(context.TODO(), s.Source("source0", nil)))
 
-	// the pod that was originally started with correct resources is not too small, therefore respawning.
+	// the pod that was originally started with correct resources is now too small, therefore respawning.
 	// the other 3 pods were started correctly.
 	s.testReconcile(r, name)
 	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize-1)
