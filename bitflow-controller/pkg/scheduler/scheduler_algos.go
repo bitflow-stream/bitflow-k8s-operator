@@ -112,3 +112,23 @@ func (s schedulingTask) getNodeNearSource(nodes *corev1.NodeList) *corev1.Node {
 	}
 	return node
 }
+func (s schedulingTask) getNodeWithLowestPenalty(nodes *corev1.NodeList) *corev1.Node {
+	if nodes == nil {
+		return nil
+	}
+
+	//availableCpu := nodes.Items[0].Status.Allocatable.Cpu()
+	minPenaltyIndex := -1
+	minPenalty := -1.0
+	for i, node := range nodes.Items {
+		penalty, err := CalculatePenaltyForNode(s.Client, s.Config, node)
+		if err != nil {
+			s.logger.Errorln("Failed to calculate node penalty", err)
+		}
+		if minPenaltyIndex < 0 || penalty < minPenalty {
+			minPenaltyIndex = i
+			minPenalty = penalty
+		}
+	}
+	return &nodes.Items[minPenaltyIndex]
+}

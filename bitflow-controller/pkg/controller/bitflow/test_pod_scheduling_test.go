@@ -3,6 +3,9 @@ package bitflow
 import (
 	"context"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
+	. "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/resources"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/scheduler"
+	"math"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +18,16 @@ type SchedulerTestSuite struct {
 
 func (s *BitflowControllerTestSuite) TestScheduler() {
 	s.SubTestSuite(new(SchedulerTestSuite))
+}
+
+const float64EqualityThreshold = 1e-4
+
+func almostEqual(a, b float64) bool {
+	return math.Abs(a-b) <= float64EqualityThreshold
+}
+
+func (s *SchedulerTestSuite) assertAlmostEqual(a float64, b float64) {
+	s.True(almostEqual(a, b), "%v is not almost equal to %v", a, b)
 }
 
 func (s *SchedulerTestSuite) TestGetAllNodes() {
@@ -59,6 +72,20 @@ func (s *SchedulerTestSuite) TestLeastContainersScheduler() {
 	s.assertNumberOfPodsForNode(r.client, "node1", 2)
 	s.assertNumberOfPodsForNode(r.client, "node2", 2)
 }
+
+func (s *SchedulerTestSuite) TestLowestPenaltyScheduler() {
+	labels := map[string]string{"hello": "world"}
+	r := s.initReconciler(
+		s.Node("node1"), s.Node("node2"),
+		s.Source("source1", labels), s.Source("source2", labels),
+		s.Source("source3", labels), s.Source("source4", labels),
+		s.StepCustomSchedulers("step1", "", "lowestPenalty", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	s.assertNumberOfPodsForNode(r.client, "node1", 4)
+}
+
+// TODO add penalty lowestPenalty scheduler tests for different #allocatedPodSlots
 
 func (s *SchedulerTestSuite) TestScheduling2StandaloneSources() {
 	doTest := func(sourceNode string) {
@@ -118,4 +145,37 @@ func (s *SchedulerTestSuite) TestSchedulingOutputSource() {
 	s.testReconcile(r, stepName)
 	s.assertPodsForStep(r.client, stepName, 1)
 	s.assertPodNodeAffinity(r.client, stepName, "node2")
+}
+
+func (s *SchedulerTestSuite) TestGetAllocatableResourcesAndTotalResourceLimit() {
+	node := s.Node("node")
+	r := s.initReconciler(node)
+
+	allocatable, totalResourceLimit := GetAllocatableResourcesAndTotalRecourceLimit(node, r.config)
+	cpu := int(allocatable.Cpu().Value())
+	mem := int(allocatable.Memory().Value())
+	//pods := allocatable.Pods().Value() // TODO also test pods
+
+	println(cpu)
+	println(mem)
+	println(totalResourceLimit)
+	s.Equal(2, cpu)
+	s.Equal(4194304, mem) // TODO value correct?
+	s.Equal(0.1, totalResourceLimit)
+}
+
+// TODO add test with more sources once #allocatedPodSlots is dynamically read
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNode() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(1396.99168564, penalty)
 }

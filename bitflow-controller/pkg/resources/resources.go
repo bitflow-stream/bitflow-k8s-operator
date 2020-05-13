@@ -116,6 +116,12 @@ func (res *ResourceAssigner) RequestNodeInfo(node *corev1.Node, podName string) 
 	return nodeInfo
 }
 
+func GetAllocatableResourcesAndTotalRecourceLimit(node *corev1.Node, config *config.Config) (corev1.ResourceList, float64) {
+	allocatable := node.Status.Allocatable
+	totalLimit := RequestBitflowResourceLimitByNode(node, config)
+	return allocatable, totalLimit
+}
+
 func RequestBitflowResourceLimitByNode(node *corev1.Node, conf *config.Config) float64 {
 	annotation := conf.GetResourceLimitAnnotation()
 	limit := node.Annotations[annotation]
