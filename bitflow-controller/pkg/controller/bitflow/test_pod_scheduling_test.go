@@ -3,7 +3,6 @@ package bitflow
 import (
 	"context"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
-	. "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/resources"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/scheduler"
 	"math"
 
@@ -147,20 +146,13 @@ func (s *SchedulerTestSuite) TestSchedulingOutputSource() {
 	s.assertPodNodeAffinity(r.client, stepName, "node2")
 }
 
-func (s *SchedulerTestSuite) TestGetAllocatableResourcesAndTotalResourceLimit() {
+func (s *SchedulerTestSuite) TestGetTotalResourceLimitReturnsExpectedValue() {
 	node := s.Node("node")
 	r := s.initReconciler(node)
 
-	allocatable, totalResourceLimit := GetAllocatableResourcesAndTotalRecourceLimit(node, r.config)
-	cpu := int(allocatable.Cpu().Value())
-	mem := int(allocatable.Memory().Value())
-	//pods := allocatable.Pods().Value() // TODO also test pods
+	totalResourceLimit := scheduler.GetTotalResourceLimit(*node, r.config)
 
-	println(cpu)
-	println(mem)
 	println(totalResourceLimit)
-	s.Equal(2, cpu)
-	s.Equal(4194304, mem) // TODO value correct?
 	s.Equal(0.1, totalResourceLimit)
 }
 
@@ -178,4 +170,19 @@ func (s *SchedulerTestSuite) TestCalculatePenaltyForNode() {
 
 	s.NoError(err)
 	s.assertAlmostEqual(1396.99168564, penalty)
+}
+
+// TODO add more tests once #allocatedPodSlots is dynamically read
+func (s *SchedulerTestSuite) TestGetMaxPods() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	maxPods := scheduler.GetMaxPods(*node1)
+
+	s.Equal(8.0, maxPods)
 }
