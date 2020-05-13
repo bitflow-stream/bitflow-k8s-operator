@@ -22,11 +22,11 @@ func getAllocatableCpu(node corev1.Node) float64 {
 	return float64(node.Status.Allocatable.Cpu().Value())
 }
 
-func getTotalResourceLimit(node corev1.Node, config *config.Config) float64 {
+func GetTotalResourceLimit(node corev1.Node, config *config.Config) float64 {
 	return resources.RequestBitflowResourceLimitByNode(&node, config)
 }
 
-func getMaxPods(node corev1.Node) float64 {
+func GetMaxPods(node corev1.Node) float64 {
 	return 8.0 // TODO get actual value
 }
 
@@ -37,7 +37,7 @@ func CalculateExecutionTime(cpus float64) float64 {
 
 // lower is better
 func CalculatePenaltyForNode(cli client.Client, config *config.Config, node corev1.Node) (float64, error) {
-	R := getAllocatableCpu(node) * getTotalResourceLimit(node, config) / getMaxPods(node)
+	R := getAllocatableCpu(node) * GetTotalResourceLimit(node, config) / GetMaxPods(node)
 
 	// TODO error in return necessary?
 	return CalculateExecutionTime(R), nil

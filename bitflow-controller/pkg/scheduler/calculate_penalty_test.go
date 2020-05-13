@@ -46,3 +46,8 @@ func (s *CalculatePenaltyTestSuite) TestCalculateExecutionTimeSmallR() {
 }
 
 // TODO test for very small cpu count + very high cpu count
+
+func (s *CalculatePenaltyTestSuite) TestGetAllocatableCpu() {
+	cpu := getAllocatableCpu(*s.Node("node"))
+	s.Equal(2.0, cpu)
+}
