@@ -19,7 +19,7 @@ func (s *BitflowControllerTestSuite) TestScheduler() {
 	s.SubTestSuite(new(SchedulerTestSuite))
 }
 
-const float64EqualityThreshold = 1e-4
+const float64EqualityThreshold = 1e-9
 
 func almostEqual(a, b float64) bool {
 	return math.Abs(a-b) <= float64EqualityThreshold
@@ -81,7 +81,8 @@ func (s *SchedulerTestSuite) TestLowestPenaltyScheduler() {
 		s.StepCustomSchedulers("step1", "", "lowestPenalty", "hello", "world"))
 	s.testReconcile(r, "step1")
 
-	s.assertNumberOfPodsForNode(r.client, "node1", 4)
+	s.assertNumberOfPodsForNode(r.client, "node1", 2)
+	s.assertNumberOfPodsForNode(r.client, "node2", 2)
 }
 
 // TODO add penalty lowestPenalty scheduler tests for different #allocatedPodSlots
@@ -156,8 +157,20 @@ func (s *SchedulerTestSuite) TestGetTotalResourceLimitReturnsExpectedValue() {
 	s.Equal(0.1, totalResourceLimit)
 }
 
-// TODO add test with more sources once #allocatedPodSlots is dynamically read
-func (s *SchedulerTestSuite) TestCalculatePenaltyForNode() {
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithZeroPods() {
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.89995758087401180335222081391585789973462326372178270777, penalty)
+}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithOnePod() {
 	labels := map[string]string{"hello": "world"}
 	node1 := s.Node("node1")
 	r := s.initReconciler(
@@ -169,11 +182,94 @@ func (s *SchedulerTestSuite) TestCalculatePenaltyForNode() {
 	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
 
 	s.NoError(err)
-	s.assertAlmostEqual(1396.99168564, penalty)
+	s.assertAlmostEqual(15.89995758087401180335222081391585789973462326372178270777, penalty)
 }
 
-// TODO add more tests once #allocatedPodSlots is dynamically read
-func (s *SchedulerTestSuite) TestGetMaxPods() {
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithTwoPods() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.89995758087401180335222081391585789973462326372178270777, penalty)
+}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithThreePods() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.90168191671401725106769706130550990969306211351178290284, penalty)
+}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithFourPods() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Source("source4", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.90168191671401725106769706130550990969306211351178290284, penalty)
+}
+
+// TODO re-enable test once more than 4 Sources can be passed to initReconciler()
+//func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithFivePods() {
+//	labels := map[string]string{"hello": "world"}
+//	node1 := s.Node("node1")
+//	r := s.initReconciler(
+//		node1,
+//		s.Source("source1", labels),
+//		s.Source("source2", labels),
+//		s.Source("source3", labels),
+//		s.Source("source4", labels),
+//		s.Source("source5", labels),
+//		s.Step("step1", "", "hello", "world"))
+//	s.testReconcile(r, "step1")
+//
+//	penalty, err := scheduler.CalculatePenaltyForNode(r.client, r.config, *node1)
+//
+//	s.NoError(err)
+//	s.assertAlmostEqual(15.90876535579309049388420143827839718236574473591343713582, penalty)
+//}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithZeroPodsAndOnePodToAdd() {
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNodeAfterAddingPods(r.client, r.config, *node1, 1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.89995758087401180335222081391585789973462326372178270777, penalty)
+}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithOnePodAndOnePodToAdd() {
 	labels := map[string]string{"hello": "world"}
 	node1 := s.Node("node1")
 	r := s.initReconciler(
@@ -182,7 +278,191 @@ func (s *SchedulerTestSuite) TestGetMaxPods() {
 		s.Step("step1", "", "hello", "world"))
 	s.testReconcile(r, "step1")
 
-	maxPods := scheduler.GetMaxPods(*node1)
+	penalty, err := scheduler.CalculatePenaltyForNodeAfterAddingPods(r.client, r.config, *node1, 1)
 
-	s.Equal(8.0, maxPods)
+	s.NoError(err)
+	s.assertAlmostEqual(15.89995758087401180335222081391585789973462326372178270777, penalty)
 }
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithTwoPodsAndOnePodToAdd() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNodeAfterAddingPods(r.client, r.config, *node1, 1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.90168191671401725106769706130550990969306211351178290284, penalty)
+}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithThreePodsAndOnePodToAdd() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNodeAfterAddingPods(r.client, r.config, *node1, 1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.90168191671401725106769706130550990969306211351178290284, penalty)
+}
+
+func (s *SchedulerTestSuite) TestCalculatePenaltyForNodeWithFourPodsAndOnePodToAdd() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Source("source4", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	penalty, err := scheduler.CalculatePenaltyForNodeAfterAddingPods(r.client, r.config, *node1, 1)
+
+	s.NoError(err)
+	s.assertAlmostEqual(15.90876535579309049388420143827839718236574473591343713582, penalty)
+}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsOnePodOnNode() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 0)
+
+	s.Equal(2.0, slots)
+}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsThreePodsOnNode() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 0)
+
+	s.Equal(4.0, slots)
+}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsFourPodsOnNode() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Source("source4", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 0)
+
+	s.Equal(4.0, slots)
+}
+
+// TODO re-enable test once more than 4 Sources can be passed to initReconciler()
+//func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsFivePodsOnNode() {
+//	labels := map[string]string{"hello": "world"}
+//	node1 := s.Node("node1")
+//	r := s.initReconciler(
+//		node1,
+//		s.Source("source1", labels),
+//		s.Source("source2", labels),
+//		s.Source("source3", labels),
+//		s.Source("source4", labels),
+//		s.Source("source5", labels),
+//		s.Step("step1", "", "hello", "world"))
+//	s.testReconcile(r, "step1")
+//
+//	slots := scheduler.GetNumberOfPodSlotsAllocatedForNode(r.client, r.config, node1.Name)
+//
+//	s.Equal(8.0, slots)
+//}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsOnePodOnNodeOneToAdd() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 1)
+
+	s.Equal(2.0, slots)
+}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsThreePodsOnNodeOneToAdd() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 1)
+
+	s.Equal(4.0, slots)
+}
+
+func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsFourPodsOnNodeOneToAdd() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Source("source4", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 1)
+
+	s.Equal(8.0, slots)
+}
+
+// TODO re-enable test once more than 4 Sources can be passed to initReconciler()
+//func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsFivePodsOnNodeOneToAdd() {
+//	labels := map[string]string{"hello": "world"}
+//	node1 := s.Node("node1")
+//	r := s.initReconciler(
+//		node1,
+//		s.Source("source1", labels),
+//		s.Source("source2", labels),
+//		s.Source("source3", labels),
+//		s.Source("source4", labels),
+//		s.Source("source5", labels),
+//		s.Step("step1", "", "hello", "world"))
+//	s.testReconcile(r, "step1")
+//
+//	slots := scheduler.GetNumberOfPodSlotsAllocatedForNode(r.client, r.config, node1.Name, 1)
+//
+//	s.Equal(8.0, slots)
+//}
