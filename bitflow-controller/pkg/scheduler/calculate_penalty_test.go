@@ -49,5 +49,70 @@ func (s *CalculatePenaltyTestSuite) TestCalculateExecutionTimeSmallR() {
 
 func (s *CalculatePenaltyTestSuite) TestGetAllocatableCpu() {
 	cpu := getAllocatableCpu(*s.Node("node"))
-	s.Equal(2.0, cpu)
+	s.Equal(2000.0, cpu)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueOne() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 1)
+	s.Equal(2.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueOneAndAHalf() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 1.5)
+	s.Equal(2.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueTwo() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 2)
+	s.Equal(2.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueTwoAndAHalf() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 2.5)
+	s.Equal(4.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueFour() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 4)
+	s.Equal(4.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueSeven() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 7)
+	s.Equal(8.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorTwoValueOneHundredTwentyNine() {
+	next, _ := getNextHigherNumberOfPodSlots(2, 129)
+	s.Equal(256.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorThreeValueOne() {
+	next, _ := getNextHigherNumberOfPodSlots(3, 1)
+	s.Equal(3.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorThreeValueThree() {
+	next, _ := getNextHigherNumberOfPodSlots(3, 3)
+	s.Equal(3.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorThreeValueThreeAndAHalf() {
+	next, _ := getNextHigherNumberOfPodSlots(3, 3.5)
+	s.Equal(9.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorThreeValueEightyAndAHalf() {
+	next, _ := getNextHigherNumberOfPodSlots(3, 80.5)
+	s.Equal(81.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorThreeValueEightyOne() {
+	next, _ := getNextHigherNumberOfPodSlots(3, 81)
+	s.Equal(81.0, next)
+}
+
+func (s *CalculatePenaltyTestSuite) TestGetNextHigherNumberOfPodSlotsFactorThreeValueNinetySixAndAHalf() {
+	next, _ := getNextHigherNumberOfPodSlots(3, 96.5)
+	s.Equal(243.0, next)
 }

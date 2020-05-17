@@ -121,7 +121,7 @@ func (s schedulingTask) getNodeWithLowestPenalty(nodes *corev1.NodeList) *corev1
 	minPenaltyIndex := -1
 	minPenalty := -1.0
 	for i, node := range nodes.Items {
-		penalty, err := CalculatePenaltyForNode(s.Client, s.Config, node)
+		penalty, err := CalculatePenaltyForNodeAfterAddingPods(s.Client, s.Config, node, 1)
 		if err != nil {
 			s.logger.Errorln("Failed to calculate node penalty", err)
 		}

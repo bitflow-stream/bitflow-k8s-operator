@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"errors"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/resources"
 	corev1 "k8s.io/api/core/v1"
@@ -18,16 +20,41 @@ func getStepCurveParameters(stepName string) (float64, float64, float64, float64
 }
 
 func getAllocatableCpu(node corev1.Node) float64 {
-	// TODO .Value() oder .MilliValue()?
-	return float64(node.Status.Allocatable.Cpu().Value())
+	// TODO MilliValue() is correct, for memory use Value()
+	return float64(node.Status.Allocatable.Cpu().MilliValue())
 }
 
 func GetTotalResourceLimit(node corev1.Node, config *config.Config) float64 {
 	return resources.RequestBitflowResourceLimitByNode(&node, config)
 }
 
-func GetMaxPods(node corev1.Node) float64 {
-	return 8.0 // TODO get actual value
+func getNumberOfPodsForNode(client client.Client, nodeName string) int {
+	count, err := common.GetNumberOfPodsForNode(client, nodeName)
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
+func getNextHigherNumberOfPodSlots(incrementFactor float64, value float64) (float64, error) {
+	if value < incrementFactor {
+		return incrementFactor, nil
+	}
+	count := incrementFactor
+	for true {
+		if count >= value {
+			return count, nil
+		}
+		count *= incrementFactor
+	}
+	return -1, errors.New("Should never happen")
+}
+
+func GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(client client.Client, config *config.Config, nodeName string, numberOfPodsToAdd float64) float64 {
+	incrementFactor := config.GetResourceBufferIncrementFactor()
+	numberOfPodsOnNode := float64(getNumberOfPodsForNode(client, nodeName))
+	slots, _ := getNextHigherNumberOfPodSlots(incrementFactor, numberOfPodsOnNode+numberOfPodsToAdd)
+	return slots
 }
 
 func CalculateExecutionTime(cpus float64) float64 {
@@ -36,8 +63,13 @@ func CalculateExecutionTime(cpus float64) float64 {
 }
 
 // lower is better
-func CalculatePenaltyForNode(cli client.Client, config *config.Config, node corev1.Node) (float64, error) {
-	R := getAllocatableCpu(node) * GetTotalResourceLimit(node, config) / GetMaxPods(node)
+func CalculatePenaltyForNode(client client.Client, config *config.Config, node corev1.Node) (float64, error) {
+	return CalculatePenaltyForNodeAfterAddingPods(client, config, node, 0)
+}
+
+// lower is better
+func CalculatePenaltyForNodeAfterAddingPods(client client.Client, config *config.Config, node corev1.Node, numberOfPodsToAdd float64) (float64, error) {
+	R := getAllocatableCpu(node) * GetTotalResourceLimit(node, config) / GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(client, config, node.Name, numberOfPodsToAdd)
 
 	// TODO error in return necessary?
 	return CalculateExecutionTime(R), nil
