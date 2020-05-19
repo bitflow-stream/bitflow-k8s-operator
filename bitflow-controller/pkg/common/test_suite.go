@@ -20,7 +20,7 @@ const (
 	TestNodeCpu = int64(2000)
 	TestNodeMem = int64(4 * 1024 * 1024)
 
-	TestNodeBufferInitSize = 4
+	TestNodeBufferInitSize = 8
 	TestNodeBufferFactor   = 2.0
 	TestNodeResourceLimit  = 0.1
 )

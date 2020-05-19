@@ -11,7 +11,7 @@ func (config *Config) GetResourceLimitAnnotation() string {
 }
 
 func (config *Config) GetInitialResourceBufferSize() int {
-	return config.GetIntParam("resource.buffer.init", 2)
+	return config.GetIntParam("resource.buffer.init", 8)
 }
 
 func (config *Config) GetResourceBufferIncrementFactor() float64 {

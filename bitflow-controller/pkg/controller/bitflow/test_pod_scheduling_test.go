@@ -401,6 +401,29 @@ func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingP
 //	s.Equal(8.0, slots)
 //}
 
+// TODO rename
+func (s *SchedulerTestSuite) TestXXXXXGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsFivePodsOnNode() {
+	labels := map[string]string{"hello": "world"}
+	node1 := s.Node("node1")
+	r := s.initReconciler(
+		node1,
+		s.Source("source1", labels),
+		s.Source("source2", labels),
+		s.Source("source3", labels),
+		s.Source("source4", labels),
+		s.Source("source5", labels),
+		s.Source("source6", labels),
+		s.Source("source7", labels),
+		s.Source("source8", labels),
+		s.Source("source9", labels),
+		s.Step("step1", "", "hello", "world"))
+	s.testReconcile(r, "step1")
+
+	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 0)
+
+	s.Equal(16.0, slots)
+}
+
 func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingPodsOnePodOnNodeOneToAdd() {
 	labels := map[string]string{"hello": "world"}
 	node1 := s.Node("node1")
@@ -462,7 +485,7 @@ func (s *SchedulerTestSuite) TestGetNumberOfPodSlotsAllocatedForNodeAfterAddingP
 //		s.Step("step1", "", "hello", "world"))
 //	s.testReconcile(r, "step1")
 //
-//	slots := scheduler.GetNumberOfPodSlotsAllocatedForNode(r.client, r.config, node1.Name, 1)
+//	slots := scheduler.GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(r.client, r.config, node1.Name, 1)
 //
 //	s.Equal(8.0, slots)
 //}

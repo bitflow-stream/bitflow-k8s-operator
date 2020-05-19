@@ -68,6 +68,7 @@ func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
 				if containerCpu != assignedCpu {
 					logger.Infof("Container resources do not match assigned resources, restarting pod")
 					deletePod = true
+					println(containerCpu, "!=", assignedCpu) // TODO remove
 					break
 				}
 			}

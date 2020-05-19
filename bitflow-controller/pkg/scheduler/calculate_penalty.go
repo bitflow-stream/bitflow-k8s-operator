@@ -36,12 +36,14 @@ func getNumberOfPodsForNode(client client.Client, nodeName string) int {
 	return count
 }
 
-func getNextHigherNumberOfPodSlots(incrementFactor float64, value float64) (float64, error) {
-	if value < incrementFactor {
-		return incrementFactor, nil
+func getNextHigherNumberOfPodSlots(bufferInitSize float64, incrementFactor float64, value float64) (float64, error) {
+	println(value, "<", bufferInitSize)
+	if value < bufferInitSize {
+		return bufferInitSize, nil
 	}
 	count := incrementFactor
 	for true {
+		println(count, ">=", value)
 		if count >= value {
 			return count, nil
 		}
@@ -51,9 +53,11 @@ func getNextHigherNumberOfPodSlots(incrementFactor float64, value float64) (floa
 }
 
 func GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(client client.Client, config *config.Config, nodeName string, numberOfPodsToAdd float64) float64 {
+	bufferInitSize := float64(config.GetInitialResourceBufferSize())
 	incrementFactor := config.GetResourceBufferIncrementFactor()
 	numberOfPodsOnNode := float64(getNumberOfPodsForNode(client, nodeName))
-	slots, _ := getNextHigherNumberOfPodSlots(incrementFactor, numberOfPodsOnNode+numberOfPodsToAdd)
+	println(numberOfPodsOnNode + numberOfPodsToAdd) // TODO remove
+	slots, _ := getNextHigherNumberOfPodSlots(bufferInitSize, incrementFactor, numberOfPodsOnNode+numberOfPodsToAdd)
 	return slots
 }
 
