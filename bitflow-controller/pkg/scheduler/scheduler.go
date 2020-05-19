@@ -27,7 +27,7 @@ func (s *Scheduler) SchedulePod(pod *corev1.Pod, step *bitflowv1.BitflowStep, so
 	var nodeList *corev1.NodeList
 	var err error
 	if step.Spec.NodeLabels != nil {
-		logger.Infof("Filter nodes with labels: %v", step.Spec.NodeLabels)
+		logger.Debugf("Filter nodes with labels: %v", step.Spec.NodeLabels)
 		nodeList, err = common.RequestReadyNodesByLabels(s.Client, step.Spec.NodeLabels)
 	} else {
 		nodeList, err = common.RequestReadyNodes(s.Client)
@@ -36,7 +36,7 @@ func (s *Scheduler) SchedulePod(pod *corev1.Pod, step *bitflowv1.BitflowStep, so
 	for _, node := range nodeList.Items {
 		nodeNames = append(nodeNames, node.GetName())
 	}
-	logger.Infof("Using the following nodes for scheduling: %v ", nodeNames)
+	logger.Debugf("Using the following nodes for scheduling: %v ", nodeNames)
 
 	if err != nil {
 		logger.Errorf("Failed to request available nodes: %v", err)
