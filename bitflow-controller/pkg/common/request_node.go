@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -77,7 +78,7 @@ func RequestReadyNodesByLabels(cli client.Client, nodeLabels map[string][]string
 		if err != nil {
 			return nodeList, err
 		}
-		selector.Add(*req)
+		selector = selector.Add(*req)
 	}
 	nodeError := cli.List(context.TODO(), &client.ListOptions{LabelSelector: selector}, nodeList)
 	readyNodes := FilterReadyNodes(nodeList)
