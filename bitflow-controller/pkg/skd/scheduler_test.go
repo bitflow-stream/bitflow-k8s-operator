@@ -15,28 +15,55 @@ func TestSkd(t *testing.T) {
 	suite.Run(t, new(SkdTestSuite))
 }
 
+func getNodeAffinityForPod(pod *corev1.Pod) string {
+	return pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+}
+
 func (s *SkdTestSuite) Test_shouldSetAffinityOnAllPods() {
-	node1 := s.Node("Some Node Name")
-	pod1 := s.Pod("Some Pod Name")
-	pod2 := s.Pod("Some Other Pod Name")
+	node1 := s.Node("node1")
+	node2 := s.Node("node2")
+	pod1 := s.Pod("pod1")
+	pod2 := s.Pod("pod2")
+	pod3 := s.Pod("pod3")
+	pod4 := s.Pod("pod4")
+	pod5 := s.Pod("pod5")
 
 	scheduler := Scheduler{
-		nodes: []NodeData{
+		nodes: []*NodeData{
 			{
-				node:                    node1,
-				curve:                   Curve{},
-				initialNumberOfPodSlots: 0,
-				podSlotScalingFactor:    0,
-				resourceLimit:           0,
+				node: node1,
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+			{
+				node: node2,
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
 			},
 		},
-		pods: []*corev1.Pod{pod1, pod2},
+		pods: []*corev1.Pod{pod1, pod2, pod3, pod4, pod5},
 	}
 
-	scheduler.setNodeAffinityForPods()
+	err := scheduler.setNodeAffinityForPods()
 
-	actualNodeAffinityPod1 := scheduler.pods[0].Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
-	actualNodeAffinityPod2 := scheduler.pods[1].Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
-	s.Equal(node1.Name, actualNodeAffinityPod1)
-	s.Equal(node1.Name, actualNodeAffinityPod2)
+	s.Nil(err)
+	s.Equal(node1.Name, getNodeAffinityForPod(scheduler.pods[0]))
+	s.Equal(node1.Name, getNodeAffinityForPod(scheduler.pods[1]))
+	s.Equal(node2.Name, getNodeAffinityForPod(scheduler.pods[2]))
+	s.Equal(node2.Name, getNodeAffinityForPod(scheduler.pods[3]))
+	s.Equal(node1.Name, getNodeAffinityForPod(scheduler.pods[4]))
 }
