@@ -33,8 +33,7 @@ func (s *Scheduler) setNodeAffinityForPods() error {
 	if err != nil {
 		return err
 	}
-	simulate(*s)
-	return nil
+	return simulate(*s)
 }
 
 func validateScheduler(scheduler Scheduler) error {
@@ -64,7 +63,7 @@ func validateScheduler(scheduler Scheduler) error {
 	return nil
 }
 
-func simulate(scheduler Scheduler) {
+func simulate(scheduler Scheduler) error {
 	var simulatedNodes []*SimulatedNode
 	for _, nodeData := range scheduler.nodes {
 		simulatedNodes = append(simulatedNodes, &SimulatedNode{
@@ -74,7 +73,10 @@ func simulate(scheduler Scheduler) {
 	}
 
 	for _, pod := range scheduler.pods {
-		lowestPenaltyNode := getLowestPenaltyNode(simulatedNodes)
+		lowestPenaltyNode, err := GetLowestPenaltyNode(simulatedNodes)
+		if err != nil {
+			return err
+		}
 		lowestPenaltyNode.pods = append(lowestPenaltyNode.pods, pod)
 	}
 
@@ -83,4 +85,5 @@ func simulate(scheduler Scheduler) {
 			common.SetTargetNode(simulatedNode.nodeData.node, pod)
 		}
 	}
+	return nil
 }

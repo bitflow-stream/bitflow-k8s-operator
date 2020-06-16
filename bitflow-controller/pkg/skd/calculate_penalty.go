@@ -15,43 +15,45 @@ func CalculateExecutionTime(cpus float64, curve Curve) float64 {
 	return curve.a*math.Pow(cpus+curve.b, -curve.c) + curve.d
 }
 
-func getNextHigherNumberOfPodSlots(incrementFactor int64, value int64) (int64, error) {
-	if value < incrementFactor {
-		return incrementFactor, nil
+func GetNumberOfPodSlotsAfterAddingPods(node SimulatedNode, numberOfPodsToAdd int64) (int64, error) {
+	numberOfPods := int64(len(node.pods)) + numberOfPodsToAdd
+	initialNumberOfPodSlots := node.nodeData.initialNumberOfPodSlots
+	if numberOfPods < initialNumberOfPodSlots {
+		return initialNumberOfPodSlots, nil
 	}
-	count := incrementFactor
+	updatedNumberOfPodSlots := initialNumberOfPodSlots
 	for true {
-		if count >= value {
-			return count, nil
+		if updatedNumberOfPodSlots >= numberOfPods {
+			return updatedNumberOfPodSlots, nil
 		}
-		count *= incrementFactor
+		updatedNumberOfPodSlots *= node.nodeData.podSlotScalingFactor
 	}
 	return -1, errors.New("should never happen")
 }
 
-func GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(node SimulatedNode, numberOfPodsToAdd int64) int64 {
-	incrementFactor := node.nodeData.podSlotScalingFactor
-	numberOfPodsOnNode := int64(len(node.pods))
-	slots, _ := getNextHigherNumberOfPodSlots(incrementFactor, numberOfPodsOnNode+numberOfPodsToAdd)
-	return slots
-}
-
 // lower is better
 func CalculatePenaltyForNodeAfterAddingPods(simulatedNode SimulatedNode, numberOfPodsToAdd int64) float64 {
-	R := getAllocatableCpu(*simulatedNode.nodeData.node) * simulatedNode.nodeData.resourceLimit / float64(GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(simulatedNode, numberOfPodsToAdd))
+	numberOfPodSlots, _ := GetNumberOfPodSlotsAfterAddingPods(simulatedNode, numberOfPodsToAdd) // TODO handle error or remove
+	R := getAllocatableCpu(*simulatedNode.nodeData.node) * simulatedNode.nodeData.resourceLimit / float64(numberOfPodSlots)
 
 	return CalculateExecutionTime(R, simulatedNode.nodeData.curve)
 }
 
-func getLowestPenaltyNode(simulatedNodes []*SimulatedNode) *SimulatedNode {
-	minPenaltyIndex := -1
-	minPenalty := -1.0
+func GetLowestPenaltyNode(simulatedNodes []*SimulatedNode) (*SimulatedNode, error) {
+	if len(simulatedNodes) == 0 {
+		return nil, errors.New("simulatedNodes are empty")
+	}
+	minPenaltyIndex := 0
+	minPenalty := CalculatePenaltyForNodeAfterAddingPods(*simulatedNodes[0], 1)
 	for i, simulatedNode := range simulatedNodes {
+		if i == 0 {
+			continue
+		}
 		penalty := CalculatePenaltyForNodeAfterAddingPods(*simulatedNode, 1)
-		if minPenaltyIndex < 0 || penalty < minPenalty {
+		if penalty < minPenalty {
 			minPenaltyIndex = i
 			minPenalty = penalty
 		}
 	}
-	return simulatedNodes[minPenaltyIndex]
+	return simulatedNodes[minPenaltyIndex], nil
 }

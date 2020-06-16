@@ -77,6 +77,14 @@ func (suite *AbstractTestSuite) SchedulerNode() *corev1.Node {
 		map[string]string{"bitflow-resource-limit": "0.1"})
 }
 
+func (s *AbstractTestSuite) NodeWithCpuAndMemory(name string, cpu int64, memory int64, resourceLimit float64) *corev1.Node {
+	return s.NodeWithResources(name,
+		map[string]string{"test-node": "yes", HostnameLabel: name},
+		map[string]string{"bitflow-resource-limit": fmt.Sprintf("%f", resourceLimit)},
+		cpu,
+		memory*1024*1024)
+}
+
 func (suite *AbstractTestSuite) NodeWithResources(name string, labels, annotations map[string]string, cpu int64, memory int64) *corev1.Node {
 	var res = make(corev1.ResourceList)
 	res[corev1.ResourceCPU] = *resource.NewMilliQuantity(cpu, resource.DecimalSI)
