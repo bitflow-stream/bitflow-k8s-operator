@@ -2,87 +2,139 @@ package skd
 
 import (
 	"errors"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
-	corev1 "k8s.io/api/core/v1"
 )
 
-type Scheduler struct {
+type Scheduler interface {
+	Schedule() (map[string]string, error)
+}
+
+type EqualDistributionScheduler struct {
+	nodeNames []string
+	podNames  []string
+}
+
+func (eds EqualDistributionScheduler) Schedule() (map[string]string, error) {
+	if err := validateEqualDistributionScheduler(eds); err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]string)
+
+	if len(eds.podNames) == 0 {
+		return m, nil
+	}
+
+	var nodeIndex = 0
+	for _, podName := range eds.podNames {
+		if nodeIndex >= len(eds.nodeNames) {
+			nodeIndex = 0
+		}
+
+		m[podName] = eds.nodeNames[nodeIndex]
+
+		nodeIndex++
+	}
+
+	return m, nil
+}
+
+type AdvancedScheduler struct {
 	nodes []*NodeData
-	pods  []*corev1.Pod
+	pods  []*PodData
+}
+
+func (as AdvancedScheduler) Schedule() (map[string]string, error) {
+	if err := validateAdvancedScheduler(as); err != nil {
+		return nil, err
+	}
+
+	// TODO implement
+
+	return nil, nil
 }
 
 type NodeData struct {
-	node                    *corev1.Node
-	curve                   Curve
-	initialNumberOfPodSlots int64
-	podSlotScalingFactor    int64
+	name                    string
+	allocatableCpu          int // TODO which unit? Data is found here: node.Status.Allocatable.Cpu().MilliValue()
+	memory                  int // memory in MB
+	initialNumberOfPodSlots int
+	podSlotScalingFactor    int
 	resourceLimit           float64
+}
+
+type PodData struct {
+	name             string
+	receivesDataFrom []string // list of pod names
+	curve            Curve
+	minimumMemory    int // memory in MB
 }
 
 type Curve struct {
 	a, b, c, d float64
 }
 
-type SimulatedNode struct {
-	nodeData *NodeData
-	pods     []*corev1.Pod
+type NodeState struct {
+	node *NodeData
+	pods []*PodData
 }
 
-func (s *Scheduler) setNodeAffinityForPods() error {
-	err := validateScheduler(*s)
-	if err != nil {
-		return err
-	}
-	return simulate(*s)
+type SystemState struct {
+	nodes []*NodeState
 }
 
-func validateScheduler(scheduler Scheduler) error {
-	if len(scheduler.nodes) == 0 {
-		return errors.New("no node data in scheduler")
+func validateEqualDistributionScheduler(scheduler EqualDistributionScheduler) error {
+	if len(scheduler.nodeNames) == 0 {
+		return errors.New("no nodes in scheduler")
 	}
-	if len(scheduler.pods) == 0 {
+	for _, name := range scheduler.nodeNames {
+		if name == "" {
+			return errors.New("empty name in nodeNames")
+		}
+	}
+	if len(scheduler.podNames) == 0 {
 		return errors.New("no pods in scheduler")
 	}
-	for _, nodeData := range scheduler.nodes {
-		if nodeData.node == nil {
-			return errors.New("no node in NodeData")
-		}
-		if nodeData.curve == (Curve{}) {
-			return errors.New("empty curve")
-		}
-		if nodeData.resourceLimit == 0 {
-			return errors.New("resourceLimit is 0")
-		}
-		if nodeData.initialNumberOfPodSlots == 0 {
-			return errors.New("initialNumberOfPodSlots is 0")
-		}
-		if nodeData.podSlotScalingFactor == 0 {
-			return errors.New("podSlotScalingFactor is 0")
+	for _, name := range scheduler.podNames {
+		if name == "" {
+			return errors.New("empty name in podNames")
 		}
 	}
 	return nil
 }
 
-func simulate(scheduler Scheduler) error {
-	var simulatedNodes []*SimulatedNode
+func validateAdvancedScheduler(scheduler AdvancedScheduler) error {
+	if len(scheduler.nodes) == 0 {
+		return errors.New("no node data in scheduler")
+	}
 	for _, nodeData := range scheduler.nodes {
-		simulatedNodes = append(simulatedNodes, &SimulatedNode{
-			nodeData: nodeData,
-			pods:     nil,
-		})
-	}
-
-	for _, pod := range scheduler.pods {
-		lowestPenaltyNode, err := GetLowestPenaltyNode(simulatedNodes)
-		if err != nil {
-			return err
+		if nodeData.name == "" {
+			return errors.New("empty name in NodeData")
 		}
-		lowestPenaltyNode.pods = append(lowestPenaltyNode.pods, pod)
+		if nodeData.memory <= 0 {
+			return errors.New("resourceLimit is 0")
+		}
+		if nodeData.initialNumberOfPodSlots <= 0 {
+			return errors.New("initialNumberOfPodSlots is <= 0")
+		}
+		if nodeData.podSlotScalingFactor <= 0 {
+			return errors.New("podSlotScalingFactor is <= 0")
+		}
+		if nodeData.resourceLimit <= 0 {
+			return errors.New("resourceLimit is <= 0")
+		}
 	}
-
-	for _, simulatedNode := range simulatedNodes {
-		for _, pod := range simulatedNode.pods {
-			common.SetTargetNode(simulatedNode.nodeData.node, pod)
+	for _, podData := range scheduler.pods {
+		if podData.name == "" {
+			return errors.New("empty name in PodData")
+		}
+		if podData.receivesDataFrom == nil {
+			return errors.New("receivesDataFrom is nil")
+		}
+		if podData.curve == (Curve{}) {
+			return errors.New("empty curve")
+		}
+		if podData.minimumMemory <= 0 {
+			return errors.New("minimumMemory is <= 0")
 		}
 	}
 	return nil

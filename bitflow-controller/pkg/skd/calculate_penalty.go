@@ -2,22 +2,15 @@ package skd
 
 import (
 	"errors"
-	corev1 "k8s.io/api/core/v1"
 	"math"
 )
-
-func getAllocatableCpu(node corev1.Node) float64 {
-	// TODO MilliValue() is correct, for memory use Value()
-	return float64(node.Status.Allocatable.Cpu().MilliValue())
-}
 
 func CalculateExecutionTime(cpus float64, curve Curve) float64 {
 	return curve.a*math.Pow(cpus+curve.b, -curve.c) + curve.d
 }
 
-func GetNumberOfPodSlotsAfterAddingPods(node SimulatedNode, numberOfPodsToAdd int64) (int64, error) {
-	numberOfPods := int64(len(node.pods)) + numberOfPodsToAdd
-	initialNumberOfPodSlots := node.nodeData.initialNumberOfPodSlots
+func GetNumberOfPodSlots(nodeData *NodeData, numberOfPods int) (int, error) {
+	initialNumberOfPodSlots := nodeData.initialNumberOfPodSlots
 	if numberOfPods < initialNumberOfPodSlots {
 		return initialNumberOfPodSlots, nil
 	}
@@ -26,34 +19,28 @@ func GetNumberOfPodSlotsAfterAddingPods(node SimulatedNode, numberOfPodsToAdd in
 		if updatedNumberOfPodSlots >= numberOfPods {
 			return updatedNumberOfPodSlots, nil
 		}
-		updatedNumberOfPodSlots *= node.nodeData.podSlotScalingFactor
+		updatedNumberOfPodSlots *= nodeData.podSlotScalingFactor
 	}
 	return -1, errors.New("should never happen")
 }
 
-// lower is better
-func CalculatePenaltyForNodeAfterAddingPods(simulatedNode SimulatedNode, numberOfPodsToAdd int64) float64 {
-	numberOfPodSlots, _ := GetNumberOfPodSlotsAfterAddingPods(simulatedNode, numberOfPodsToAdd) // TODO handle error or remove
-	R := getAllocatableCpu(*simulatedNode.nodeData.node) * simulatedNode.nodeData.resourceLimit / float64(numberOfPodSlots)
+func CalculatePenalty(state SystemState) (float64, error) {
+	var penalty = 0.0
 
-	return CalculateExecutionTime(R, simulatedNode.nodeData.curve)
-}
+	for _, nodeState := range state.nodes {
+		nodeData := nodeState.node
 
-func GetLowestPenaltyNode(simulatedNodes []*SimulatedNode) (*SimulatedNode, error) {
-	if len(simulatedNodes) == 0 {
-		return nil, errors.New("simulatedNodes are empty")
-	}
-	minPenaltyIndex := 0
-	minPenalty := CalculatePenaltyForNodeAfterAddingPods(*simulatedNodes[0], 1)
-	for i, simulatedNode := range simulatedNodes {
-		if i == 0 {
-			continue
+		numberOfPodSlots, err := GetNumberOfPodSlots(nodeData, len(nodeState.pods))
+		if err != nil {
+			return -1, err
 		}
-		penalty := CalculatePenaltyForNodeAfterAddingPods(*simulatedNode, 1)
-		if penalty < minPenalty {
-			minPenaltyIndex = i
-			minPenalty = penalty
+
+		availableCpus := float64(nodeData.allocatableCpu) * nodeData.resourceLimit / float64(numberOfPodSlots)
+
+		for _, podData := range nodeState.pods {
+			penalty += CalculateExecutionTime(availableCpus, podData.curve)
 		}
 	}
-	return simulatedNodes[minPenaltyIndex], nil
+
+	return penalty, nil
 }
