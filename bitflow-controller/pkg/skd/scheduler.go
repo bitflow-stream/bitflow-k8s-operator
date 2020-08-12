@@ -55,8 +55,8 @@ func (as AdvancedScheduler) Schedule() (map[string]string, error) {
 
 type NodeData struct {
 	name                    string
-	allocatableCpu          int // TODO which unit? Data is found here: node.Status.Allocatable.Cpu().MilliValue()
-	memory                  int // memory in MB
+	allocatableCpu          float64 // 1000 == 1 CPU core
+	memory                  int     // memory in MB
 	initialNumberOfPodSlots int
 	podSlotScalingFactor    int
 	resourceLimit           float64

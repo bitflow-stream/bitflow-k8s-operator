@@ -35,7 +35,7 @@ func CalculatePenalty(state SystemState) (float64, error) {
 			return -1, err
 		}
 
-		availableCpus := float64(nodeData.allocatableCpu) * nodeData.resourceLimit / float64(numberOfPodSlots)
+		availableCpus := nodeData.allocatableCpu * nodeData.resourceLimit / float64(numberOfPodSlots)
 
 		for _, podData := range nodeState.pods {
 			penalty += CalculateExecutionTime(availableCpus, podData.curve)
