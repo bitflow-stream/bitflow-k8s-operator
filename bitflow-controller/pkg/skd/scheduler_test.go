@@ -36,8 +36,7 @@ func (s *SkdTestSuite) Test_EqualDistributionScheduler_shouldReturnCorrectMap() 
 	s.Equal("n1", scheduledMap["p10"])
 }
 
-// TODO placeholder test, rename
-func (s *SkdTestSuite) Test_AdvancedScheduler_shouldTODO() {
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectly() {
 	var scheduler Scheduler
 	scheduler = AdvancedScheduler{
 		nodes: []*NodeData{
@@ -122,11 +121,111 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldTODO() {
 				},
 				minimumMemory: 16,
 			},
+			{
+				name:             "p6",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p7",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p8",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p9",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p10",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p11",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p12",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p13",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
 		},
 	}
 
 	scheduledMap, err := scheduler.Schedule()
 
 	s.Nil(err)
-	s.Equal(0, len(scheduledMap))
+	s.Equal("n1", scheduledMap["p1"])
+	s.Equal("n1", scheduledMap["p2"])
+	s.Equal("n1", scheduledMap["p3"])
+	s.Equal("n1", scheduledMap["p4"])
+	s.Equal("n2", scheduledMap["p5"])
+	s.Equal("n2", scheduledMap["p6"])
+	s.Equal("n2", scheduledMap["p7"])
+	s.Equal("n2", scheduledMap["p8"])
+	s.Equal("n3", scheduledMap["p9"])
+	s.Equal("n3", scheduledMap["p10"])
+	s.Equal("n3", scheduledMap["p11"])
+	s.Equal("n3", scheduledMap["p12"])
+	s.Equal("n3", scheduledMap["p13"])
 }

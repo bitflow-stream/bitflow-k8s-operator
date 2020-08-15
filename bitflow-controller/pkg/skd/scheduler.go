@@ -43,14 +43,81 @@ type AdvancedScheduler struct {
 	pods  []*PodData
 }
 
+func findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
+	if len(podsLeft) == 0 {
+		penalty, err := CalculatePenalty(state)
+		return state, penalty, err
+	}
+
+	currentPod := podsLeft[0]
+
+	var lowestPenalty float64 = -1
+	var lowestPenaltySystemState SystemState
+
+	for i, nodeState := range state.nodes {
+		nodeState.pods = append(nodeState.pods, currentPod)
+		state.nodes[i] = nodeState
+		newSystemState, currentPenalty, err := findBestPodDistribution(state, podsLeft[1:])
+		if err != nil {
+			continue
+		}
+		if lowestPenalty == -1 || currentPenalty < lowestPenalty {
+			lowestPenalty = currentPenalty
+
+			// copying "manually" to prevent lowestPenaltySystemState and newSystemState from having the same memory address, which leads to problems
+			lowestPenaltySystemState = SystemState{}
+			for _, newSystemStateNodeState := range newSystemState.nodes {
+				lowestPenaltySystemState.nodes = append(lowestPenaltySystemState.nodes, newSystemStateNodeState)
+			}
+		}
+
+		// deleting previously added pod in preparation for next iteration
+		// copying "manually" to prevent errors -  state.nodes[i].pods = state.nodes[i].pods[:len(state.nodes[i].pods)-1] does NOT work
+		var tempPods []*PodData
+		for j, pod := range state.nodes[i].pods {
+			if j == len(state.nodes[i].pods)-1 {
+				break
+			}
+			tempPods = append(tempPods, pod)
+		}
+		state.nodes[i].pods = tempPods
+	}
+
+	if lowestPenalty == -1 {
+		return SystemState{}, -1, errors.New("pod " + currentPod.name + " could not be scheduled onto any node")
+	}
+
+	return lowestPenaltySystemState, lowestPenalty, nil
+}
+
 func (as AdvancedScheduler) Schedule() (map[string]string, error) {
 	if err := validateAdvancedScheduler(as); err != nil {
 		return nil, err
 	}
 
-	// TODO implement
+	systemState := SystemState{[]NodeState{}}
+	for _, node := range as.nodes {
+		systemState.nodes = append(systemState.nodes, NodeState{
+			node: node,
+			pods: []*PodData{},
+		})
+	}
 
-	return nil, nil
+	bestDistributionState, _, err := findBestPodDistribution(systemState, as.pods)
+
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]string)
+	for _, nodeState := range bestDistributionState.nodes {
+		nodeName := nodeState.node.name
+		for _, pod := range nodeState.pods {
+			m[pod.name] = nodeName
+		}
+	}
+
+	return m, nil
 }
 
 type NodeData struct {
@@ -78,8 +145,24 @@ type NodeState struct {
 	pods []*PodData
 }
 
+func (state SystemState) toString() string {
+	var str string = "("
+
+	for _, nodeState := range state.nodes {
+		str += nodeState.node.name + "["
+
+		for _, pod := range nodeState.pods {
+			str += pod.name + " "
+		}
+
+		str += "] "
+	}
+	str += ")"
+	return str
+}
+
 type SystemState struct {
-	nodes []*NodeState
+	nodes []NodeState
 }
 
 func validateEqualDistributionScheduler(scheduler EqualDistributionScheduler) error {

@@ -141,7 +141,7 @@ func (s *CalculatePenaltyTestSuite) Test_shouldCalculatePenaltyForDifferentState
 	s.testCalculatePenalty(
 		"",
 		SystemState{
-			[]*NodeState{
+			[]NodeState{
 				{
 					node: &NodeData{
 						name:                    "n1",
