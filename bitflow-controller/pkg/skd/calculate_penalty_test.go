@@ -38,7 +38,6 @@ func (s *CalculatePenaltyTestSuite) testGetNumberOfPodSlots(initialNumberOfPodSl
 		s.Nil(err)
 		s.Equal(expectedNumberOfSlots, actualNumberOfSlots)
 	})
-
 }
 
 func (s *CalculatePenaltyTestSuite) Test_shouldGetNumberOfPodSlotsWithDifferentCombinations() {
@@ -64,5 +63,106 @@ func (s *CalculatePenaltyTestSuite) Test_shouldGetNumberOfPodSlotsWithDifferentC
 	s.testGetNumberOfPodSlots(3, 4, 13, 48)
 }
 
-// TODO test CalculateExecutionTime
-// TODO test CalculatePenalty
+func (s *CalculatePenaltyTestSuite) testCalculateExecutionTime(cpuMillis float64, curveA float64, curveB float64, curveC float64, curveD float64, expectedExecutionTime float64) {
+	s.SubTest(fmt.Sprintf("cpuMillis%f:a%f:b%f:c%f:d%f->%f", cpuMillis, curveA, curveB, curveC, curveD, expectedExecutionTime), func() {
+		actualExecutionTime := CalculateExecutionTime(cpuMillis, Curve{
+			a: curveA,
+			b: curveB,
+			c: curveC,
+			d: curveD,
+		})
+
+		s.assertAlmostEqual(actualExecutionTime, expectedExecutionTime)
+	})
+}
+
+func (s *CalculatePenaltyTestSuite) Test_shouldCalculateExecutionTimeForDifferentCombinationsOfCpusAndCurves() {
+	s.testCalculateExecutionTime(
+		16000,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		15.9226)
+	s.testCalculateExecutionTime(
+		4000,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		16.2861)
+	s.testCalculateExecutionTime(
+		2000,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		17.4530)
+	s.testCalculateExecutionTime(
+		1000,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		21.9972)
+	s.testCalculateExecutionTime(
+		500,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		38.7860)
+	s.testCalculateExecutionTime(
+		250,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		95.1258)
+	s.testCalculateExecutionTime(
+		50,
+		6.71881241016441,
+		0.0486498280492762,
+		2.0417306475862214,
+		15.899403720950454,
+		776.3603)
+}
+
+func (s *CalculatePenaltyTestSuite) testCalculatePenalty(testName string, state SystemState, expectedPenalty float64) {
+	s.SubTest(testName, func() {
+		actualPenalty, err := CalculatePenalty(state)
+
+		s.Nil(err)
+		s.assertAlmostEqual(actualPenalty, expectedPenalty)
+	})
+}
+
+func (s *CalculatePenaltyTestSuite) Test_shouldCalculatePenaltyForDifferentStates() {
+	s.testCalculatePenalty(
+		"",
+		SystemState{
+			[]*NodeState{
+				{
+					node: &NodeData{
+						name:                    "n1",
+						allocatableCpu:          16000,
+						memory:                  2000,
+						initialNumberOfPodSlots: 8,
+						podSlotScalingFactor:    2,
+						resourceLimit:           0.5, // TODO bezieht sich das resourceLimit nur auf CPU oder auch auf memory?
+					},
+					pods: []*PodData{
+						{
+							name:             "p1",
+							receivesDataFrom: []string{},
+							curve: Curve{
+								a: 6.71881241016441,
+								b: 0.0486498280492762,
+								c: 2.0417306475862214,
+								d: 15.899403720950454,
+							},
+							minimumMemory: 64,
+						}},
+				}}},
+		21.9972)
+}

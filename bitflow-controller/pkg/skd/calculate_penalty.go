@@ -5,8 +5,8 @@ import (
 	"math"
 )
 
-func CalculateExecutionTime(cpus float64, curve Curve) float64 {
-	return curve.a*math.Pow(cpus+curve.b, -curve.c) + curve.d
+func CalculateExecutionTime(cpuMillis float64, curve Curve) float64 {
+	return curve.a*math.Pow((cpuMillis/1000)+curve.b, -curve.c) + curve.d
 }
 
 func GetNumberOfPodSlots(nodeData *NodeData, numberOfPods int) (int, error) {
