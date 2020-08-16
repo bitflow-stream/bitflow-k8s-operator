@@ -24,7 +24,16 @@ func GetNumberOfPodSlots(nodeData *NodeData, numberOfPods int) (int, error) {
 	return -1, errors.New("should never happen")
 }
 
-func CalculatePenalty(state SystemState) (float64, error) {
+func NodeContainsPod(nodeState NodeState, podName string) bool {
+	for _, pod := range nodeState.pods {
+		if pod.name == podName {
+			return true
+		}
+	}
+	return false
+}
+
+func CalculatePenalty(state SystemState, networkPenalty float64) (float64, error) {
 	var penalty = 0.0
 
 	for _, nodeState := range state.nodes {
@@ -39,6 +48,11 @@ func CalculatePenalty(state SystemState) (float64, error) {
 
 		for _, podData := range nodeState.pods {
 			penalty += CalculateExecutionTime(availableCpus, podData.curve)
+			for _, receivesDataFrom := range podData.receivesDataFrom {
+				if !NodeContainsPod(nodeState, receivesDataFrom) {
+					penalty += networkPenalty
+				}
+			}
 		}
 	}
 

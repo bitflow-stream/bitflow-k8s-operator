@@ -128,9 +128,9 @@ func (s *CalculatePenaltyTestSuite) Test_shouldCalculateExecutionTimeForDifferen
 		776.3603)
 }
 
-func (s *CalculatePenaltyTestSuite) testCalculatePenalty(testName string, state SystemState, expectedPenalty float64) {
+func (s *CalculatePenaltyTestSuite) testCalculatePenalty(testName string, state SystemState, networkPenalty float64, expectedPenalty float64) {
 	s.SubTest(testName, func() {
-		actualPenalty, err := CalculatePenalty(state)
+		actualPenalty, err := CalculatePenalty(state, networkPenalty)
 
 		s.Nil(err)
 		s.assertAlmostEqual(actualPenalty, expectedPenalty)
@@ -164,5 +164,48 @@ func (s *CalculatePenaltyTestSuite) Test_shouldCalculatePenaltyForDifferentState
 							minimumMemory: 64,
 						}},
 				}}},
+		0, // TODO add test with networkPenalty
 		21.9972)
+}
+
+func (s *CalculatePenaltyTestSuite) Test_shouldRecognizeWhichPodsNodeContains() {
+	nodeState := NodeState{
+		node: &NodeData{
+			name:                    "n1",
+			allocatableCpu:          4000,
+			memory:                  64,
+			initialNumberOfPodSlots: 2,
+			podSlotScalingFactor:    2,
+			resourceLimit:           0.1,
+		},
+		pods: []*PodData{
+			{
+				name:             "p2",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+			{
+				name:             "p3",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+	}
+
+	s.False(NodeContainsPod(nodeState, "p1"))
+	s.True(NodeContainsPod(nodeState, "p2"))
+	s.True(NodeContainsPod(nodeState, "p3"))
+	s.False(NodeContainsPod(nodeState, "p4"))
 }

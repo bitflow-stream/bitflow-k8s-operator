@@ -39,13 +39,15 @@ func (eds EqualDistributionScheduler) Schedule() (map[string]string, error) {
 }
 
 type AdvancedScheduler struct {
-	nodes []*NodeData
-	pods  []*PodData
+	nodes            []*NodeData
+	pods             []*PodData
+	networkPenalty   float64
+	thresholdPercent float64
 }
 
-func findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
+func (as AdvancedScheduler) findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
 	if len(podsLeft) == 0 {
-		penalty, err := CalculatePenalty(state)
+		penalty, err := CalculatePenalty(state, as.networkPenalty)
 		return state, penalty, err
 	}
 
@@ -57,7 +59,7 @@ func findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemStat
 	for i, nodeState := range state.nodes {
 		nodeState.pods = append(nodeState.pods, currentPod)
 		state.nodes[i] = nodeState
-		newSystemState, currentPenalty, err := findBestPodDistribution(state, podsLeft[1:])
+		newSystemState, currentPenalty, err := as.findBestPodDistribution(state, podsLeft[1:])
 		if err != nil {
 			continue
 		}
@@ -103,7 +105,7 @@ func (as AdvancedScheduler) Schedule() (map[string]string, error) {
 		})
 	}
 
-	bestDistributionState, _, err := findBestPodDistribution(systemState, as.pods)
+	bestDistributionState, _, err := as.findBestPodDistribution(systemState, as.pods)
 
 	if err != nil {
 		return nil, err
