@@ -47,7 +47,7 @@ type AdvancedScheduler struct {
 	previousScheduling map[string]string
 }
 
-func (as AdvancedScheduler) findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
+func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
 	if len(podsLeft) == 0 {
 		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
 		return state, penalty, err
@@ -61,7 +61,7 @@ func (as AdvancedScheduler) findBestPodDistribution(state SystemState, podsLeft 
 	for i, nodeState := range state.nodes {
 		nodeState.pods = append(nodeState.pods, currentPod)
 		state.nodes[i] = nodeState
-		newSystemState, currentPenalty, err := as.findBestPodDistribution(state, podsLeft[1:])
+		newSystemState, currentPenalty, err := as.findBestSchedulingCheckingAllPermutations(state, podsLeft[1:])
 		if err != nil {
 			continue
 		}
@@ -134,7 +134,7 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 		})
 	}
 
-	bestDistributionState, bestDistributionPenalty, err := as.findBestPodDistribution(systemState, as.pods)
+	bestDistributionState, bestDistributionPenalty, err := as.findBestSchedulingCheckingAllPermutations(systemState, as.pods)
 
 	if as.previousScheduling != nil {
 		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
