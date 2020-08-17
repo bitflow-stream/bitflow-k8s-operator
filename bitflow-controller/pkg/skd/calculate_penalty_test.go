@@ -128,9 +128,9 @@ func (s *CalculatePenaltyTestSuite) Test_shouldCalculateExecutionTimeForDifferen
 		776.3603)
 }
 
-func (s *CalculatePenaltyTestSuite) testCalculatePenalty(testName string, state SystemState, networkPenalty float64, expectedPenalty float64) {
-	s.SubTest(testName, func() {
-		actualPenalty, err := CalculatePenalty(state, networkPenalty)
+func (s *CalculatePenaltyTestSuite) testCalculatePenalty(description string, state SystemState, networkPenalty float64, memoryPenalty float64, expectedPenalty float64) {
+	s.SubTest(fmt.Sprintf("calculatePenalty-networkPenalty:%f memoryPenalty:%f -> %f - %s", networkPenalty, memoryPenalty, expectedPenalty, description), func() {
+		actualPenalty, err := CalculatePenalty(state, networkPenalty, memoryPenalty)
 
 		s.Nil(err)
 		s.assertAlmostEqual(actualPenalty, expectedPenalty)
@@ -139,7 +139,7 @@ func (s *CalculatePenaltyTestSuite) testCalculatePenalty(testName string, state 
 
 func (s *CalculatePenaltyTestSuite) Test_shouldCalculatePenaltyForDifferentStates() {
 	s.testCalculatePenalty(
-		"",
+		"without network-penalty or memory-penalty",
 		SystemState{
 			[]NodeState{
 				{
@@ -147,9 +147,9 @@ func (s *CalculatePenaltyTestSuite) Test_shouldCalculatePenaltyForDifferentState
 						name:                    "n1",
 						allocatableCpu:          16000,
 						memory:                  2000,
-						initialNumberOfPodSlots: 8,
+						initialNumberOfPodSlots: 2,
 						podSlotScalingFactor:    2,
-						resourceLimit:           0.5, // TODO bezieht sich das resourceLimit nur auf CPU oder auch auf memory?
+						resourceLimit:           0.5,
 					},
 					pods: []*PodData{
 						{
@@ -164,8 +164,99 @@ func (s *CalculatePenaltyTestSuite) Test_shouldCalculatePenaltyForDifferentState
 							minimumMemory: 64,
 						}},
 				}}},
-		0, // TODO add test with networkPenalty
-		21.9972)
+		0,
+		0,
+		16.2861)
+
+	s.testCalculatePenalty(
+		"network-penalty test",
+		SystemState{
+			[]NodeState{
+				{
+					node: &NodeData{
+						name:                    "n1",
+						allocatableCpu:          16000,
+						memory:                  2000,
+						initialNumberOfPodSlots: 2,
+						podSlotScalingFactor:    2,
+						resourceLimit:           0.5,
+					},
+					pods: []*PodData{
+						{
+							name:             "p2",
+							receivesDataFrom: []string{"p3"},
+							curve: Curve{
+								a: 6.71881241016441,
+								b: 0.0486498280492762,
+								c: 2.0417306475862214,
+								d: 15.899403720950454,
+							},
+							minimumMemory: 64,
+						}},
+				}}},
+		50,
+		0,
+		66.2861)
+
+	s.testCalculatePenalty(
+		"memory-penalty, but pod has enough memory",
+		SystemState{
+			[]NodeState{
+				{
+					node: &NodeData{
+						name:                    "n1",
+						allocatableCpu:          16000,
+						memory:                  2000,
+						initialNumberOfPodSlots: 2,
+						podSlotScalingFactor:    2,
+						resourceLimit:           0.5,
+					},
+					pods: []*PodData{
+						{
+							name:             "p1",
+							receivesDataFrom: []string{},
+							curve: Curve{
+								a: 6.71881241016441,
+								b: 0.0486498280492762,
+								c: 2.0417306475862214,
+								d: 15.899403720950454,
+							},
+							minimumMemory: 500,
+						}},
+				}}},
+		0,
+		100,
+		16.2861)
+
+	s.testCalculatePenalty(
+		"memory-penalty, pod does not have enough memory",
+		SystemState{
+			[]NodeState{
+				{
+					node: &NodeData{
+						name:                    "n1",
+						allocatableCpu:          16000,
+						memory:                  2000,
+						initialNumberOfPodSlots: 2,
+						podSlotScalingFactor:    2,
+						resourceLimit:           0.5,
+					},
+					pods: []*PodData{
+						{
+							name:             "p1",
+							receivesDataFrom: []string{},
+							curve: Curve{
+								a: 6.71881241016441,
+								b: 0.0486498280492762,
+								c: 2.0417306475862214,
+								d: 15.899403720950454,
+							},
+							minimumMemory: 1000,
+						}},
+				}}},
+		0,
+		100,
+		66.2861)
 }
 
 func (s *CalculatePenaltyTestSuite) Test_shouldRecognizeWhichPodsNodeContains() {

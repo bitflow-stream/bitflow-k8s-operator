@@ -42,13 +42,14 @@ type AdvancedScheduler struct {
 	nodes              []*NodeData
 	pods               []*PodData
 	networkPenalty     float64
+	memoryPenalty      float64
 	thresholdPercent   float64
 	previousScheduling map[string]string
 }
 
 func (as AdvancedScheduler) findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
 	if len(podsLeft) == 0 {
-		penalty, err := CalculatePenalty(state, as.networkPenalty)
+		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
 		return state, penalty, err
 	}
 
@@ -136,7 +137,7 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 	bestDistributionState, bestDistributionPenalty, err := as.findBestPodDistribution(systemState, as.pods)
 
 	if as.previousScheduling != nil {
-		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty)
+		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
 		if err == nil && !NewDistributionPenaltyLowerConsideringThreshold(previousPenalty, bestDistributionPenalty, as.thresholdPercent) {
 			return false, nil, nil
 		}
@@ -160,7 +161,7 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 type NodeData struct {
 	name                    string
 	allocatableCpu          float64 // 1000 == 1 CPU core
-	memory                  int     // memory in MB
+	memory                  float64 // memory in MB
 	initialNumberOfPodSlots int
 	podSlotScalingFactor    int
 	resourceLimit           float64
@@ -170,7 +171,7 @@ type PodData struct {
 	name             string
 	receivesDataFrom []string // list of pod names
 	curve            Curve
-	minimumMemory    int // memory in MB
+	minimumMemory    float64 // memory in MB
 }
 
 type Curve struct {
@@ -183,7 +184,7 @@ type NodeState struct {
 }
 
 func (state SystemState) toString() string {
-	var str string = "("
+	var str = "("
 
 	for _, nodeState := range state.nodes {
 		str += nodeState.node.name + "["
@@ -231,7 +232,7 @@ func validateAdvancedScheduler(scheduler AdvancedScheduler) error {
 			return errors.New("empty name in NodeData")
 		}
 		if nodeData.memory <= 0 {
-			return errors.New("resourceLimit is 0")
+			return errors.New("memory is <= 0")
 		}
 		if nodeData.initialNumberOfPodSlots <= 0 {
 			return errors.New("initialNumberOfPodSlots is <= 0")

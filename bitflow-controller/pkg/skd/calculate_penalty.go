@@ -33,7 +33,7 @@ func NodeContainsPod(nodeState NodeState, podName string) bool {
 	return false
 }
 
-func CalculatePenalty(state SystemState, networkPenalty float64) (float64, error) {
+func CalculatePenalty(state SystemState, networkPenalty float64, memoryPenalty float64) (float64, error) {
 	var penalty = 0.0
 
 	for _, nodeState := range state.nodes {
@@ -44,14 +44,19 @@ func CalculatePenalty(state SystemState, networkPenalty float64) (float64, error
 			return -1, err
 		}
 
-		availableCpus := nodeData.allocatableCpu * nodeData.resourceLimit / float64(numberOfPodSlots)
+		cpuCoresPerPod := nodeData.allocatableCpu * nodeData.resourceLimit / float64(numberOfPodSlots)
+
+		memoryPerPod := nodeData.memory * nodeData.resourceLimit / float64(numberOfPodSlots)
 
 		for _, podData := range nodeState.pods {
-			penalty += CalculateExecutionTime(availableCpus, podData.curve)
+			penalty += CalculateExecutionTime(cpuCoresPerPod, podData.curve)
 			for _, receivesDataFrom := range podData.receivesDataFrom {
 				if !NodeContainsPod(nodeState, receivesDataFrom) {
 					penalty += networkPenalty
 				}
+			}
+			if memoryPerPod < podData.minimumMemory {
+				penalty += memoryPenalty * (1 - memoryPerPod/podData.minimumMemory)
 			}
 		}
 	}

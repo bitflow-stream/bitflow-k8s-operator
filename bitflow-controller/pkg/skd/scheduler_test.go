@@ -704,3 +704,290 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldDetermineIfNewDistributionPe
 	s.testNewDistributionPenaltyLowerConsideringThreshold(100, 90, 10, true)
 	s.testNewDistributionPenaltyLowerConsideringThreshold(100, 90.000001, 10, false)
 }
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldNotThrowErrorWhenAllNecessaryFieldsAreSet() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.Nil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeMemoryIsMissing() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeMemoryIs0() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  0,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeResourceLimitIsMissing() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeResourceLimitIs0() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenPodMinimumMemoryIsMissing() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenPodMinimumMemoryIs0() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 0,
+			},
+		},
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenThresholdIsLessThan0() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+		thresholdPercent: -1,
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenThresholdIsGreaterThan100() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  64,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				receivesDataFrom: []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory: 16,
+			},
+		},
+		thresholdPercent: 101,
+	}
+
+	_, _, err := scheduler.Schedule()
+
+	s.NotNil(err)
+}
