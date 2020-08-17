@@ -5,7 +5,7 @@ import (
 )
 
 type Scheduler interface {
-	Schedule() (map[string]string, error)
+	Schedule() (bool, map[string]string, error)
 }
 
 type EqualDistributionScheduler struct {
@@ -13,15 +13,15 @@ type EqualDistributionScheduler struct {
 	podNames  []string
 }
 
-func (eds EqualDistributionScheduler) Schedule() (map[string]string, error) {
+func (eds EqualDistributionScheduler) Schedule() (bool, map[string]string, error) {
 	if err := validateEqualDistributionScheduler(eds); err != nil {
-		return nil, err
+		return false, nil, err
 	}
 
 	m := make(map[string]string)
 
 	if len(eds.podNames) == 0 {
-		return m, nil
+		return true, m, nil
 	}
 
 	var nodeIndex = 0
@@ -35,14 +35,15 @@ func (eds EqualDistributionScheduler) Schedule() (map[string]string, error) {
 		nodeIndex++
 	}
 
-	return m, nil
+	return true, m, nil
 }
 
 type AdvancedScheduler struct {
-	nodes            []*NodeData
-	pods             []*PodData
-	networkPenalty   float64
-	thresholdPercent float64
+	nodes              []*NodeData
+	pods               []*PodData
+	networkPenalty     float64
+	thresholdPercent   float64
+	previousScheduling map[string]string
 }
 
 func (as AdvancedScheduler) findBestPodDistribution(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
@@ -92,9 +93,36 @@ func (as AdvancedScheduler) findBestPodDistribution(state SystemState, podsLeft 
 	return lowestPenaltySystemState, lowestPenalty, nil
 }
 
-func (as AdvancedScheduler) Schedule() (map[string]string, error) {
+func NewDistributionPenaltyLowerConsideringThreshold(previousPenalty float64, newPenalty float64, thresholdPercent float64) bool {
+	var previousPenaltyMinusThreshold = previousPenalty * ((100 - thresholdPercent) / 100)
+	if newPenalty <= previousPenaltyMinusThreshold {
+		return true
+	}
+	return false
+}
+
+func (as AdvancedScheduler) getPreviousSystemState() SystemState {
+	systemState := SystemState{[]NodeState{}}
+
+	for _, node := range as.nodes {
+		nodeState := NodeState{
+			node: node,
+			pods: []*PodData{},
+		}
+		for _, pod := range as.pods {
+			if as.previousScheduling[pod.name] == node.name {
+				nodeState.pods = append(nodeState.pods, pod)
+			}
+		}
+		systemState.nodes = append(systemState.nodes, nodeState)
+	}
+
+	return systemState
+}
+
+func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 	if err := validateAdvancedScheduler(as); err != nil {
-		return nil, err
+		return false, nil, err
 	}
 
 	systemState := SystemState{[]NodeState{}}
@@ -105,10 +133,17 @@ func (as AdvancedScheduler) Schedule() (map[string]string, error) {
 		})
 	}
 
-	bestDistributionState, _, err := as.findBestPodDistribution(systemState, as.pods)
+	bestDistributionState, bestDistributionPenalty, err := as.findBestPodDistribution(systemState, as.pods)
+
+	if as.previousScheduling != nil {
+		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty)
+		if err == nil && !NewDistributionPenaltyLowerConsideringThreshold(previousPenalty, bestDistributionPenalty, as.thresholdPercent) {
+			return false, nil, nil
+		}
+	}
 
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 
 	m := make(map[string]string)
@@ -119,7 +154,7 @@ func (as AdvancedScheduler) Schedule() (map[string]string, error) {
 		}
 	}
 
-	return m, nil
+	return true, m, nil
 }
 
 type NodeData struct {
@@ -221,6 +256,9 @@ func validateAdvancedScheduler(scheduler AdvancedScheduler) error {
 		if podData.minimumMemory <= 0 {
 			return errors.New("minimumMemory is <= 0")
 		}
+	}
+	if scheduler.thresholdPercent < 0 || scheduler.thresholdPercent > 100 {
+		return errors.New("thresholdPercent needs to be >= 0 and <= 100")
 	}
 	return nil
 }
