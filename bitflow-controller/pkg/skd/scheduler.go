@@ -2,6 +2,7 @@ package skd
 
 import (
 	"errors"
+	"fmt"
 )
 
 type Scheduler interface {
@@ -12,6 +13,8 @@ type EqualDistributionScheduler struct {
 	nodeNames []string
 	podNames  []string
 }
+
+var calculationCount = 0
 
 func (eds EqualDistributionScheduler) Schedule() (bool, map[string]string, error) {
 	if err := validateEqualDistributionScheduler(eds); err != nil {
@@ -50,6 +53,7 @@ type AdvancedScheduler struct {
 func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
 	if len(podsLeft) == 0 {
 		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
+		calculationCount++
 		return state, penalty, err
 	}
 
@@ -63,6 +67,7 @@ func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state Syst
 		state.nodes[i] = nodeState
 		newSystemState, currentPenalty, err := as.findBestSchedulingCheckingAllPermutations(state, podsLeft[1:])
 		if err != nil {
+			state.nodes[i].pods = removeLastPodFromSlice(state.nodes[i].pods)
 			continue
 		}
 		if lowestPenalty == -1 || currentPenalty < lowestPenalty {
@@ -75,16 +80,7 @@ func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state Syst
 			}
 		}
 
-		// deleting previously added pod in preparation for next iteration
-		// copying "manually" to prevent errors -  state.nodes[i].pods = state.nodes[i].pods[:len(state.nodes[i].pods)-1] does NOT work
-		var tempPods []*PodData
-		for j, pod := range state.nodes[i].pods {
-			if j == len(state.nodes[i].pods)-1 {
-				break
-			}
-			tempPods = append(tempPods, pod)
-		}
-		state.nodes[i].pods = tempPods
+		state.nodes[i].pods = removeLastPodFromSlice(state.nodes[i].pods)
 	}
 
 	if lowestPenalty == -1 {
@@ -92,6 +88,65 @@ func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state Syst
 	}
 
 	return lowestPenaltySystemState, lowestPenalty, nil
+}
+
+func (as AdvancedScheduler) findGoodScheduling(state SystemState, podsLeft []*PodData, currentlyLowestPenalty float64) (SystemState, float64, error) {
+	if len(podsLeft) == 0 {
+		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
+		calculationCount++
+		return state, penalty, err
+	} else if currentlyLowestPenalty != -1 {
+		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
+		// TODO score might be lowered by added pods which communicate (removing network-penalty), needs to be taken into account
+		if err != nil || penalty > currentlyLowestPenalty {
+			return state, penalty, errors.New("permutation does not have lower penalty, skipping")
+		}
+	}
+
+	currentPod := podsLeft[0]
+
+	var lowestPenalty float64 = -1
+	var lowestPenaltySystemState SystemState
+
+	for i, nodeState := range state.nodes {
+		nodeState.pods = append(nodeState.pods, currentPod)
+		state.nodes[i] = nodeState
+		newSystemState, currentPenalty, err := as.findGoodScheduling(state, podsLeft[1:], lowestPenalty)
+		if err != nil {
+			state.nodes[i].pods = removeLastPodFromSlice(state.nodes[i].pods)
+			continue
+		}
+		if lowestPenalty == -1 || currentPenalty < lowestPenalty {
+			lowestPenalty = currentPenalty
+
+			// copying "manually" to prevent lowestPenaltySystemState and newSystemState from having the same memory address, which leads to problems
+			lowestPenaltySystemState = SystemState{}
+			for _, newSystemStateNodeState := range newSystemState.nodes {
+				lowestPenaltySystemState.nodes = append(lowestPenaltySystemState.nodes, newSystemStateNodeState)
+			}
+		}
+
+		state.nodes[i].pods = removeLastPodFromSlice(state.nodes[i].pods)
+	}
+
+	if lowestPenalty == -1 {
+		return SystemState{}, -1, errors.New("pod " + currentPod.name + " could not be scheduled onto any node")
+	}
+
+	return lowestPenaltySystemState, lowestPenalty, nil
+}
+
+func removeLastPodFromSlice(pods []*PodData) []*PodData {
+	// deleting previously added pod in preparation for next iteration
+	// copying "manually" to prevent errors -  pods = pods[:len(pods)-1] does NOT work
+	var tempPods []*PodData
+	for j, pod := range pods {
+		if j == len(pods)-1 {
+			break
+		}
+		tempPods = append(tempPods, pod)
+	}
+	return tempPods
 }
 
 func NewDistributionPenaltyLowerConsideringThreshold(previousPenalty float64, newPenalty float64, thresholdPercent float64) bool {
@@ -102,16 +157,16 @@ func NewDistributionPenaltyLowerConsideringThreshold(previousPenalty float64, ne
 	return false
 }
 
-func (as AdvancedScheduler) getPreviousSystemState() SystemState {
+func getSystemStateFromSchedulingMap(nodes []*NodeData, pods []*PodData, scheduling map[string]string) SystemState {
 	systemState := SystemState{[]NodeState{}}
 
-	for _, node := range as.nodes {
+	for _, node := range nodes {
 		nodeState := NodeState{
 			node: node,
 			pods: []*PodData{},
 		}
-		for _, pod := range as.pods {
-			if as.previousScheduling[pod.name] == node.name {
+		for _, pod := range pods {
+			if scheduling[pod.name] == node.name {
 				nodeState.pods = append(nodeState.pods, pod)
 			}
 		}
@@ -119,6 +174,10 @@ func (as AdvancedScheduler) getPreviousSystemState() SystemState {
 	}
 
 	return systemState
+}
+
+func (as AdvancedScheduler) getPreviousSystemState() SystemState {
+	return getSystemStateFromSchedulingMap(as.nodes, as.pods, as.previousScheduling)
 }
 
 func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
@@ -134,7 +193,8 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 		})
 	}
 
-	bestDistributionState, bestDistributionPenalty, err := as.findBestSchedulingCheckingAllPermutations(systemState, as.pods)
+	//bestDistributionState, bestDistributionPenalty, err := as.findBestSchedulingCheckingAllPermutations(systemState, as.pods)
+	bestDistributionState, bestDistributionPenalty, err := as.findGoodScheduling(systemState, as.pods, -1)
 
 	if as.previousScheduling != nil {
 		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
@@ -155,6 +215,7 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 		}
 	}
 
+	println(fmt.Sprintf("Penalty: %f\nCalculations: %d", bestDistributionPenalty, calculationCount))
 	return true, m, nil
 }
 
