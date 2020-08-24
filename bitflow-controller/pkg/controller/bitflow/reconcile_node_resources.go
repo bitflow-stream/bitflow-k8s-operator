@@ -45,12 +45,16 @@ func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
 	}
 	for _, node := range nodes.Items {
 		logger := log.WithField("node", node.Name)
+		resources := r.resourceLimiter.GetCurrentResources(&node)
+		if resources == nil {
+			logger.Debugf("Resource limit not set, not limiting resources...")
+			continue
+		}
 		pods, err := common.RequestAllPodsOnNode(r.client, node.Name, r.namespace, r.idLabels)
 		if err != nil {
 			logger.Errorf("Failed to retrieve all Bitflow pods on node: %v", err)
 			continue
 		}
-		resources := r.resourceLimiter.GetCurrentResources(&node)
 		for _, pod := range pods {
 			deletePod := false
 			for _, container := range pod.Spec.Containers {
