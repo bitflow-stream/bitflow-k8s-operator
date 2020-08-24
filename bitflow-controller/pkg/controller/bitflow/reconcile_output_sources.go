@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,18 +28,54 @@ func (r *BitflowReconciler) validateSource(source *bitflowv1.BitflowSource) {
 	}
 }
 
-func (r *BitflowReconciler) reconcileOutputSources(step *bitflowv1.BitflowStep, podList []*corev1.Pod, matchedInputSources []*bitflowv1.BitflowSource) error {
+func (r *BitflowReconciler) reconcileOutputSources() {
+	// Instead of working with actually running pods, check the pods that we WANT/PLAN to be running.
+	requiredSources := make(map[string]*bitflowv1.BitflowSource)
+	r.pods.Read(func() {
+		for _, pod := range r.pods.pods {
+			for _, out := range pod.step.Spec.Outputs {
+				requiredSource := CreateOutputSource(pod.step, pod.pod, out, pod.inputSources, r.idLabels)
+				if requiredSource != nil {
+					requiredSources[requiredSource.Name] = requiredSource
+				}
+			}
+		}
+	})
 
+	// Query all managed data sources
+	allOutputSources, err := r.listOutputSources("")
+	if err != nil {
+		log.Error("Failed to query existing managed output sources:", err)
+		return
+	}
+
+	// Check existing source and delete those that are not necessary. Try to update instead of re-creating.
+	for _, existing := range allOutputSources {
+		if required, ok := requiredSources[existing.Name]; ok {
+			if CompareSources(required, existing) {
+				delete(requiredSources, existing.Name)
+			} else if CanSourceBeUpdated(required, existing) {
+				delete(requiredSources, existing.Name)
+				// TODO update
+			} else {
+				// TODO delete (and remain in requiredSources map)
+			}
+		} else {
+			// TODO delete
+		}
+	}
+
+	// Create missing sources
+	for _, source := range requiredSources {
+		// TODO create
+	}
+}
+
+func (r *BitflowReconciler) xxx() {
 	// TODO properly clean up left over sources...
 
 	if len(step.Spec.Outputs) == 0 {
 		return nil
-	}
-
-	allOutputSources, err := r.listOutputSources(step.Name)
-	if err != nil {
-		step.Log().Errorf("Failed to query existing output sources: %v", err)
-		// TODO is it ok to continue running here?....
 	}
 
 	// TODO: handle source validation errors!!!!!!!!!!!!!!!!!!!
@@ -51,25 +87,25 @@ func (r *BitflowReconciler) reconcileOutputSources(step *bitflowv1.BitflowStep, 
 	for _, pod := range podList {
 		if pod.Status.PodIP == "" {
 			podsWaitingForIP[pod.Name] = true
-			step.Log().WithField("pod", pod.Name).Debugf("Pod is missing an IP, not creating output sources...")
+			step.Log().WithField("pod", pod.Name).Debugf("pod is missing an IP, not creating output sources...")
 			continue
 		}
 		if pod.DeletionTimestamp != nil {
-			step.Log().WithField("pod", pod.Name).Debugf("Pod is scheduled for deletion, not creating output sources...")
+			step.Log().WithField("pod", pod.Name).Debugf("pod is scheduled for deletion, not creating output sources...")
 			continue
 		}
 		for _, out := range step.Spec.Outputs {
 			found = false
 			// Create a temporary source object the same way as an actual source object would be created in createSource().
 			// Compare all properties of this temporary object with existing sources.
-			requiredOut := r.makeSourceObject(step, pod, out, matchedInputSources)
+			requiredOut := r.makeSourceObject(step, pod, out, inputSources)
 			if requiredOut == nil {
 				continue
 			}
 			for _, existOut := range allOutputSources {
 
 				// TODO IMPORTANT: when a pod is being restarted, it will get a new IP. In this case the source should be updated, instead of being deleted and recreated.
-				// Avoid respawning all subsequent pipeline pods!
+				// Avoid pods all subsequent pipeline pods!
 
 				if CompareSources(requiredOut, existOut) {
 					found = true
@@ -91,7 +127,7 @@ func (r *BitflowReconciler) reconcileOutputSources(step *bitflowv1.BitflowStep, 
 				continue
 			}
 			logger = logger.WithField("pod", podName)
-			if _, present := r.respawning.IsPodRestarting(podName); podName != "" && present {
+			if _, present := r.pods.IsPodRestarting(podName); podName != "" && present {
 				// pod is currently restarting -> dont kill its output source yet
 				logger.Debug("Missing pod is being restarted, not deleting output source")
 				continue
@@ -109,7 +145,7 @@ func (r *BitflowReconciler) reconcileOutputSources(step *bitflowv1.BitflowStep, 
 	}
 
 	for _, podSource := range podsWithoutSource {
-		r.createSource(step, &podSource, matchedInputSources)
+		r.createSource(step, &podSource, inputSources)
 	}
 	return nil
 }
@@ -124,28 +160,6 @@ func CompareSources(required *bitflowv1.BitflowSource, existing *bitflowv1.Bitfl
 		}
 	}
 	return true
-}
-
-func (r *BitflowReconciler) makeSourceObject(step *bitflowv1.BitflowStep, pod *corev1.Pod, out *bitflowv1.StepOutput, matchedInputSources []*bitflowv1.BitflowSource) *bitflowv1.BitflowSource {
-	inputSources := matchedInputSources
-	if step.Type() == bitflowv1.StepTypeOneToOne {
-
-		// TODO this operation occurs frequently, extract method (obtaining one-to-one input source from pod)
-		logger := step.Log().WithField("pod", pod.Name)
-		inputSourceName := pod.Labels[bitflowv1.PodLabelOneToOneSourceName]
-		if inputSourceName == "" {
-			logger.Errorf("Pod missing valid '%v' label, cannot query input source", bitflowv1.PodLabelOneToOneSourceName)
-			return nil
-		}
-		logger = logger.WithField("source", inputSourceName)
-		source, err := common.GetSource(r.client, inputSourceName, r.namespace)
-		if err != nil {
-			logger.Errorln("Failed to query one-to-one input source:", err)
-			return nil
-		}
-		inputSources = []*bitflowv1.BitflowSource{source}
-	}
-	return CreateOutputSource(step, pod, out, inputSources, r.idLabels)
 }
 
 func (r *BitflowReconciler) createSource(step *bitflowv1.BitflowStep, podSource *PodOutputPair, matchedInputSources []*bitflowv1.BitflowSource) {
@@ -236,7 +250,7 @@ func MergeLabels(sources []*bitflowv1.BitflowSource, newStepName string) map[str
 		}
 	}
 
-	// Add/Overwrite special labels
+	// Put/Overwrite special labels
 	maxDepth++
 	depthStr := strconv.Itoa(maxDepth)
 	mergedLabels[bitflowv1.PipelineDepthLabel] = depthStr

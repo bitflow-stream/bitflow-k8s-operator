@@ -129,14 +129,14 @@ func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceCheckRespawning1() 
 	name := "bitflow-step-1"
 	r := s.makeReconcilerWithSources(name, common.TestNodeBufferInitSize+1)
 
-	// 1 pod started with correct resources, 4 pods respawning due to wrong resources
+	// 1 pod started with correct resources, 4 pods pods due to wrong resources
 	s.testReconcile(r, name)
 	s.assertPodsForStep(r.client, name, 1)
 	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
 
 	s.NoError(r.client.Delete(context.TODO(), s.Source("source0", nil)))
 
-	// the pod that was originally started with correct resources is now too small, therefore respawning.
+	// the pod that was originally started with correct resources is now too small, therefore pods.
 	// the other 3 pods were started correctly.
 	s.testReconcile(r, name)
 	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize-1)
@@ -151,7 +151,7 @@ func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceCheckRespawning2() 
 	name := "bitflow-step-1"
 	r := s.makeReconcilerWithSources(name, common.TestNodeBufferInitSize+1)
 
-	// 1 pod started with correct resources, 4 pods respawning due to wrong resources
+	// 1 pod started with correct resources, 4 pods pods due to wrong resources
 	s.testReconcile(r, name)
 	s.assertPodsForStep(r.client, name, 1)
 	s.assertRespawningPods(r, common.TestNodeBufferInitSize)

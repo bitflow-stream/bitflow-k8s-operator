@@ -1,4 +1,4 @@
-package resources
+package bitflow
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -19,26 +18,18 @@ const (
 	GBytes = 1024 * MBytes
 )
 
-type ResourceAssigner struct {
-	Client     client.Client
-	Config     *config.Config
-	Respawning *common.RespawningPods
-	Namespace  string
-	PodLabels  map[string]string
-}
-
 // AssignResourcesNodeImplicit: Assumes the pod was once already deployed and still includes information
 // about the former node on which this pod was placed
-func (res *ResourceAssigner) AssignResourcesNodeImplicit(pod *corev1.Pod) *corev1.ResourceList {
+func (r *BitflowReconciler) AssignResourcesNodeImplicit(pod *corev1.Pod) *corev1.ResourceList {
 	nodename := common.GetNodeName(pod)
-	node, _ := common.RequestNode(res.Client, nodename)
-	return res.AssignResources(pod, node)
+	node, _ := common.RequestNode(r.client, nodename)
+	return r.AssignResources(pod, node)
 }
 
-func (res *ResourceAssigner) AssignResources(pod *corev1.Pod, node *corev1.Node) *corev1.ResourceList {
-	initSize := res.Config.GetInitialResourceBufferSize()
-	factor := res.Config.GetResourceBufferIncrementFactor()
-	nodeInfo := res.RequestNodeInfo(node, pod.Name)
+func (r *BitflowReconciler) AssignResources(pod *corev1.Pod, node *corev1.Node) *corev1.ResourceList {
+	initSize := r.config.GetInitialResourceBufferSize()
+	factor := r.config.GetResourceBufferIncrementFactor()
+	nodeInfo := r.RequestNodeInfo(node, pod.Name)
 	numberOfContainers := len(pod.Spec.Containers)
 	log.Debugf("Bitflow infos. buffer init size: %v, buffer increment factor: %v, node info: %v", initSize, factor, nodeInfo)
 
@@ -77,21 +68,21 @@ func getContainerResourceLimits() *corev1.ResourceRequirements {
 	}
 }
 
-func (res *ResourceAssigner) GetCurrentResources(node *corev1.Node) *corev1.ResourceList {
-	initSize := res.Config.GetInitialResourceBufferSize()
-	factor := res.Config.GetResourceBufferIncrementFactor()
-	nodeInfo := res.RequestNodeInfo(node, "")
+func (r *BitflowReconciler) getCurrentResources(node *corev1.Node) *corev1.ResourceList {
+	initSize := r.config.GetInitialResourceBufferSize()
+	factor := r.config.GetResourceBufferIncrementFactor()
+	nodeInfo := r.RequestNodeInfo(node, "")
 	log.Debugf("Bitflow node infos during validation: init size: %v, factor: %v, Node infos: %v", initSize, factor, nodeInfo.String())
 	return nodeInfo.GetCurrentResourceList(initSize, 0, factor)
 }
 
-func (res *ResourceAssigner) RequestNodeInfo(node *corev1.Node, podName string) NodeInfo {
+func (r *BitflowReconciler) RequestNodeInfo(node *corev1.Node, podName string) NodeInfo {
 	var nodeInfo NodeInfo
-	totalLimit := RequestBitflowResourceLimitByNode(node, res.Config)
+	totalLimit := RequestBitflowResourceLimitByNode(node, r.config)
 	nodeInfo.TotalResourceLimit = totalLimit
 	nodeInfo.AllocatableResources = node.Status.Allocatable
 
-	pods, err := common.RequestAllPodsOnNode(res.Client, node.Name, res.Namespace, res.PodLabels)
+	pods, err := common.RequestAllPodsOnNode(r.client, node.Name, r.namespace, r.idLabels)
 	if err != nil {
 		log.Errorf("Failed to query all Bitflow pods on node %v: %v", node.Name, err)
 		return nodeInfo
@@ -99,7 +90,7 @@ func (res *ResourceAssigner) RequestNodeInfo(node *corev1.Node, podName string) 
 	var count int
 	for _, pod := range pods {
 		log.Debugln("Found Bitflow pod", pod.Name)
-		_, ok := res.Respawning.IsPodRestartingOnNode(pod.Name, node.Name)
+		_, ok := r.pods.IsPodRestartingOnNode(pod.Name, node.Name)
 		if pod.DeletionTimestamp != nil && !ok {
 			log.Debugln("Not counting pod because", pod.Name, pod.DeletionTimestamp != nil, ok)
 			continue
@@ -110,7 +101,7 @@ func (res *ResourceAssigner) RequestNodeInfo(node *corev1.Node, podName string) 
 		log.Debugln("count pod")
 		count += len(pod.Spec.Containers)
 	}
-	count += res.Respawning.CountRestarting(pods, podName, node.Name)
+	count += r.pods.CountRestarting(pods, podName, node.Name)
 
 	nodeInfo.NumberOfBitflowContainers = count
 	return nodeInfo

@@ -32,7 +32,7 @@ func (r *BitflowReconciler) startRestApi(listenEndpoint string) {
 func (r *BitflowReconciler) SetupRestInterface(engine *gin.Engine) {
 	engine.GET("/health", r.handleHealth)
 	engine.GET("/ip", r.handleIpRequest)
-	engine.GET("/respawning", r.handleRespawningPods)
+	engine.GET("/pods", r.handleRespawningPods)
 	if r.statistic != nil {
 		engine.GET("/statistics", r.handleStatistics)
 	}
@@ -65,7 +65,7 @@ func (r *BitflowReconciler) handleIpRequest(ctx *gin.Context) {
 }
 
 func (r *BitflowReconciler) handleRespawningPods(ctx *gin.Context) {
-	podsMap := r.respawning.ListPods()
+	podsMap := r.pods.ListPods()
 	ctx.JSON(http.StatusOK, podsMap)
 }
 
@@ -146,7 +146,7 @@ func (r *BitflowReconciler) listInputSourcesForPod(podName, namespace string) ([
 	}
 	stepName := pod.Labels[bitflowv1.LabelStepName]
 	if stepName == "" {
-		return nil, fmt.Errorf("Pod '%v' has no valid '%v' label", podName, bitflowv1.LabelStepName)
+		return nil, fmt.Errorf("pod '%v' has no valid '%v' label", podName, bitflowv1.LabelStepName)
 	}
 	step, err := common.GetStep(r.client, stepName, namespace)
 	if err != nil {
@@ -160,7 +160,7 @@ func (r *BitflowReconciler) listInputSourcesForPod(podName, namespace string) ([
 	if step.Type() == bitflowv1.StepTypeOneToOne {
 		sourceName := pod.Labels[bitflowv1.PodLabelOneToOneSourceName]
 		if sourceName == "" {
-			return nil, fmt.Errorf("Pod '%v' has no valid '%v' label", podName, bitflowv1.PodLabelOneToOneSourceName)
+			return nil, fmt.Errorf("pod '%v' has no valid '%v' label", podName, bitflowv1.PodLabelOneToOneSourceName)
 		}
 		source, err := common.GetSource(r.client, sourceName, namespace)
 		if err != nil {

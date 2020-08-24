@@ -29,13 +29,13 @@ func (s *SchedulerTestSuite) getNodeWithResources(name string, cpu int64, memory
 		memory*1024*1024)
 }
 
-func (s *SchedulerTestSuite) getScheduler(objects ...runtime.Object) *Scheduler {
+func (s *SchedulerTestSuite) getScheduler(objects ...runtime.Object) *OldScheduler {
 	configMap := s.ConfigMap("bitflow-config")
 	configMap.Data["schedulers"] = "" // Make sure there are not default schedulers
 	objects = append(objects, configMap)
 	cl := s.MakeFakeClient(objects...)
 	conf := config.NewConfig(cl, common.TestNamespace, "bitflow-config")
-	return &Scheduler{cl, conf, common.TestNamespace, map[string]string{"bitflow": "true"}}
+	return &OldScheduler{cl, conf, common.TestNamespace, map[string]string{"bitflow": "true"}}
 }
 
 func (s *SchedulerTestSuite) testSchedulerMultipleNodes(testName string, expectedSuccessfulScheduler string, schedulerList string, expectedNode *corev1.Node, nodes []*corev1.Node, pods []*corev1.Pod) {
@@ -135,7 +135,7 @@ func (s *SchedulerTestSuite) TestSchedulersMultipleNodes() {
 	// TODO test sourceAffinity scheduler
 }
 
-func (s *SchedulerTestSuite) testSimpleScheduler(scheduler *Scheduler, schedulerList string, sources []*bitflowv1.BitflowSource, expectedSuccessfulScheduler string, expectedNode *corev1.Node) {
+func (s *SchedulerTestSuite) testSimpleScheduler(scheduler *OldScheduler, schedulerList string, sources []*bitflowv1.BitflowSource, expectedSuccessfulScheduler string, expectedNode *corev1.Node) {
 	s.SubTest(schedulerList, func() {
 		scheduledPod := s.Pod("scheduled-pod")
 		step := s.Step("test-step", bitflowv1.StepTypeOneToOne)

@@ -13,7 +13,7 @@ import (
 	"github.com/antongulenko/golib"
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/resources"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/controller/bitflow"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -149,7 +149,7 @@ func (s *MetricsRecordingServer) recordMetrics() {
 			return
 		}
 		for _, node := range nodes.Items {
-			resourceLimit = resources.RequestBitflowResourceLimitByNode(&node, s.proxy.controllerConfig)
+			resourceLimit = bitflow.RequestBitflowResourceLimitByNode(&node, s.proxy.controllerConfig)
 
 			// TODO check if this label selector is valid for selecting all Bitflow pods. Otherwise, somehow obtain the ID labels of the controller here.
 			pods, err = common.RequestAllPodsOnNode(s.proxy.client, node.Name, s.proxy.KubeNamespace, map[string]string{bitflowv1.LabelStepName: "*"})

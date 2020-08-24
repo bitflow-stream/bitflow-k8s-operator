@@ -55,7 +55,7 @@ func (r *BitflowReconciler) validateStep(step *bitflowv1.BitflowStep) bool {
 	return true
 }
 
-func (r *BitflowReconciler) GetAllToOnePod(step *bitflowv1.BitflowStep, matchedSources []*bitflowv1.BitflowSource) ([]*corev1.Pod, error) {
+func (r *BitflowReconciler) ReconcileAllToOnePod(step *bitflowv1.BitflowStep, matchedSources []*bitflowv1.BitflowSource) error {
 	validSources := 0
 	for _, source := range matchedSources {
 		if source.Status.ValidationError == "" {
@@ -64,12 +64,12 @@ func (r *BitflowReconciler) GetAllToOnePod(step *bitflowv1.BitflowStep, matchedS
 	}
 	if validSources == 0 {
 		r.cleanupStep(step.Name, "Step has no valid sources")
-		return nil, nil
+		return nil
 	}
-	return r.GetSingletonPod(step, matchedSources)
+	return r.ReconcileSingletonPod(step, matchedSources)
 }
 
-func (r *BitflowReconciler) GetSingletonPod(step *bitflowv1.BitflowStep, matchedSources []*bitflowv1.BitflowSource) ([]*corev1.Pod, error) {
+func (r *BitflowReconciler) ReconcileSingletonPod(step *bitflowv1.BitflowStep, matchedSources []*bitflowv1.BitflowSource) error {
 	var podList []*corev1.Pod
 
 	name := ConstructSingletonPodName(step.Name)
@@ -79,7 +79,7 @@ func (r *BitflowReconciler) GetSingletonPod(step *bitflowv1.BitflowStep, matched
 		found = r.handleMissingSingletonPod(err, step, name, matchedSources)
 	}
 
-	// TODO instead of simply comparing the name and some labels, compare the entire Pod struct with the desired pod (fully resolved template)
+	// TODO instead of simply comparing the name and some labels, compare the entire pod struct with the desired pod (fully resolved template)
 	// Same for one-to-one pods and output sources.
 
 	if found != nil && !CompareSingletonSpec(found, step) {
@@ -88,7 +88,7 @@ func (r *BitflowReconciler) GetSingletonPod(step *bitflowv1.BitflowStep, matched
 		podList = []*corev1.Pod{found}
 	}
 	r.cleanupPodsForStep(step.Name, step.Log(), "dangling", podList...)
-	return podList, nil
+	return nil
 }
 
 func CompareSingletonSpec(pod *corev1.Pod, step *bitflowv1.BitflowStep) bool {
@@ -109,7 +109,7 @@ func (r *BitflowReconciler) handleMissingSingletonPod(err error, step *bitflowv1
 	return nil
 }
 
-func (r *BitflowReconciler) GetOneToOnePods(step *bitflowv1.BitflowStep, matchedSources []*bitflowv1.BitflowSource) ([]*corev1.Pod, error) {
+func (r *BitflowReconciler) ReconcileOneToOnePods(step *bitflowv1.BitflowStep, matchedSources []*bitflowv1.BitflowSource) error {
 	podList := make([]*corev1.Pod, 0, len(matchedSources))
 	validRestartingPods := make([]string, 0, len(matchedSources))
 
@@ -128,15 +128,15 @@ func (r *BitflowReconciler) GetOneToOnePods(step *bitflowv1.BitflowStep, matched
 			} else if !common.IsBeingDeleted(found) {
 				podList = append(podList, found)
 			} else if common.IsBeingDeleted(found) {
-				if _, ok := r.respawning.IsPodRestarting(found.Name); ok {
+				if _, ok := r.pods.IsPodRestarting(found.Name); ok {
 					validRestartingPods = append(validRestartingPods, found.Name)
 				}
 			}
 		}
 	}
-	r.respawning.DeletePodsWithLabelExcept(bitflowv1.LabelStepName, step.Name, validRestartingPods)
+	r.pods.DeletePodsWithLabelExcept(bitflowv1.LabelStepName, step.Name, validRestartingPods)
 	r.cleanupPodsForStep(step.Name, step.Log(), "dangling", podList...)
-	return podList, nil
+	return nil
 }
 
 func CompareOneToOneSpec(source *bitflowv1.BitflowSource, pod *corev1.Pod, step *bitflowv1.BitflowStep) bool {
@@ -161,14 +161,14 @@ func (r *BitflowReconciler) handleMissingPod(err error, step *bitflowv1.BitflowS
 }
 
 func (r *BitflowReconciler) createPod(model *PodCreation) *corev1.Pod {
-	if spec, ok := r.respawning.IsPodRestarting(model.name); ok {
+	if spec, ok := r.pods.IsPodRestarting(model.name); ok {
 		return r.createRestartedPod(model.name, spec)
 	}
 	return r.createNewPod(model)
 }
 
-func (r *BitflowReconciler) createRestartedPod(podName string, status common.RespawningStatus) *corev1.Pod {
-	pod := status.Pod
+func (r *BitflowReconciler) createRestartedPod(podName string, status PodStatus) *corev1.Pod {
+	pod := status.pod
 	r.resourceLimiter.AssignResourcesNodeImplicit(pod)
 	log.WithField("pod", pod.Name).Info("Restarting pod")
 	err := r.client.Create(context.TODO(), pod)
@@ -177,7 +177,7 @@ func (r *BitflowReconciler) createRestartedPod(podName string, status common.Res
 		return nil
 	}
 	r.waitForCacheSync()
-	r.respawning.Delete(podName) // TODO define max retries, if errors occur
+	r.pods.Delete(podName) // TODO define max retries, if errors occur
 	r.statistic.PodRespawned()
 	return pod
 }
@@ -221,14 +221,14 @@ func (r *BitflowReconciler) makeOwnerReferences(pod *corev1.Pod, isController, b
 	if pod == nil || pod.Name == "" || pod.UID == "" {
 		return nil
 	}
-	// For some reason these meta fields are not set when querying the Pod
+	// For some reason these meta fields are not set when querying the pod
 	apiVersion := pod.APIVersion
 	if apiVersion == "" {
 		apiVersion = "v1"
 	}
 	kind := pod.Kind
 	if kind == "" {
-		kind = "Pod"
+		kind = "pod"
 	}
 	return []metav1.OwnerReference{{
 		APIVersion:         apiVersion,
@@ -250,7 +250,7 @@ func setOwnerReferenceForPod(pod *corev1.Pod, obj runtime.Object) {
 	var blockDel bool
 	matched := false
 	if source, ok := obj.(*bitflowv1.BitflowSource); ok && source.UID != "" {
-		// For some reason these meta fields are not set when querying the Pod
+		// For some reason these meta fields are not set when querying the pod
 		apiVersion = source.APIVersion
 		if apiVersion == "" {
 			apiVersion = bitflowv1.GroupVersion
@@ -291,7 +291,7 @@ func setOwnerReferenceForPod(pod *corev1.Pod, obj runtime.Object) {
 		}}
 		for _, oRef := range pod.OwnerReferences {
 			if *oRef.Controller && controller {
-				log.Infoln("There already is an Ownerreference flags as controller, we will ignore it", "Pod", pod, "Owner", oRef)
+				log.Infoln("There already is an Ownerreference flags as controller, we will ignore it", "pod", pod, "Owner", oRef)
 			} else {
 				ref = append(ref, oRef)
 			}

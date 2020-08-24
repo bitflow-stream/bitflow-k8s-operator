@@ -8,22 +8,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-func (r *BitflowReconciler) recurringReconcileNodeResources() reconcile.Result {
-	log.Debugln("Recurring node resource reconciliation triggered")
-	r.reconcileNodeResources()
-	if heartbeat := r.config.GetValidationHeartbeat(); heartbeat <= 0 {
-		return reconcile.Result{}
-	} else {
-		return reconcile.Result{RequeueAfter: heartbeat}
-	}
-}
 
 func (r *BitflowReconciler) reconcileNodeResources() {
 	now := time.Now()
-	period := r.config.GetValidationPeriod()
+	period := r.config.GetReconcilePeriod()
 
 	// Keep clean, so read and write of lastResourceReconciliation are as close as possible to each other
 	last := r.lastResourceReconciliation
@@ -50,7 +39,7 @@ func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
 			logger.Errorf("Failed to retrieve all Bitflow pods on node: %v", err)
 			continue
 		}
-		resources := r.resourceLimiter.GetCurrentResources(&node)
+		resources := r.getCurrentResources(&node)
 		for _, pod := range pods {
 			deletePod := false
 			for _, container := range pod.Spec.Containers {
@@ -79,7 +68,7 @@ func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
 }
 
 func (r *BitflowReconciler) deletePodForRestart(pod *corev1.Pod) {
-	if _, exists := r.respawning.IsPodRestarting(pod.Name); exists || common.IsBeingDeleted(pod) {
+	if _, exists := r.pods.IsPodRestarting(pod.Name); exists || common.IsBeingDeleted(pod) {
 		return
 	}
 
@@ -93,10 +82,10 @@ func (r *BitflowReconciler) deletePodForRestart(pod *corev1.Pod) {
 	err := r.client.Delete(context.TODO(), pod, delOpt)
 
 	if err != nil {
-		logger.Errorf("Pod could not be deleted: %v", err)
+		logger.Errorf("pod could not be deleted: %v", err)
 	} else {
 		newPod := pod.DeepCopy()
 		newPod.ResourceVersion = ""
-		r.respawning.Add(newPod)
+		r.pods.Put(newPod)
 	}
 }

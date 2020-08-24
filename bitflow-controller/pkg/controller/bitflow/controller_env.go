@@ -98,7 +98,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	log.Infof("%v: %v = %v", "OperatorName", EnvOperatorName, r.operatorName)
 	log.Infof("%v: %v = %v", "ConfigMap", EnvConfigMapName, r.configMapName)
 	log.Infof("%v: %v = %v", "Controller ID labels", EnvPodIdLabels, r.controllerIdLabels)
-	log.Infof("%v: %v = %v", "Pod IP", EnvOwnPodIp, r.ownPodIP)
+	log.Infof("%v: %v = %v", "pod IP", EnvOwnPodIp, r.ownPodIP)
 	log.Infof("%v: %v = %v", "REST API port", EnvRestApiPort, r.apiPort)
 	log.Infof("%v: %v = %v", "Concurrent reconcile routines", EnvConcurrentReconcile, r.concurrentReconcile)
 	log.Infof("%v: %v = %v", "Record statistics", EnvRecordStatistics, r.recordStatistics)

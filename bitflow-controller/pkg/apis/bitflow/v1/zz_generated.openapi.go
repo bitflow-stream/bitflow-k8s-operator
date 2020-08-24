@@ -189,7 +189,7 @@ func schema_pkg_apis_bitflow_v1_BitflowStepSpec(ref common.ReferenceCallback) co
 					},
 					"template": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/api/core/v1.Pod"),
+							Ref: ref("k8s.io/api/core/v1.pod"),
 						},
 					},
 				},
@@ -197,7 +197,7 @@ func schema_pkg_apis_bitflow_v1_BitflowStepSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/bitflow/v1.IngestMatch", "./pkg/apis/bitflow/v1.StepOutput", "k8s.io/api/core/v1.Pod", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
+			"./pkg/apis/bitflow/v1.IngestMatch", "./pkg/apis/bitflow/v1.StepOutput", "k8s.io/api/core/v1.pod", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 

@@ -1,13 +1,14 @@
-package common
+package bitflow
 
 import (
 	"testing"
 
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/stretchr/testify/suite"
 )
 
 type RespawningPodsTestSuite struct {
-	AbstractTestSuite
+	common.AbstractTestSuite
 }
 
 func TestRespawningPods(t *testing.T) {
@@ -22,16 +23,16 @@ func (s *RespawningPodsTestSuite) TestAdd() {
 	pod1.Status.PodIP = "1.2.3.4"
 	pod2.Status.PodIP = "4.5.6.7"
 
-	pods := NewRespawningPods()
-	pods.Add(pod1)
-	pods.Add(pod2)
+	pods := NewManagedPods()
+	pods.Put(pod1)
+	pods.Put(pod2)
 
 	_, restarting1 := pods.IsPodRestarting(name1)
-	s.True(restarting1, "Pod should be restarting")
+	s.True(restarting1, "pod should be restarting")
 
 	pods.Delete(name2)
 	_, restarting2 := pods.IsPodRestarting(name2)
-	s.False(restarting2, "Pod should be deleted")
+	s.False(restarting2, "pod should be deleted")
 }
 
 func (s *RespawningPodsTestSuite) TestDeleteWithLabels() {
@@ -51,12 +52,12 @@ func (s *RespawningPodsTestSuite) TestDeleteWithLabels() {
 	pod5.Status.PodIP = "4.5.6.7"
 	pod4.Status.PodIP = "4.5.6.7"
 
-	pods := NewRespawningPods()
-	pods.Add(pod1)
-	pods.Add(pod2)
-	pods.Add(pod3)
-	pods.Add(pod4)
-	pods.Add(pod5)
+	pods := NewManagedPods()
+	pods.Put(pod1)
+	pods.Put(pod2)
+	pods.Put(pod3)
+	pods.Put(pod4)
+	pods.Put(pod5)
 	s.Len(pods.ListPods(), 5)
 
 	pods.DeletePodsWithLabel("bitflow-step-name", "helloStep1")
@@ -91,12 +92,12 @@ func (s *RespawningPodsTestSuite) TestDeleteExcept() {
 	pod4.Status.PodIP = "4.5.6"
 	pod5.Status.PodIP = "4.5.6"
 
-	pods := NewRespawningPods()
-	pods.Add(pod1)
-	pods.Add(pod2)
-	pods.Add(pod3)
-	pods.Add(pod4)
-	pods.Add(pod5)
+	pods := NewManagedPods()
+	pods.Put(pod1)
+	pods.Put(pod2)
+	pods.Put(pod3)
+	pods.Put(pod4)
+	pods.Put(pod5)
 	s.Len(pods.ListPods(), 5)
 
 	pods.DeletePodsWithLabelExcept("bitflow-step-name", "helloStep1", []string{name2})
@@ -121,8 +122,8 @@ func (s *RespawningPodsTestSuite) TestRespawningOnNode() {
 	node := "restartNode"
 	pod.Spec.NodeName = node
 
-	pods := NewRespawningPods()
-	pods.Add(pod)
+	pods := NewManagedPods()
+	pods.Put(pod)
 
 	_, ok := pods.IsPodRestartingOnNode("xxx", node)
 	s.False(ok)
@@ -131,5 +132,5 @@ func (s *RespawningPodsTestSuite) TestRespawningOnNode() {
 
 	podStatus, ok := pods.IsPodRestartingOnNode(name, node)
 	s.True(ok)
-	s.Equal(node, GetNodeName(podStatus.Pod))
+	s.Equal(node, common.GetNodeName(podStatus.pod))
 }

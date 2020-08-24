@@ -100,7 +100,7 @@ func (s *SchedulerTestSuite) assertPodNodeAffinity(cl client.Client, stepName st
 func (s *SchedulerTestSuite) TestSchedulingOutputSource() {
 	stepName := "step-1"
 
-	// create random Pod
+	// create random pod
 	pod := s.PodLabels("pod1", map[string]string{v1.LabelStepName: stepName})
 	pod.Spec.NodeName = "node2"
 	// create fake output source on that pod
