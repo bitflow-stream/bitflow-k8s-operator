@@ -11,7 +11,6 @@ import (
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/resources"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/scheduler"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
@@ -66,14 +65,14 @@ func (s *BitflowControllerTestHelpers) initReconciler(objects ...runtime.Object)
 
 	idLabels := map[string]string{}
 	conf := config.NewConfig(cl, common.TestNamespace, "bitflow-config")
-	respawns := common.NewRespawningPods()
-	sched := &scheduler.Scheduler{Client: cl, Config: conf, Namespace: common.TestNamespace, IdLabels: idLabels}
-	res := &resources.ResourceAssigner{Client: cl, Config: conf, Respawning: respawns, Namespace: "default"}
+	respawns := NewManagedPods()
+	sched := &scheduler.OldScheduler{Client: cl, Config: conf, Namespace: common.TestNamespace, IdLabels: idLabels}
+	res := &ResourceAssigner{Client: cl, Config: conf, Respawning: respawns, Namespace: "default"}
 	return &BitflowReconciler{
 		client:          cl,
 		scheme:          scheme.Scheme,
 		cache:           &MockCache{},
-		respawning:      respawns,
+		pods:            respawns,
 		config:          conf,
 		scheduler:       sched,
 		resourceLimiter: res,
@@ -159,7 +158,7 @@ func (s *BitflowControllerTestHelpers) assertNoSourceExists(cl client.Client) {
 func (s *BitflowControllerTestHelpers) assertMissingPod(cl client.Client, podName string) {
 	var found corev1.Pod
 	err := cl.Get(context.TODO(), types.NamespacedName{Name: podName, Namespace: common.TestNamespace}, &found)
-	s.Error(err, "Pod exists, but should not")
+	s.Error(err, "pod exists, but should not")
 	s.True(errors.IsNotFound(err))
 }
 
@@ -195,7 +194,7 @@ func (s *BitflowControllerTestHelpers) assertOutputSources(cl client.Client, cou
 }
 
 func (s *BitflowControllerTestHelpers) assertRespawningPods(r *BitflowReconciler, count int) {
-	s.Equal(count, r.respawning.Size(), "Wrong number of respawning pods")
+	s.Equal(count, r.pods.Len(), "Wrong number of pods pods")
 }
 
 func (s *BitflowControllerTestHelpers) assertNumberOfPodsForNode(cl client.Client, nodeName string, expectedNumberOfPods int) {

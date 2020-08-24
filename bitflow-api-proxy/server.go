@@ -35,8 +35,8 @@ func (s *ProxyServer) registerFlags() {
 	flag.DurationVar(&s.ConfigCachePeriod, "config-cache", 0, "Amount of time a cached config value will be read from cache. If this time expires the next request to the parameter will read from kubernetes API and again cache the value. Use negative value to always load from kubernetes API.")
 
 	flag.StringVar(&s.OperatorApiPort, "operator-api-port", "8888", "Port of the REST API of the operator")
-	flag.StringVar(&s.OperatorSelectorKey, "operator-selector", "app.kubernetes.io/instance", "Kubernetes Pod label selector key for finding the operator")
-	flag.StringVar(&s.OperatorSelectorValue, "operator-selector-value", "bitflow-operator", "Kubernetes Pod label selector value for finding the operator")
+	flag.StringVar(&s.OperatorSelectorKey, "operator-selector", "app.kubernetes.io/instance", "Kubernetes pod label selector key for finding the operator")
+	flag.StringVar(&s.OperatorSelectorValue, "operator-selector-value", "bitflow-operator", "Kubernetes pod label selector value for finding the operator")
 
 	s.metrics.registerFlags()
 }

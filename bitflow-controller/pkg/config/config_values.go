@@ -30,11 +30,13 @@ func (config *Config) GetDeleteGracePeriod() time.Duration {
 	return config.GetDurationParam("delete.grace.period", 30*time.Second)
 }
 
-func (config *Config) GetValidationPeriod() time.Duration {
+func (config *Config) GetReconcilePeriod() time.Duration {
+	// TODO rename parameter (requires changing many config files)
 	return config.GetDurationParam("state.validation.period", 0)
 }
 
-func (config *Config) GetValidationHeartbeat() time.Duration {
+func (config *Config) GetReconcileHeartbeat() time.Duration {
+	// TODO rename parameter (requires changing many config files)
 	return config.GetDurationParam("state.validation.heartbeat", 2*time.Minute)
 }
 

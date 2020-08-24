@@ -138,7 +138,7 @@ func (main *Main) serveCRMetrics(cfg *rest.Config) error {
 }
 
 func (main *Main) serveMetrics(namespace string, ctx context.Context, cfg *rest.Config) error {
-	// Add to the below struct any other metrics ports you want to expose.
+	// Put to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
 		{Port: int32(main.metricsPort), Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: int32(main.metricsPort)}},
 		{Port: int32(main.operatorMetricsPort), Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: int32(main.operatorMetricsPort)}},

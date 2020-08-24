@@ -229,9 +229,9 @@ func (s *ProxyServer) getNodeResources(c *gin.Context) {
 	//	}
 
 	if errR != nil {
-		ret["Nodes Pod Resources - Error"] = errR.Error()
+		ret["Nodes pod Resources - Error"] = errR.Error()
 	} else {
-		ret["Nodes Pod Resources"] = resources
+		ret["Nodes pod Resources"] = resources
 	}
 
 	ret["Bitflow Resource limit"] = bitflowLimit
@@ -249,7 +249,7 @@ func RequestNodeResources(cli client.Client, nodeName string) (*corev1.ResourceL
 	if err != nil {
 		return nil, err
 	}
-	return &node.Status.Allocatable, nil
+	return &node.status.Allocatable, nil
 }
 
 func RequestBitflowResourceLimitByName(cli client.Client, config *config.Config, nodeName string) float64 {
