@@ -14,136 +14,123 @@ import (
 )
 
 // TODO if possible, avoid this hack with the fake step name. It is necessary to execute a regularly recurring reconcile.
-const STATE_VALIDATION_FAKE_STEP_NAME = "bitflow-validate-state-identifier-fake-step"
+const ReconcileLoopFakeStepName = "bitflow-trigger-reconcile-fake-step"
 
 // Reconcile checks all cluster resources associated with a BitflowStep object and makes sure that the cluster corresponds
 // to the desired state.
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *BitflowReconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) {
+func (r *BitflowReconciler) Reconcile(req reconcile.Request) (result reconcile.Result, err error) {
+	logger := log.WithFields(log.Fields{"namespace": req.Namespace, "step": req.Name})
 	if req.Namespace != r.namespace {
-		log.WithFields(log.Fields{"namespace": req.Namespace, "step": req.Name}).Warnf("Ignoring reconcile request for foreign namespace")
-		return reconcile.Result{}, nil
+		logger.Warnf("Ignoring reconcile request for foreign namespace")
+		return
 	}
 	start := time.Now()
 	stepName := req.Name
-	isStepReconcile := stepName == STATE_VALIDATION_FAKE_STEP_NAME
+	isStepReconcile := stepName != ReconcileLoopFakeStepName
 
-	// TODO probably reconcile all steps here to avoid unnecessary pod deletions due to delayed updates
 	if isStepReconcile {
-		logger := log.WithField("step", stepName)
 		logger.Debugf("Reconciling step")
-		r.pods.Debug()
-
-		if err := r.updatePodStatus(stepName, logger); err != nil {
-			// TODO correctly/fully integrate the statistics
-			r.statistic.ErrorOccurred()
-			logger.Errorf("Error reconciling step: %v", err)
-		}
+		r.updatePodStatus(stepName, logger)
 	} else {
-		log.Debugln("Recurring node resource reconciliation triggered")
+		log.Debugln("Auto-reconcile loop triggered")
 	}
-
-	// After updating the pod status, do the actual pod modifications (start/delete)
-	r.reconcileNodeResources()
 
 	// Manage automatically created output data sources
 	r.reconcileOutputSources()
+	r.statistic.PodsUpdated(time.Now().Sub(start))
+
+	// TODO control, how often and when the schedule/spawn routine is triggered
+	// TODO update pods for ALL steps before making modifications to pods?
+
+	// After updating the pod status, do the actual pod modifications (start/delete)
+	r.spawnPodsPeriodically()
 
 	// Make sure the regular automatic reconcile is triggered again
-	var result reconcile.Result
 	if !isStepReconcile {
 		if heartbeat := r.config.GetReconcileHeartbeat(); heartbeat > 0 {
 			result.RequeueAfter = heartbeat
 		}
 	}
-	r.statistic.PodsReconciled(time.Now().Sub(start))
-	return result, nil
+	return
 }
 
-func (r *BitflowReconciler) updatePodStatus(stepName string, logger *log.Entry) error {
+func (r *BitflowReconciler) updatePodStatus(stepName string, logger *log.Entry) {
+	pods, step, err := r.constructPodsForStep(stepName)
+	if err != nil && !errors.IsNotFound(err) {
+		logger.Errorln("Failed to construct pods for step:", err)
+		// Do NOT return here, clean up (delete) pods from failed step
+	}
+
+	// Create/update pods for this step
+	for pod, inputSources := range pods {
+		r.pods.Put(pod, step, inputSources)
+	}
+
+	// Delete other (dangling) pods for this step
+	existingPodNames := make(map[string]bool, len(pods))
+	for existingPod := range pods {
+		existingPodNames[existingPod.Name] = true
+	}
+	r.pods.CleanupStep(stepName, existingPodNames)
+}
+
+func (r *BitflowReconciler) constructPodsForStep(stepName string) (map[*corev1.Pod][]*bitflowv1.BitflowSource, *bitflowv1.BitflowStep, error) {
 	// Load and validate the step
 	step, err := common.GetStep(r.client, stepName, r.namespace)
 	if err != nil {
-		err := r.handleStepError(stepName, err, logger)
-		return err
+		return nil, nil, err
 	}
-	if isStepValid := r.validateStep(step); !isStepValid {
-		step.Log().Debugln("Invalid step. Validation error:", step.Status.ValidationError)
-		return nil
+	logger := step.Log()
+	if isStepValid := r.validateStep(step, logger); !isStepValid {
+		logger.Debugln("Step validation failed:", step.Status.ValidationError)
+		return nil, nil, fmt.Errorf("Validation error in step: %v", step.Status.ValidationError)
 	}
 
-	// Reconcile all pods for the step
+	// Construct all pods for the step
 	matchedSources, err := r.listMatchingSources(step)
 	if err != nil {
-		step.Log().Errorf("Failed to query matching sources for reconciling: %v", err)
+		logger.Errorf("Failed to query matching sources for: %v", err)
+		// Continue, so that at least singleton pods can still be created, and other pods are cleaned up
 	}
-	stepType := step.Type()
-	if stepType == bitflowv1.StepTypeSingleton {
-		return r.ReconcileSingletonPod(step, nil)
-	} else if stepType == bitflowv1.StepTypeOneToOne {
-		return r.ReconcileOneToOnePods(step, matchedSources)
-	} else if step.Type() == bitflowv1.StepTypeAllToOne {
-		return r.ReconcileAllToOnePod(step, matchedSources)
-	} else {
+	switch stepType := step.Type(); stepType {
+	case bitflowv1.StepTypeSingleton:
+		return r.constructSingletonPod(step, nil), step, nil
+	case bitflowv1.StepTypeOneToOne:
+		return r.constructOneToOnePods(step, matchedSources), step, nil
+	case bitflowv1.StepTypeAllToOne:
+		return r.constructAllToOnePod(step, matchedSources), step, nil
+	default:
 		// Unknown step type, should have been detected in validateStep()
-		return fmt.Errorf("Cannot handle unknown step type: %v", stepType)
+		return nil, nil, fmt.Errorf("Cannot handle unknown step type: %v", stepType)
 	}
 }
 
-func (r *BitflowReconciler) handleStepError(stepName string, err error, logger *log.Entry) error {
-	if errors.IsNotFound(err) {
-		r.cleanupStep(stepName, "Step deleted")
-		return nil
-	}
-	logger.Errorln("Error fetching step:", err)
-	return err
-}
-
-func (r *BitflowReconciler) cleanupStep(stepName, reason string) {
-	logger := log.WithField("step", stepName)
-	logger.Debugln("Cleaning up step:", reason)
-
-	r.cleanupOutputSourcesForStep(stepName, logger)
-	podsDeleted := r.cleanupPodsForStep(stepName, logger, "cleaning up step")
-
-	r.pods.DeletePodsWithLabel(bitflowv1.LabelStepName, stepName)
-	if podsDeleted {
-		r.reconcileNodeResources()
-	}
-}
-
-func (r *BitflowReconciler) cleanupOutputSourcesForStep(stepName string, logger *log.Entry) {
-	outputs, err := r.listOutputSources(stepName)
-	if err != nil {
-		logger.Errorln("Failed to query output sources for step:", err)
-	} else {
-		for _, source := range outputs {
-			err = r.client.Delete(context.TODO(), source)
-			if err != nil {
-				source.Log().Errorln("Failed to delete source:", err)
-			}
+func (r *BitflowReconciler) validateStep(step *bitflowv1.BitflowStep, logger *log.Entry) bool {
+	validationMsg := step.Status.ValidationError
+	step.Validate()
+	if validationMsg != step.Status.ValidationError {
+		err := r.client.Status().Update(context.TODO(), step)
+		if err != nil {
+			logger.Errorf("Failed to update validation error status: %v", err)
 		}
 	}
+	return step.Status.ValidationError == ""
 }
 
-func (r *BitflowReconciler) cleanupPodsForStep(stepName string, logger *log.Entry, reason string, skipPods ...*corev1.Pod) (podsDeleted bool) {
-	pods, err := r.listPodsForStep(stepName)
-	if err != nil {
-		logger.Errorf("Failed to list pods (%v): %v", reason, err)
-		return
-	}
+func (r *BitflowReconciler) spawnPodsPeriodically() {
+	now := time.Now()
+	period := r.config.GetSpawnPeriod()
 
-	skipPodNames := make(map[string]bool, len(skipPods))
-	for _, skipPod := range skipPods {
-		skipPodNames[skipPod.Name] = true
+	// Keep clean, so read and write of lastSpawnRoutine are as close as possible to each other
+	last := r.lastSpawnRoutine
+	if last.IsZero() || now.Sub(last) >= period {
+		r.lastSpawnRoutine = now
+		log.Debugln("Scheduling/deleting pods...")
+		startTimestamp := time.Now()
+		r.spawnPods()
+		r.statistic.PodsSpawned(time.Now().Sub(startTimestamp))
 	}
-
-	for _, pod := range pods.Items {
-		if !skipPodNames[pod.Name] {
-			podsDeleted = podsDeleted || r.deletePod(&pod, logger, reason)
-		}
-	}
-	return
 }

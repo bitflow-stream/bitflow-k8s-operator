@@ -13,12 +13,12 @@ type ReconcileStatistics struct {
 }
 
 type ReconcileStatisticData struct {
-	PodReconcileLoops                 int
-	PodReconcileLoopDuration          onlinestats.Running
-	NodeResourceReconcileLoops        int
-	NodeResourceReconcileLoopDuration onlinestats.Running
-	RestartedPods                     int
-	Errors                            int
+	PodUpdateRoutines int
+	PodUpdateDuration onlinestats.Running
+	PodSpawnRoutines  int
+	PodSpawnDuration  onlinestats.Running
+	RestartedPods     int
+	Errors            int
 }
 
 func (stat *ReconcileStatistics) GetData() ReconcileStatisticData {
@@ -30,40 +30,37 @@ func (stat *ReconcileStatistics) GetData() ReconcileStatisticData {
 	return stat.data
 }
 
-func (stat *ReconcileStatistics) PodsReconciled(duration time.Duration) {
+func (stat *ReconcileStatistics) update(f func()) {
 	if stat == nil {
 		return
 	}
 	stat.lock.Lock()
 	defer stat.lock.Unlock()
-	stat.data.PodReconcileLoops++
-	stat.data.PodReconcileLoopDuration.Push(float64(duration.Nanoseconds()))
+	f()
 }
 
-func (stat *ReconcileStatistics) NodeResourcesReconciled(duration time.Duration) {
-	if stat == nil {
-		return
-	}
-	stat.lock.Lock()
-	defer stat.lock.Unlock()
-	stat.data.NodeResourceReconcileLoops++
-	stat.data.NodeResourceReconcileLoopDuration.Push(float64(duration.Nanoseconds()))
+func (stat *ReconcileStatistics) PodsUpdated(duration time.Duration) {
+	stat.update(func() {
+		stat.data.PodUpdateRoutines++
+		stat.data.PodUpdateDuration.Push(float64(duration.Nanoseconds()))
+	})
+}
+
+func (stat *ReconcileStatistics) PodsSpawned(duration time.Duration) {
+	stat.update(func() {
+		stat.data.PodSpawnRoutines++
+		stat.data.PodSpawnDuration.Push(float64(duration.Nanoseconds()))
+	})
 }
 
 func (stat *ReconcileStatistics) PodRespawned() {
-	if stat == nil {
-		return
-	}
-	stat.lock.Lock()
-	defer stat.lock.Unlock()
-	stat.data.RestartedPods++
+	stat.update(func() {
+		stat.data.RestartedPods++
+	})
 }
 
 func (stat *ReconcileStatistics) ErrorOccurred() {
-	if stat == nil {
-		return
-	}
-	stat.lock.Lock()
-	defer stat.lock.Unlock()
-	stat.data.Errors++
+	stat.update(func() {
+		stat.data.Errors++
+	})
 }

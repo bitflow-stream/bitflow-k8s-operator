@@ -27,11 +27,11 @@ func (s *RespawningPodsTestSuite) TestAdd() {
 	pods.Put(pod1)
 	pods.Put(pod2)
 
-	_, restarting1 := pods.IsPodRestarting(name1)
+	_, restarting1 := pods.IsPodRespawning(name1)
 	s.True(restarting1, "pod should be restarting")
 
 	pods.Delete(name2)
-	_, restarting2 := pods.IsPodRestarting(name2)
+	_, restarting2 := pods.IsPodRespawning(name2)
 	s.False(restarting2, "pod should be deleted")
 }
 
@@ -63,15 +63,15 @@ func (s *RespawningPodsTestSuite) TestDeleteWithLabels() {
 	pods.DeletePodsWithLabel("bitflow-step-name", "helloStep1")
 	s.Len(pods.ListPods(), 2)
 
-	_, ok1 := pods.IsPodRestarting(name1)
+	_, ok1 := pods.IsPodRespawning(name1)
 	s.False(ok1)
-	_, ok2 := pods.IsPodRestarting(name2)
+	_, ok2 := pods.IsPodRespawning(name2)
 	s.False(ok2)
-	_, ok3 := pods.IsPodRestarting(name3)
+	_, ok3 := pods.IsPodRespawning(name3)
 	s.False(ok3)
-	_, ok4 := pods.IsPodRestarting(name4)
+	_, ok4 := pods.IsPodRespawning(name4)
 	s.True(ok4)
-	_, ok5 := pods.IsPodRestarting(name5)
+	_, ok5 := pods.IsPodRespawning(name5)
 	s.True(ok5)
 }
 
@@ -103,15 +103,15 @@ func (s *RespawningPodsTestSuite) TestDeleteExcept() {
 	pods.DeletePodsWithLabelExcept("bitflow-step-name", "helloStep1", []string{name2})
 	s.Len(pods.ListPods(), 3)
 
-	_, ok1 := pods.IsPodRestarting(name1)
+	_, ok1 := pods.IsPodRespawning(name1)
 	s.False(ok1)
-	_, ok2 := pods.IsPodRestarting(name2)
+	_, ok2 := pods.IsPodRespawning(name2)
 	s.True(ok2)
-	_, ok3 := pods.IsPodRestarting(name3)
+	_, ok3 := pods.IsPodRespawning(name3)
 	s.False(ok3)
-	_, ok4 := pods.IsPodRestarting(name4)
+	_, ok4 := pods.IsPodRespawning(name4)
 	s.True(ok4)
-	_, ok5 := pods.IsPodRestarting(name5)
+	_, ok5 := pods.IsPodRespawning(name5)
 	s.True(ok5)
 }
 

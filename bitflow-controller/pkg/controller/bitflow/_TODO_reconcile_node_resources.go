@@ -2,7 +2,6 @@ package bitflow
 
 import (
 	"context"
-	"time"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	log "github.com/sirupsen/logrus"
@@ -10,23 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *BitflowReconciler) reconcileNodeResources() {
-	now := time.Now()
-	period := r.config.GetReconcilePeriod()
-
-	// Keep clean, so read and write of lastResourceReconciliation are as close as possible to each other
-	last := r.lastResourceReconciliation
-	shouldReconcile := last.IsZero() || now.Sub(last) >= period
-	if shouldReconcile {
-		r.lastResourceReconciliation = now
-		log.Debugln("Reconciling node resources...")
-		startTimestamp := time.Now()
-		r.doReconcileResourcesOnAllNodes()
-		r.statistic.NodeResourcesReconciled(time.Now().Sub(startTimestamp))
-	}
-}
-
-func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
+func (r *BitflowReconciler) RECONCILE_RESOURCES() {
 	nodes, err := common.RequestReadyNodes(r.client)
 	if err != nil {
 		log.Errorln("Failed to retrieve all ready nodes:", err)
@@ -68,7 +51,7 @@ func (r *BitflowReconciler) doReconcileResourcesOnAllNodes() {
 }
 
 func (r *BitflowReconciler) deletePodForRestart(pod *corev1.Pod) {
-	if _, exists := r.pods.IsPodRestarting(pod.Name); exists || common.IsBeingDeleted(pod) {
+	if _, exists := r.pods.IsPodRespawning(pod.Name); exists || common.IsBeingDeleted(pod) {
 		return
 	}
 

@@ -127,7 +127,7 @@ func (r *BitflowReconciler) xxx() {
 				continue
 			}
 			logger = logger.WithField("pod", podName)
-			if _, present := r.pods.IsPodRestarting(podName); podName != "" && present {
+			if _, present := r.pods.IsPodRespawning(podName); podName != "" && present {
 				// pod is currently restarting -> dont kill its output source yet
 				logger.Debug("Missing pod is being restarted, not deleting output source")
 				continue
@@ -257,4 +257,18 @@ func MergeLabels(sources []*bitflowv1.BitflowSource, newStepName string) map[str
 	mergedLabels[bitflowv1.PipelinePathLabelPrefix+depthStr] = newStepName
 
 	return mergedLabels
+}
+
+func (r *BitflowReconciler) cleanupOutputSourcesForStep(stepName string, logger *log.Entry) {
+	outputs, err := r.listOutputSources(stepName)
+	if err != nil {
+		logger.Errorln("Failed to query output sources for step:", err)
+	} else {
+		for _, source := range outputs {
+			err = r.client.Delete(context.TODO(), source)
+			if err != nil {
+				source.Log().Errorln("Failed to delete source:", err)
+			}
+		}
+	}
 }

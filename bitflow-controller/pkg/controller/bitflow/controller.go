@@ -52,8 +52,8 @@ type BitflowReconciler struct {
 	config    *config.Config
 	statistic *ReconcileStatistics
 
-	recurringReconcileStarted  sync.Once
-	lastResourceReconciliation time.Time
+	recurringReconcileStarted sync.Once
+	lastSpawnRoutine          time.Time
 }
 
 func startReconciler(mgr manager.Manager, watchNamespace string) error {
@@ -222,7 +222,7 @@ func (r *BitflowReconciler) startRecurringReconcile(ctl controller.Controller) e
 			r.recurringReconcileStarted.Do(func() {
 				requests = []reconcile.Request{{
 					NamespacedName: types.NamespacedName{
-						Name:      STATE_VALIDATION_FAKE_STEP_NAME,
+						Name:      ReconcileLoopFakeStepName,
 						Namespace: r.namespace,
 					}}}
 			})
