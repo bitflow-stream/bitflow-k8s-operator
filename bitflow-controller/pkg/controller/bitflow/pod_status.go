@@ -8,21 +8,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-const (
-	PodPlanned    = "planned"    // The controller will soon schedule and create the pod
-	PodCreated    = "created"    // The pod has been scheduled and started
-	PodRespawning = "respawning" // The pod was deleted and waits to be restarted
-
-	// Deleted/Dangling/Obsolete pods are entirely removed from the ManagedPods map
-)
-
+// Deleted/Dangling/Obsolete pods are entirely removed from the ManagedPods map
 type PodStatus struct {
-	status string
-	pod    *corev1.Pod
-
+	pod          *corev1.Pod
 	step         *bitflowv1.BitflowStep
 	inputSources []*bitflowv1.BitflowSource
-	previousIP   string
+
+	respawning bool
+	previousIP string
 }
 
 func (spec *PodStatus) CountContainer() int {
@@ -33,6 +26,7 @@ func (spec *PodStatus) Log() *log.Entry {
 	return log.WithFields(log.Fields{
 		"pod":  spec.pod,
 		"step": spec.step.Name,
+		"type": spec.step.Type(),
 	})
 }
 
@@ -66,66 +60,76 @@ func (p *ManagedPods) Len() (res int) {
 	return
 }
 
-func (p *ManagedPods) Count(status string) (res int) {
+func (p *ManagedPods) CleanupStep(stepName string, existingPodNames map[string]bool) {
+	p.Modify(func() {
+		for name, pod := range p.pods {
+			if pod.step.Name == stepName && !existingPodNames[name] {
+				delete(p.pods, name)
+			}
+		}
+	})
+}
+
+func (p *ManagedPods) Put(pod *corev1.Pod, step *bitflowv1.BitflowStep, inputSources []*bitflowv1.BitflowSource) {
+	p.Modify(func() {
+		entry := p.pods[pod.Name]
+
+		// Re-allocate to avoid data race
+		p.pods[pod.Name] = &PodStatus{
+			pod:          pod,
+			step:         step,
+			inputSources: inputSources,
+
+			// Copy these values, if an entry existed. Otherwise filled with default values.
+			respawning: entry.respawning,
+			previousIP: entry.previousIP,
+		}
+	})
+}
+
+func (p *ManagedPods) MarkRespawning(pod *corev1.Pod, isRespawning bool) {
+	p.Modify(func() {
+		if status, ok := p.pods[pod.Name]; ok {
+			status.respawning = isRespawning
+			if pod.Status.PodIP != "" {
+				status.previousIP = pod.Status.PodIP
+			}
+		}
+	})
+}
+
+func (p *ManagedPods) GetSteps() (result map[string]map[string]*PodStatus) {
 	p.Read(func() {
+		result = make(map[string]map[string]*PodStatus)
 		for _, pod := range p.pods {
-			if pod.status == status {
-				res++
+			pods, ok := result[pod.step.Name]
+			if !ok {
+				pods = make(map[string]*PodStatus)
+			}
+			pods[pod.pod.Name] = pod
+		}
+	})
+	return
+}
+
+func (p *ManagedPods) ListRespawningPods() (result []string) {
+	p.Read(func() {
+		result = make([]string, 0, len(p.pods))
+		for name, pod := range p.pods {
+			if pod.respawning {
+				result = append(result, name)
 			}
 		}
 	})
 	return
 }
 
-func (p *ManagedPods) Put(pod *corev1.Pod, status string) {
-	p.Modify(func() {
-		p.pods[pod.Name] = PodStatus{
-			status:     status,
-			pod:        pod,
-			previousIP: pod.Status.PodIP,
-		}
+func (p *ManagedPods) IsPodRespawning(name string) (pod *PodStatus, isRespawning bool) {
+	p.Read(func() {
+		pod, isRespawning = p.pods[name]
+		isRespawning = isRespawning && pod.respawning
 	})
-}
-
-func (p *ManagedPods) Delete(name string) {
-	p.Modify(func() {
-		delete(p.pods, name)
-	})
-}
-
-func (p *ManagedPods) DeletePodsWithLabel(labelKey string, labelValue string) {
-	p.Lock()
-	defer p.Unlock()
-	for key, status := range p.pods {
-		if status.pod.Labels[labelKey] == labelValue {
-			delete(p.pods, key)
-		}
-	}
-}
-
-func (p *ManagedPods) DeletePodsWithLabelExcept(labelKey string, labelValue string, valid []string) {
-	p.Lock()
-	defer p.Unlock()
-	for key, status := range p.pods {
-		if status.pod.Labels[labelKey] == labelValue {
-			found := false
-			for _, validPod := range valid {
-				if validPod == key {
-					found = true
-				}
-			}
-			if !found {
-				delete(p.pods, key)
-			}
-		}
-	}
-}
-
-func (p *ManagedPods) IsPodRestarting(name string) (PodStatus, bool) {
-	p.RLock()
-	defer p.RUnlock()
-	res, ok := p.pods[name]
-	return res, ok
+	return
 }
 
 func (p *ManagedPods) IsPodRestartingOnNode(podName, nodeName string) (PodStatus, bool) {
@@ -138,16 +142,6 @@ func (p *ManagedPods) IsPodRestartingOnNode(podName, nodeName string) (PodStatus
 		}
 	}
 	return PodStatus{}, false
-}
-
-func (p *ManagedPods) ListPods() []string {
-	p.RLock()
-	defer p.RUnlock()
-	podList := make([]string, 0, len(p.pods))
-	for key := range p.pods {
-		podList = append(podList, key)
-	}
-	return podList
 }
 
 func (p *ManagedPods) CountRestarting(pods []*corev1.Pod, currentPod, currentNode string) int {
@@ -169,15 +163,4 @@ func (p *ManagedPods) CountRestarting(pods []*corev1.Pod, currentPod, currentNod
 		}
 	}
 	return count
-}
-
-func (p *ManagedPods) Debug() {
-	if !log.IsLevelEnabled(log.DebugLevel) {
-		return
-	}
-	p.RLock()
-	defer p.RUnlock()
-	for key := range p.pods {
-		log.Debugln("RespawningEntry", key)
-	}
 }

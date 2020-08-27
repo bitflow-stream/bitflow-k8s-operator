@@ -2,7 +2,7 @@ package bitflow
 
 import (
 	"context"
-	fmt "fmt"
+	"fmt"
 
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
@@ -13,6 +13,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func (r *BitflowReconciler) waitForCacheSync() {
+	log.Debugln("Started cache sync")
+	stopper := make(chan struct{})
+	r.cache.WaitForCacheSync(stopper)
+	close(stopper)
+	log.Debugln("Finished cache sync")
+}
 
 func (r *BitflowReconciler) deletePod(pod *corev1.Pod, logger *log.Entry, reason string) bool {
 	if !common.IsBeingDeleted(pod) {
@@ -27,6 +35,16 @@ func (r *BitflowReconciler) deletePod(pod *corev1.Pod, logger *log.Entry, reason
 	return false
 }
 
+func (r *BitflowReconciler) listPodsForStep(stepName string) (*corev1.PodList, error) {
+	selector := r.selectorForStep(stepName)
+	var allPods corev1.PodList
+	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: r.namespace, LabelSelector: selector}, &allPods)
+	if err != nil {
+		err = fmt.Errorf("Failed to query matching pods: %v", err)
+	}
+	return &allPods, err
+}
+
 func (r *BitflowReconciler) selectorForStep(stepName string) labels.Selector {
 	selector := make(labels.Set)
 	if stepName != "" {
@@ -36,16 +54,6 @@ func (r *BitflowReconciler) selectorForStep(stepName string) labels.Selector {
 		selector[k] = v
 	}
 	return labels.SelectorFromSet(selector)
-}
-
-func (r *BitflowReconciler) listPodsForStep(stepName string) (*corev1.PodList, error) {
-	selector := r.selectorForStep(stepName)
-	var allPods corev1.PodList
-	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: r.namespace, LabelSelector: selector}, &allPods)
-	if err != nil {
-		err = fmt.Errorf("Failed to query matching pods: %v", err)
-	}
-	return &allPods, err
 }
 
 func (r *BitflowReconciler) listOutputSources(stepName string) ([]*bitflowv1.BitflowSource, error) {

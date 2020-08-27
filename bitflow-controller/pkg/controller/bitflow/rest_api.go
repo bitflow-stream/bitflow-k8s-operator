@@ -65,7 +65,7 @@ func (r *BitflowReconciler) handleIpRequest(ctx *gin.Context) {
 }
 
 func (r *BitflowReconciler) handleRespawningPods(ctx *gin.Context) {
-	podsMap := r.pods.ListPods()
+	podsMap := r.pods.ListRespawningPods()
 	ctx.JSON(http.StatusOK, podsMap)
 }
 

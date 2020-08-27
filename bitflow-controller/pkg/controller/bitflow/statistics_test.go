@@ -29,8 +29,8 @@ func (s *StatisticsTestSuite) writeStats(stat *ReconcileStatistics, numberOfLogs
 		go func(numLogs int) {
 			defer wg.Done()
 			for i := 0; i < numLogs; i++ {
-				stat.PodsReconciled(loopTime)
-				stat.NodeResourcesReconciled(loopTime)
+				stat.PodsUpdated(loopTime)
+				stat.PodsSpawned(loopTime)
 				stat.PodRespawned()
 				stat.ErrorOccurred()
 			}
@@ -44,16 +44,16 @@ func (s *StatisticsTestSuite) TestConcurrentStatistics() {
 	s.writeStats(stat, 5, 3, 9, 3, 2)
 
 	data := stat.GetData()
-	s.Equal(22, data.PodReconcileLoops)
-	s.Equal(22, data.NodeResourceReconcileLoops)
+	s.Equal(22, data.PodUpdateRoutines)
+	s.Equal(22, data.PodSpawnRoutines)
 	s.Equal(22, data.RestartedPods)
 	s.Equal(22, data.Errors)
-	s.InEpsilon(loopTimeNanos, data.PodReconcileLoopDuration.Mean(), 0.00001)
-	s.InEpsilon(loopTimeNanos, data.NodeResourceReconcileLoopDuration.Mean(), 0.00001)
+	s.InEpsilon(loopTimeNanos, data.PodUpdateDuration.Mean(), 0.00001)
+	s.InEpsilon(loopTimeNanos, data.PodSpawnDuration.Mean(), 0.00001)
 }
 
 func (s *StatisticsTestSuite) TestNilStatistics() {
 	var stat *ReconcileStatistics // nil
 	s.writeStats(stat, 2, 4, 6)
-	s.Zero(stat.GetData().PodReconcileLoops, "nil-statistics should remain empty")
+	s.Zero(stat.GetData().PodUpdateRoutines, "nil-statistics should remain empty")
 }
