@@ -193,6 +193,8 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 		})
 	}
 
+	calculationCount = 0
+
 	//bestDistributionState, bestDistributionPenalty, err := as.findBestSchedulingCheckingAllPermutations(systemState, as.pods)
 	bestDistributionState, bestDistributionPenalty, err := as.findGoodScheduling(systemState, as.pods, -1)
 

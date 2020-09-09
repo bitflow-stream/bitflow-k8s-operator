@@ -429,6 +429,529 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkP
 	s.Equal(scheduledMap["p9"], scheduledMap["p8"])
 }
 
+//func (s *SkdTestSuite) Test_AdvancedScheduler_shouldScheduleRealisticScenarioWithNetworkPenalty() {
+//	var scheduler Scheduler
+//	nodes := []*NodeData{
+//		{
+//			name:                    "n1",
+//			allocatableCpu:          4000,
+//			memory:                  64,
+//			initialNumberOfPodSlots: 2,
+//			podSlotScalingFactor:    2,
+//			resourceLimit:           0.1,
+//		},
+//		{
+//			name:                    "n2",
+//			allocatableCpu:          4000,
+//			memory:                  64,
+//			initialNumberOfPodSlots: 2,
+//			podSlotScalingFactor:    2,
+//			resourceLimit:           0.1,
+//		},
+//		{
+//			name:                    "n3",
+//			allocatableCpu:          4000,
+//			memory:                  64,
+//			initialNumberOfPodSlots: 2,
+//			podSlotScalingFactor:    2,
+//			resourceLimit:           0.1,
+//		},
+//		{
+//			name:                    "n4",
+//			allocatableCpu:          4000,
+//			memory:                  64,
+//			initialNumberOfPodSlots: 2,
+//			podSlotScalingFactor:    2,
+//			resourceLimit:           0.1,
+//		},
+//		{
+//			name:                    "n5",
+//			allocatableCpu:          4000,
+//			memory:                  64,
+//			initialNumberOfPodSlots: 2,
+//			podSlotScalingFactor:    2,
+//			resourceLimit:           0.1,
+//		},
+//	}
+//	curve := Curve{
+//		a: 6.71881241016441,
+//		b: 0.0486498280492762,
+//		c: 2.0417306475862214,
+//		d: 15.899403720950454,
+//	}
+//	pods := []*PodData{
+//		{
+//			name:             "p1_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p2_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p3_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p4_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p5_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p6_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p7_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p8_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p9_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p10_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p11_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p12_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p13_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p14_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p15_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p16_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p17_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p18_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p19_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p20_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p21_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p22_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p23_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p24_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p25_1",
+//			receivesDataFrom: []string{},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p1_2",
+//			receivesDataFrom: []string{"p1_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p2_2",
+//			receivesDataFrom: []string{"p2_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p3_2",
+//			receivesDataFrom: []string{"p3_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p4_2",
+//			receivesDataFrom: []string{"p4_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p5_2",
+//			receivesDataFrom: []string{"p5_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p6_2",
+//			receivesDataFrom: []string{"p6_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p7_2",
+//			receivesDataFrom: []string{"p7_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p8_2",
+//			receivesDataFrom: []string{"p8_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p9_2",
+//			receivesDataFrom: []string{"p9_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p10_2",
+//			receivesDataFrom: []string{"p10_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p11_2",
+//			receivesDataFrom: []string{"p11_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p12_2",
+//			receivesDataFrom: []string{"p12_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p13_2",
+//			receivesDataFrom: []string{"p13_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p14_2",
+//			receivesDataFrom: []string{"p14_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p15_2",
+//			receivesDataFrom: []string{"p15_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p16_2",
+//			receivesDataFrom: []string{"p16_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p17_2",
+//			receivesDataFrom: []string{"p17_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p18_2",
+//			receivesDataFrom: []string{"p18_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p19_2",
+//			receivesDataFrom: []string{"p19_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p20_2",
+//			receivesDataFrom: []string{"p20_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p21_2",
+//			receivesDataFrom: []string{"p21_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p22_2",
+//			receivesDataFrom: []string{"p22_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p23_2",
+//			receivesDataFrom: []string{"p23_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p24_2",
+//			receivesDataFrom: []string{"p24_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p25_2",
+//			receivesDataFrom: []string{"p25_1"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p1_3",
+//			receivesDataFrom: []string{"p1_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p2_3",
+//			receivesDataFrom: []string{"p2_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p3_3",
+//			receivesDataFrom: []string{"p3_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p4_3",
+//			receivesDataFrom: []string{"p4_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p5_3",
+//			receivesDataFrom: []string{"p5_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p6_3",
+//			receivesDataFrom: []string{"p6_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p7_3",
+//			receivesDataFrom: []string{"p7_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p8_3",
+//			receivesDataFrom: []string{"p8_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p9_3",
+//			receivesDataFrom: []string{"p9_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p10_3",
+//			receivesDataFrom: []string{"p10_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p11_3",
+//			receivesDataFrom: []string{"p11_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p12_3",
+//			receivesDataFrom: []string{"p12_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p13_3",
+//			receivesDataFrom: []string{"p13_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p14_3",
+//			receivesDataFrom: []string{"p14_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p15_3",
+//			receivesDataFrom: []string{"p15_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p16_3",
+//			receivesDataFrom: []string{"p16_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p17_3",
+//			receivesDataFrom: []string{"p17_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p18_3",
+//			receivesDataFrom: []string{"p18_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p19_3",
+//			receivesDataFrom: []string{"p19_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p20_3",
+//			receivesDataFrom: []string{"p20_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p21_3",
+//			receivesDataFrom: []string{"p21_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p22_3",
+//			receivesDataFrom: []string{"p22_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p23_3",
+//			receivesDataFrom: []string{"p23_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p24_3",
+//			receivesDataFrom: []string{"p24_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//		{
+//			name:             "p25_3",
+//			receivesDataFrom: []string{"p25_2"},
+//			curve:            curve,
+//			minimumMemory:    16,
+//		},
+//	}
+//	scheduler = AdvancedScheduler{
+//		nodes:            nodes,
+//		pods:             pods,
+//		networkPenalty:   1_000,
+//		thresholdPercent: 10,
+//	}
+//
+//	schedulingChanged, scheduledMap, err := scheduler.Schedule()
+//
+//	s.Nil(err)
+//	s.True(schedulingChanged)
+//	s.Equal(scheduledMap["p2"], scheduledMap["p10"])
+//	s.Equal(scheduledMap["p7"], scheduledMap["p1"])
+//	s.Equal(scheduledMap["p8"], scheduledMap["p1"])
+//	s.Equal(scheduledMap["p9"], scheduledMap["p3"])
+//	s.Equal(scheduledMap["p9"], scheduledMap["p4"])
+//	s.Equal(scheduledMap["p9"], scheduledMap["p6"])
+//	s.Equal(scheduledMap["p9"], scheduledMap["p7"])
+//	s.Equal(scheduledMap["p9"], scheduledMap["p8"])
+//}
+
 func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasNotChangedWithThreshold() {
 	var scheduler Scheduler
 	nodes := []*NodeData{
