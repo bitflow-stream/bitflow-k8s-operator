@@ -2,6 +2,19 @@ package config
 
 import "time"
 
+var AllConfigKes = []string{
+	"external.source.node.label",
+	"resource.limit.annotation",
+	"resource.buffer.init",
+	"resource.buffer.factor",
+	"resource.limit",
+	"extra.env",
+	"delete.grace.period",
+	"state.validation.period",
+	"state.validation.heartbeat",
+	"schedulers",
+}
+
 func (config *Config) GetStandaloneSourceLabel() string {
 	return config.GetStringParam("external.source.node.label", "nodename")
 }
@@ -40,6 +53,7 @@ func (config *Config) GetReconcileHeartbeat() time.Duration {
 	return config.GetDurationParam("state.validation.heartbeat", 2*time.Minute)
 }
 
-func (config *Config) GetDefaultScheduler() []string {
-	return config.GetStringSliceParam("schedulers", []string{"sourceAffinity", "first"})
+func (config *Config) GetDefaultScheduler() string {
+	// TODO rename parameter (requires changing many config files)
+	return config.GetStringParam("schedulers", "least-occupied")
 }

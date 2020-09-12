@@ -149,7 +149,7 @@ func (s *MetricsRecordingServer) recordMetrics() {
 			return
 		}
 		for _, node := range nodes.Items {
-			resourceLimit = bitflow.RequestBitflowResourceLimitByNode(&node, s.proxy.controllerConfig)
+			resourceLimit = bitflow.GetNodeResourceLimit(&node, s.proxy.controllerConfig)
 
 			// TODO check if this label selector is valid for selecting all Bitflow pods. Otherwise, somehow obtain the ID labels of the controller here.
 			pods, err = common.RequestAllPodsOnNode(s.proxy.client, node.Name, s.proxy.KubeNamespace, map[string]string{bitflowv1.LabelStepName: "*"})

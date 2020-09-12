@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/antongulenko/golib"
@@ -123,20 +124,22 @@ func (suite *AbstractTestSuite) ConfigMap(name string) *corev1.ConfigMap {
 	}
 }
 
-func (suite *AbstractTestSuite) Step(name string, stepType string, ingestMatches ...string) *bitflowv1.BitflowStep {
-	return suite.StepCustomSchedulers(name, stepType, "sourceAffinity,first", ingestMatches...)
+func (suite *AbstractTestSuite) SetConfigValue(cl client.Client, name, key, value string) {
+	var configMap corev1.ConfigMap
+	suite.NoError(cl.Get(context.TODO(), client.ObjectKey{Namespace: TestNamespace, Name: name}, &configMap))
+	configMap.Data[key] = value
+	suite.NoError(cl.Update(context.TODO(), &configMap))
 }
 
-func (suite *AbstractTestSuite) StepCustomSchedulers(name string, stepType string, schedulerList string, ingestMatches ...string) *bitflowv1.BitflowStep {
+func (suite *AbstractTestSuite) Step(name string, stepType string, ingestMatches ...string) *bitflowv1.BitflowStep {
 	step := &bitflowv1.BitflowStep{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: TestNamespace,
 		},
 		Spec: bitflowv1.BitflowStepSpec{
-			Type:      stepType,
-			Scheduler: schedulerList,
-			Template:  suite.PodLabels("", map[string]string{"step": name}),
+			Type:     stepType,
+			Template: suite.PodLabels("", map[string]string{"step": name}),
 		},
 	}
 	suite.AddStepIngest(step, ingestMatches...)
@@ -144,9 +147,8 @@ func (suite *AbstractTestSuite) StepCustomSchedulers(name string, stepType strin
 }
 
 func (suite *AbstractTestSuite) StepWithOutput(name string, stepType string, outputName string, outputLabels map[string]string, ingestMatches ...string) *bitflowv1.BitflowStep {
-	step := suite.Step(name, stepType)
+	step := suite.Step(name, stepType, ingestMatches...)
 	suite.AddStepOutput(step, outputName, outputLabels)
-	suite.AddStepIngest(step, ingestMatches...)
 	return step
 }
 

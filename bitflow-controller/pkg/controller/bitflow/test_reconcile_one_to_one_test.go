@@ -97,105 +97,65 @@ func (s *ReconcileOneToOneTestSuite) TestOneToOneStepKeepOutput() {
 	s.assertOutputSources(r.client, common.TestNodeBufferInitSize)
 }
 
-func (s *ReconcileOneToOneTestSuite) TestRespawningOneToOne() {
-	name := "bitflow-step-1"
-	r := s.makeReconcilerWithSources(name, common.TestNodeBufferInitSize+1)
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 1)
-	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
-
-	// TODO this is actually weird behavior in the resource assigner, which should be fixed
-	// currently, newly created pods are not taken into account when computing resources
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 2)
-	s.assertRespawningPods(r, common.TestNodeBufferInitSize+1-2)
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 3)
-	s.assertRespawningPods(r, common.TestNodeBufferInitSize+1-3)
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 4)
-	s.assertRespawningPods(r, common.TestNodeBufferInitSize+1-4)
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize+1)
-	s.assertRespawningPods(r, 0)
-}
-
 func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceCheckRespawning1() {
 	name := "bitflow-step-1"
 	r := s.makeReconcilerWithSources(name, common.TestNodeBufferInitSize+1)
 
-	// 1 pod started with correct resources, 4 pods pods due to wrong resources
+	// all pods started with halved resources
 	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 1)
-	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
+	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize+1)
+	s.assertRespawningPods(r, 0)
 
 	s.NoError(r.client.Delete(context.TODO(), s.Source("source0", nil)))
 
-	// the pod that was originally started with correct resources is now too small, therefore pods.
-	// the other 3 pods were started correctly.
+	// pods restarted with more resources. First reconcile: delete pods. Second reconcile: restart pods.
 	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize-1)
-	s.assertRespawningPods(r, 1)
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize)
-	s.assertRespawningPods(r, 0)
-}
-
-func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceCheckRespawning2() {
-	name := "bitflow-step-1"
-	r := s.makeReconcilerWithSources(name, common.TestNodeBufferInitSize+1)
-
-	// 1 pod started with correct resources, 4 pods pods due to wrong resources
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 1)
+	s.assertPodsForStep(r.client, name, 0)
 	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
 
-	// Delete the source for the pod that was started correctly (the last one)
-	sourceName := "source" + strconv.Itoa(common.TestNodeBufferInitSize)
-	s.NoError(r.client.Delete(context.TODO(), s.Source(sourceName, nil)))
-	s.deletePodForSource(r.client, sourceName)
-
-	// Now all pods should immediately be started correctly
 	s.testReconcile(r, name)
-	s.assertRespawningPods(r, 0)
 	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize)
+	s.assertRespawningPods(r, 0)
 }
 
-func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceCheckRespawning3() {
+func (s *ReconcileOneToOneTestSuite) TestOneToOneDeleteSourceNoRestart() {
 	name := "bitflow-step-1"
 	num := common.TestNodeBufferInitSize + 2
 	r := s.makeReconcilerWithSources(name, num)
 
 	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 2)
-	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
+	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize+2)
+	s.assertRespawningPods(r, 0)
 
-	// Delete one of the correctly running pods and its source
+	// Delete one of the running pods and its source
 	sourceName := "source" + strconv.Itoa(num-1)
 	s.NoError(r.client.Delete(context.TODO(), s.Source(sourceName, nil)))
 	s.deletePodForSource(r.client, sourceName)
 
-	// TODO see TestRespawningOneToOne, this behavior should be fixed
+	// Pods should not be respawned - resources remain the same
+	s.testReconcile(r, name)
+	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize+1)
+	s.assertRespawningPods(r, 0)
+}
+
+func (s *ReconcileOneToOneTestSuite) TestOneToOneCreateSourceCheckRespawning() {
+	name := "bitflow-step-1"
+	r := s.makeReconcilerWithSources(name, common.TestNodeBufferInitSize)
 
 	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 2)
-	s.assertRespawningPods(r, num-3)
+	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize)
+	s.assertRespawningPods(r, 0)
+
+	// Add another source - old pods should be restarted, new pod added
+	sourceName := "extra-source"
+	s.NoError(r.client.Create(context.TODO(), s.Source(sourceName, map[string]string{"x": "y"})))
 
 	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 3)
-	s.assertRespawningPods(r, num-4)
+	s.assertPodsForStep(r.client, name, 1)
+	s.assertRespawningPods(r, common.TestNodeBufferInitSize)
 
+	// Second reconcile should create all respawned pods
 	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 4)
-	s.assertRespawningPods(r, num-5)
-
-	s.testReconcile(r, name)
-	s.assertPodsForStep(r.client, name, 5)
+	s.assertPodsForStep(r.client, name, common.TestNodeBufferInitSize+1)
 	s.assertRespawningPods(r, 0)
 }

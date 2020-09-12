@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 
+	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/controller/bitflow"
 	"github.com/gin-gonic/gin"

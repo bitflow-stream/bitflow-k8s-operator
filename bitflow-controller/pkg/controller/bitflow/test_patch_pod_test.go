@@ -86,7 +86,7 @@ func (s *PatchPodTestSuite) TestPatchSource() {
 	input1 := s.Source("insource1", map[string]string{"in1": "Hello", "overwritten-in": "gone", "same-in": "x", "different-in": "a", bitflowv1.PipelinePathLabelPrefix + "1": "other-step", bitflowv1.PipelineDepthLabel: "1"})
 	input2 := s.Source("insource2", map[string]string{"in2": "Hello", "overwritten-in": "gone", "same-in": "x", "different-in": "b", bitflowv1.PipelinePathLabelPrefix + "1": "other-step", bitflowv1.PipelineDepthLabel: "1"})
 
-	source := CreateOutputSource(step, pod, out, []*bitflowv1.BitflowSource{input1, input2}, map[string]string{"id": "extra"})
+	source := createOutputSource(step, pod, out, []*bitflowv1.BitflowSource{input1, input2}, map[string]string{"id": "extra"})
 	s.NotNil(source)
 
 	expectedLabels := map[string]string{
