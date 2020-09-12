@@ -1,12 +1,14 @@
 package bitflow
 
 import (
-	"context"
+	"strconv"
+
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/scheduler"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SchedulerTestSuite struct {
@@ -18,104 +20,110 @@ func (s *BitflowControllerTestSuite) TestScheduler() {
 }
 
 func (s *SchedulerTestSuite) TestGetAllNodes() {
-	r := s.initReconciler(
-		s.Node("node1"),
-		s.Node("node2"),
-		s.Node("node3"),
-		s.Node("node4"),
-		s.Node("node5"))
+	// Mark Node 2 as non-ready
+	node2 := s.Node("node2")
+	node2.Status.Conditions = []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionFalse}}
 
-	var nodeList *corev1.NodeList
-	var err error
-	nodeList, err = common.RequestReadyNodes(r.client)
+	r := s.initReconciler(s.Node("node1"), node2, s.Node("node3"), s.Node("node4"), s.Node("node5"))
+
+	nodeList, err := common.RequestReadyNodes(r.client)
 	s.NoError(err)
-	s.Equal(5, len(nodeList.Items))
+	s.Len(nodeList.Items, 4)
 }
 
-func (s *SchedulerTestSuite) TestGetNumberOfPodsForNode() {
-	labels := map[string]string{"hello": "world"}
-	r := s.initReconciler(
-		s.Node("node1"),
-		s.Source("source1", labels), s.Source("source2", labels),
-		s.Source("source3", labels), s.Source("source4", labels),
-		s.Step("step1", "", "hello", "world"))
-	s.testReconcile(r, "step1")
+func (s *SchedulerTestSuite) testScheduler(schedulerName string, numReconciles int, expectedPodsOnNodes []int) {
+	s.SubTest(schedulerName, func() {
+		scheduler.Seed(42)     // Make tests reproducible
+		totalExpectedPods := 8 // Based on the steps defined below
 
-	count, err := common.GetNumberOfPodsForNode(r.client, "node1")
-
-	s.NoError(err)
-	s.Equal(4, count)
-}
-
-func (s *SchedulerTestSuite) TestLeastContainersScheduler() {
-	labels := map[string]string{"hello": "world"}
-	r := s.initReconciler(
-		s.Node("node1"), s.Node("node2"),
-		s.Source("source1", labels), s.Source("source2", labels),
-		s.Source("source3", labels), s.Source("source4", labels),
-		s.StepCustomSchedulers("step1", "", "leastContainers", "hello", "world"))
-	s.testReconcile(r, "step1")
-
-	s.assertNumberOfPodsForNode(r.client, "node1", 2)
-	s.assertNumberOfPodsForNode(r.client, "node2", 2)
-}
-
-func (s *SchedulerTestSuite) TestScheduling2StandaloneSources() {
-	doTest := func(sourceNode string) {
-		s.SubTest(sourceNode, func() {
-			labels := map[string]string{"nodename": sourceNode, "hello": "world"}
-			r := s.initReconciler(
-				s.Node("node1"), s.Node("node2"), s.Node("node3"),
-				s.Source("source1", labels), s.Source("source2", labels), s.Source("source3", labels),
-				s.Step("step1", "", "hello", "world"))
-			s.testReconcile(r, "step1")
-
-			s.assertPodsForStep(r.client, "step1", 3)
-			s.assertPodNodeAffinity(r.client, "step1", sourceNode)
-		})
-	}
-
-	doTest("node1")
-	doTest("node2")
-}
-
-func (s *SchedulerTestSuite) assertPodNodeAffinity(cl client.Client, stepName string, nodeName string) {
-	var list corev1.PodList
-	s.NoError(cl.List(context.TODO(), &client.ListOptions{}, &list))
-
-	found := false
-	for _, pod := range list.Items {
-		if pod.Labels[v1.LabelStepName] != stepName {
-			continue
+		numNodes := len(expectedPodsOnNodes)
+		objects := []runtime.Object{
+			s.Source("source1", map[string]string{"type": "input", "s": "a", "nodename": "node" + strconv.Itoa((numNodes+0)%numNodes)}),
+			s.Source("source2", map[string]string{"type": "input", "s": "b", "nodename": "node" + strconv.Itoa((numNodes+1)%numNodes)}),
+			s.Source("source3", map[string]string{"type": "input", "s": "c", "nodename": "node" + strconv.Itoa((numNodes+2)%numNodes)}),
+			s.Source("source4", map[string]string{"type": "input", "s": "d", "nodename": "node" + strconv.Itoa((numNodes+3)%numNodes)}),
+			s.StepWithOutput("step-one", v1.StepTypeOneToOne,
+				"out", map[string]string{"type": "processed"}, "type", "input"),
+			s.StepWithOutput("step-all", v1.StepTypeAllToOne,
+				"out", map[string]string{"type": "processed"}, "type", "input"),
+			s.StepWithOutput("step-filter", v1.StepTypeOneToOne,
+				"out", map[string]string{"type": "filtered"}, "type", "input", "s", "a"),
+			s.StepWithOutput("step-filter-processed", v1.StepTypeAllToOne,
+				"out", map[string]string{"type": "processed"}, "type", "filtered"),
+			s.Step("step-processed", v1.StepTypeAllToOne, "type", "processed"),
 		}
-		found = true
+		for i := range expectedPodsOnNodes {
+			objects = append(objects, s.Node("node"+strconv.Itoa(i)))
+		}
+		r := s.initReconciler(objects...)
 
-		s.NotNil(pod.Spec.Affinity)
-		s.Equal(nodeName,
-			pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
-	}
-	s.True(found, "No pod found for step %v", stepName)
+		// Configure the tested scheduler
+		s.SetConfigValue(r.client, "bitflow-config", "schedulers", schedulerName)
+
+		// Make sure all pods and output sources are created
+		for i := 0; i < numReconciles; i++ {
+			// This fake step makes the controller consider all steps at once, instead of checking the one-by-one
+			_, err := s.performReconcile(r, ReconcileLoopFakeStepName)
+			s.NoError(err)
+			s.assignIPToPods(r.client)
+		}
+
+		podsOnNodes := make([]int, len(expectedPodsOnNodes))
+		sumExpectedPods := 0
+		sumEncounteredPods := 0
+		for i, expectedPodsOnNode := range expectedPodsOnNodes {
+			nodeName := "node" + strconv.Itoa(i)
+			sumExpectedPods += expectedPodsOnNode
+			count, err := s.getNumberOfPodsForNode(r.client, nodeName)
+			s.NoError(err)
+			podsOnNodes[i] = count
+			sumEncounteredPods += count
+		}
+		s.Equal(totalExpectedPods, sumExpectedPods, "Wrong number of expected pods provided")
+		s.Equal(totalExpectedPods, sumEncounteredPods, "Wrong number of scheduled pods")
+
+		s.Equal(expectedPodsOnNodes, podsOnNodes, "Wrong schedule")
+	})
 }
 
-func (s *SchedulerTestSuite) TestSchedulingOutputSource() {
-	stepName := "step-1"
+func (s *SchedulerTestSuite) testSchedulers(numReconciles int, schedulers map[string][]int) {
+	schedulers["WRONG-SCHEDULER"] = schedulers[SchedulerNameDefault]
+	for schedulerName, distribution := range schedulers {
+		s.testScheduler(schedulerName, numReconciles, distribution)
+	}
+}
 
-	// create random pod
-	pod := s.PodLabels("pod1", map[string]string{v1.LabelStepName: stepName})
-	pod.Spec.NodeName = "node2"
-	// create fake output source on that pod
-	source := s.Source(ConstructSourceName("pod1", "randomSource"), map[string]string{
-		v1.LabelStepName:      stepName,
-		v1.SourceLabelPodName: pod.Name,
-		"hello":               "world",
+func (s *SchedulerTestSuite) TestSchedule_1Node() {
+	s.testSchedulers(3, map[string][]int{
+		SchedulerNameLeastOccupied: {8},
+		SchedulerNameRandom:        {8},
 	})
+}
 
-	r := s.initReconciler(
-		pod, source,
-		s.Node("node1"), s.Node("node2"), s.Node("node3"),
-		s.Step(stepName, "", "hello", "world"))
+func (s *SchedulerTestSuite) TestSchedule_2Nodes() {
+	s.testSchedulers(4, map[string][]int{
+		SchedulerNameLeastOccupied: {5, 3}, // Not 4,4 due to order of events and limitations of the naive scheduler
+		SchedulerNameRandom:        {6, 2},
+	})
+}
 
-	s.testReconcile(r, stepName)
-	s.assertPodsForStep(r.client, stepName, 1)
-	s.assertPodNodeAffinity(r.client, stepName, "node2")
+func (s *SchedulerTestSuite) TestSchedule_3Nodes() {
+	s.testSchedulers(6, map[string][]int{
+		SchedulerNameLeastOccupied: {5, 2, 1}, // See comment above
+		SchedulerNameRandom:        {6, 1, 1},
+	})
+}
+
+func (s *SchedulerTestSuite) TestSchedule_4Nodes() {
+	s.testSchedulers(10, map[string][]int{
+		SchedulerNameLeastOccupied: {4, 2, 1, 1}, // See comment above
+		SchedulerNameRandom:        {3, 3, 1, 1},
+	})
+}
+
+func (s *SchedulerTestSuite) TestSchedule_5Nodes() {
+	s.testSchedulers(10, map[string][]int{
+		SchedulerNameLeastOccupied: {4, 2, 1, 1, 0}, // See comment above
+		SchedulerNameRandom:        {3, 3, 1, 1, 0},
+	})
 }

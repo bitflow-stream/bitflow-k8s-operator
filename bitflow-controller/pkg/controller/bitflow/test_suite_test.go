@@ -11,7 +11,6 @@ import (
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/scheduler"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+var idLabels = map[string]string{"reconciler": "bitflow-test"}
 
 type BitflowControllerTestSuite struct {
 	common.AbstractTestSuite
@@ -38,6 +39,7 @@ type BitflowControllerTestHelpers struct {
 }
 
 func (s *BitflowControllerTestHelpers) SetupTest() {
+	// Set debug log level for tests
 	golib.LogVerbose = true
 	golib.ConfigureLogging()
 }
@@ -62,22 +64,21 @@ func (s *BitflowControllerTestHelpers) initReconciler(objects ...runtime.Object)
 	configMap := s.ConfigMap("bitflow-config")
 	objects = append(objects, configMap)
 	cl := s.MakeFakeClient(objects...)
-
-	idLabels := map[string]string{}
 	conf := config.NewConfig(cl, common.TestNamespace, "bitflow-config")
-	respawns := NewManagedPods()
-	sched := &scheduler.OldScheduler{Client: cl, Config: conf, Namespace: common.TestNamespace, IdLabels: idLabels}
-	res := &ResourceAssigner{Client: cl, Config: conf, Respawning: respawns, Namespace: "default"}
+	conf.SilentlyUseAllDefaults()
 	return &BitflowReconciler{
-		client:          cl,
-		scheme:          scheme.Scheme,
-		cache:           &MockCache{},
-		pods:            respawns,
-		config:          conf,
-		scheduler:       sched,
-		resourceLimiter: res,
-		statistic:       nil,
-		namespace:       common.TestNamespace,
+		client: cl,
+		scheme: scheme.Scheme,
+		cache:  new(MockCache),
+
+		namespace: common.TestNamespace,
+		idLabels:  idLabels,
+		ownPodIP:  "",
+		apiPort:   0,
+
+		pods:      NewManagedPods(),
+		config:    conf,
+		statistic: nil,
 	}
 }
 
@@ -194,7 +195,7 @@ func (s *BitflowControllerTestHelpers) assertOutputSources(cl client.Client, cou
 }
 
 func (s *BitflowControllerTestHelpers) assertRespawningPods(r *BitflowReconciler, count int) {
-	s.Equal(count, r.pods.Len(), "Wrong number of pods pods")
+	s.Len(r.pods.ListRespawningPods(), count, "Wrong number of respawning pods")
 }
 
 func (s *BitflowControllerTestHelpers) assertNumberOfPodsForNode(cl client.Client, nodeName string, expectedNumberOfPods int) {
@@ -202,7 +203,25 @@ func (s *BitflowControllerTestHelpers) assertNumberOfPodsForNode(cl client.Clien
 	err := cl.List(context.TODO(), &client.ListOptions{}, &list)
 	s.NoError(err)
 
-	actualNumberOfPods, err := common.GetNumberOfPodsForNode(cl, nodeName)
+	actualNumberOfPods, err := s.getNumberOfPodsForNode(cl, nodeName)
 	s.NoError(err)
 	s.Equal(expectedNumberOfPods, actualNumberOfPods)
+}
+
+func (s *BitflowControllerTestHelpers) getNumberOfPodsForNode(cli client.Client, nodeName string) (int, error) {
+	var podList corev1.PodList
+	err := cli.List(context.TODO(), &client.ListOptions{}, &podList)
+
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	for _, pod := range podList.Items {
+		if common.GetTargetNode(&pod) == nodeName {
+			count++
+		}
+	}
+
+	return count, nil
 }

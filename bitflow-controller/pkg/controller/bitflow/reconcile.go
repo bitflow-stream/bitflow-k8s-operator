@@ -33,20 +33,21 @@ func (r *BitflowReconciler) Reconcile(req reconcile.Request) (result reconcile.R
 
 	if isStepReconcile {
 		logger.Debugf("Reconciling step")
-		r.updatePodStatus(stepName, logger)
+		r.updatePodStatusFromName(stepName, logger)
 	} else {
-		log.Debugln("Auto-reconcile loop triggered")
+		log.Debugln("Reconciling all steps")
+		r.updateAllPodStatus()
 	}
-
-	// Manage automatically created output data sources
-	r.reconcileOutputSources()
 	r.statistic.PodsUpdated(time.Now().Sub(start))
 
 	// TODO control, how often and when the schedule/spawn routine is triggered
 	// TODO update pods for ALL steps before making modifications to pods?
 
 	// After updating the pod status, do the actual pod modifications (start/delete)
-	r.spawnPodsPeriodically()
+	r.ensurePodsPeriodically()
+
+	// Manage automatically created output data sources
+	r.reconcileOutputSources()
 
 	// Make sure the regular automatic reconcile is triggered again
 	if !isStepReconcile {
@@ -57,9 +58,29 @@ func (r *BitflowReconciler) Reconcile(req reconcile.Request) (result reconcile.R
 	return
 }
 
-func (r *BitflowReconciler) updatePodStatus(stepName string, logger *log.Entry) {
-	pods, step, err := r.constructPodsForStep(stepName)
+func (r *BitflowReconciler) updateAllPodStatus() {
+	steps, err := r.listAllSteps()
+	if err != nil {
+		log.Errorln("Failed to list all steps:", err)
+		return
+	}
+	for _, step := range steps {
+		r.updatePodStatus(step.Name, step, log.WithField("step", step.Name))
+	}
+}
+
+func (r *BitflowReconciler) updatePodStatusFromName(stepName string, logger *log.Entry) {
+	step, err := common.GetStep(r.client, stepName, r.namespace)
 	if err != nil && !errors.IsNotFound(err) {
+		logger.Errorf("Failed to load step %v: %v", stepName, err)
+		// Do NOT return here, clean up (delete) pods from failed/missing step
+	}
+	r.updatePodStatus(stepName, step, logger)
+}
+
+func (r *BitflowReconciler) updatePodStatus(stepName string, step *bitflowv1.BitflowStep, logger *log.Entry) {
+	pods, err := r.constructPodsForStep(step)
+	if err != nil {
 		logger.Errorln("Failed to construct pods for step:", err)
 		// Do NOT return here, clean up (delete) pods from failed step
 	}
@@ -77,16 +98,17 @@ func (r *BitflowReconciler) updatePodStatus(stepName string, logger *log.Entry) 
 	r.pods.CleanupStep(stepName, existingPodNames)
 }
 
-func (r *BitflowReconciler) constructPodsForStep(stepName string) (map[*corev1.Pod][]*bitflowv1.BitflowSource, *bitflowv1.BitflowStep, error) {
-	// Load and validate the step
-	step, err := common.GetStep(r.client, stepName, r.namespace)
-	if err != nil {
-		return nil, nil, err
+func (r *BitflowReconciler) constructPodsForStep(step *bitflowv1.BitflowStep) (map[*corev1.Pod][]*bitflowv1.BitflowSource, error) {
+	if step == nil {
+		// Error was already logged
+		return nil, nil
 	}
+
+	// Validate the step
 	logger := step.Log()
 	if isStepValid := r.validateStep(step, logger); !isStepValid {
 		logger.Debugln("Step validation failed:", step.Status.ValidationError)
-		return nil, nil, fmt.Errorf("Validation error in step: %v", step.Status.ValidationError)
+		return nil, fmt.Errorf("Validation error in step: %v", step.Status.ValidationError)
 	}
 
 	// Construct all pods for the step
@@ -97,14 +119,14 @@ func (r *BitflowReconciler) constructPodsForStep(stepName string) (map[*corev1.P
 	}
 	switch stepType := step.Type(); stepType {
 	case bitflowv1.StepTypeSingleton:
-		return r.constructSingletonPod(step, nil), step, nil
+		return r.constructSingletonPod(step, nil), nil
 	case bitflowv1.StepTypeOneToOne:
-		return r.constructOneToOnePods(step, matchedSources), step, nil
+		return r.constructOneToOnePods(step, matchedSources), nil
 	case bitflowv1.StepTypeAllToOne:
-		return r.constructAllToOnePod(step, matchedSources), step, nil
+		return r.constructAllToOnePod(step, matchedSources), nil
 	default:
 		// Unknown step type, should have been detected in validateStep()
-		return nil, nil, fmt.Errorf("Cannot handle unknown step type: %v", stepType)
+		return nil, fmt.Errorf("Cannot handle unknown step type: %v", stepType)
 	}
 }
 
@@ -120,7 +142,7 @@ func (r *BitflowReconciler) validateStep(step *bitflowv1.BitflowStep, logger *lo
 	return step.Status.ValidationError == ""
 }
 
-func (r *BitflowReconciler) spawnPodsPeriodically() {
+func (r *BitflowReconciler) ensurePodsPeriodically() {
 	now := time.Now()
 	period := r.config.GetSpawnPeriod()
 
@@ -128,9 +150,9 @@ func (r *BitflowReconciler) spawnPodsPeriodically() {
 	last := r.lastSpawnRoutine
 	if last.IsZero() || now.Sub(last) >= period {
 		r.lastSpawnRoutine = now
-		log.Debugln("Scheduling/deleting pods...")
+		log.Debugf("Scheduling/deleting pods. Currently ensuring %v pod(s).", r.pods.Len())
 		startTimestamp := time.Now()
-		r.spawnPods()
+		r.ensurePods()
 		r.statistic.PodsSpawned(time.Now().Sub(startTimestamp))
 	}
 }

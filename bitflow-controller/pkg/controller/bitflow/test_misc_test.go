@@ -1,8 +1,6 @@
 package bitflow
 
 import (
-	"fmt"
-
 	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 )
 
@@ -24,14 +22,6 @@ func (s *MiscTestSuite) TestHashFunction() {
 func (s *MiscTestSuite) TestBuildDataSource() {
 	urlString := buildDataSource("podname", "127.0.0.1", 8888)
 	s.NotEmpty(urlString, "Expected a valid url but it is empty")
-}
-
-func (s *MiscTestSuite) TestRequeueError() {
-	err := fmt.Errorf("Random error")
-	requeue := NewRequeueError(err)
-	s.False(isRequeueError(err))
-	s.True(isRequeueError(requeue))
-	s.False(isRequeueError(nil))
 }
 
 func (s *MiscTestSuite) TestOwnerRefs() {

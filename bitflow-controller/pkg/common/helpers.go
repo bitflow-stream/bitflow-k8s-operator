@@ -1,11 +1,9 @@
 package common
 
 import (
-	"context"
 	"crypto/sha1"
 	"fmt"
 	"regexp"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -27,24 +25,6 @@ var (
 
 func IsBeingDeleted(pod *corev1.Pod) bool {
 	return pod.DeletionTimestamp != nil
-}
-
-func GetNodeName(pod *corev1.Pod) string {
-	if pod.Spec.NodeName != "" {
-		return pod.Spec.NodeName
-	}
-
-	// TODO Check, in what cases pod.Spec.NodeName is not set
-	// Avoid panic, check the entire object path for nil values and empty slices
-	a := pod.Spec.Affinity
-	if a != nil && a.NodeAffinity != nil && a.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-		t := a.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
-		if len(t) > 0 && len(t[0].MatchExpressions) > 0 && len(t[0].MatchExpressions[0].Values) > 0 {
-			return t[0].MatchExpressions[0].Values[0]
-		}
-	}
-
-	return ""
 }
 
 func HashName(prefix string, hashInputStrings ...string) string {
@@ -74,27 +54,27 @@ func CleanDnsName(name string) string {
 	return name
 }
 
-func GetNumberOfPodsForNode(cli client.Client, nodeName string) (int, error) {
-	var podList corev1.PodList
-	err := cli.List(context.TODO(), &client.ListOptions{}, &podList)
-
-	if err != nil {
-		return 0, err
-	}
-
-	count := 0
-	for _, pod := range podList.Items {
-		if GetNodeName(&pod) == nodeName {
-			count++
+func GetTargetNode(pod *corev1.Pod) string {
+	// Avoid panic, check the entire object path for nil values and empty slices
+	// This expression must match SetTargetNode()
+	a := pod.Spec.Affinity
+	if a != nil && a.NodeAffinity != nil && a.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+		t := a.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+		if len(t) > 0 && len(t[0].MatchExpressions) > 0 && len(t[0].MatchExpressions[0].Values) > 0 {
+			return t[0].MatchExpressions[0].Values[0]
 		}
 	}
 
-	return count, nil
+	return ""
 }
 
-func SetTargetNode(node *corev1.Node, pod *corev1.Pod) {
+func SetTargetNode(pod *corev1.Pod, node *corev1.Node) {
+	SetTargetNodeName(pod, node.Labels[HostnameLabel])
+}
+
+func SetTargetNodeName(pod *corev1.Pod, nodeName string) {
 	affinity := getRequiredNodeAffinity()
-	setLabelSelector(affinity, HostnameLabel, node.Labels[HostnameLabel])
+	setLabelSelector(affinity, HostnameLabel, nodeName)
 	pod.Spec.Affinity = affinity
 }
 

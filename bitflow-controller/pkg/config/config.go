@@ -73,6 +73,16 @@ func (config *Config) Validate() error {
 	return err
 }
 
+func (config *Config) SilentlyUseDefaults(keys ...string) {
+	for _, key := range keys {
+		config.loggedMissingKeys[key] = true
+	}
+}
+
+func (config *Config) SilentlyUseAllDefaults() {
+	config.SilentlyUseDefaults(AllConfigKes...)
+}
+
 func (config *Config) getStringParam(key string) (string, bool, error) {
 	if config.cache != nil {
 		if value, ok := config.cache[key]; ok {

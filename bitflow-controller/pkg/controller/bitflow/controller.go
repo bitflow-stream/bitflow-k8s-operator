@@ -99,9 +99,7 @@ func startReconciler(mgr manager.Manager, watchNamespace string) error {
 
 func (r *BitflowReconciler) startWatchers(mgr manager.Manager, params ControllerParameters) error {
 	err := mgr.GetFieldIndexer().IndexField(&corev1.Pod{}, "spec.nodeName", func(o runtime.Object) []string {
-		node := common.GetNodeName(o.(*corev1.Pod))
-		res := []string{node}
-		return res
+		return []string{common.GetTargetNode(o.(*corev1.Pod))}
 	})
 	if err != nil {
 		return err

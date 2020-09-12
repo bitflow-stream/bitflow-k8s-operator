@@ -38,7 +38,7 @@ func PatchOneToOnePod(pod *corev1.Pod, step *bitflowv1.BitflowStep, source *bitf
 
 	sourceString := buildDataSource(pod.Name, apiIP, apiPort)
 	extraEnv[PodEnvOneToOneSourceName] = source.Name
-	extraEnv[PodEnvOneToOneSourceLabels] = golib.FormatMap(source.Labels)
+	extraEnv[PodEnvOneToOneSourceLabels] = golib.FormatSortedMap(source.Labels)
 	extraEnv[PodEnvOneToOneSourceUrl] = source.Spec.URL
 	extraLabels[bitflowv1.PodLabelOneToOneSourceName] = source.Name
 	patchPodMeta(pod, step, sourceString, extraLabels, extraEnv)

@@ -34,7 +34,7 @@ func (r *BitflowReconciler) constructOneToOnePods(step *bitflowv1.BitflowStep, m
 	pods := make(map[*corev1.Pod][]*bitflowv1.BitflowSource, len(matchedSources))
 	for _, source := range matchedSources {
 		name := ConstructReproduciblePodName(step.Name, source.Name)
-		pod := r.constructPod(name, true, step, matchedSources)
+		pod := r.constructPod(name, true, step, []*bitflowv1.BitflowSource{source})
 		pods[pod] = []*bitflowv1.BitflowSource{source}
 	}
 	return pods

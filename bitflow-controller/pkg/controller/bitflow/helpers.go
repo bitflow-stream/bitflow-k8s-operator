@@ -15,18 +15,24 @@ import (
 )
 
 func (r *BitflowReconciler) waitForCacheSync() {
-	log.Debugln("Started cache sync")
 	stopper := make(chan struct{})
-	r.cache.WaitForCacheSync(stopper)
+	if !r.cache.WaitForCacheSync(stopper) {
+		log.Warnln("Could not sync caches")
+	}
 	close(stopper)
-	log.Debugln("Finished cache sync")
 }
 
 func (r *BitflowReconciler) deletePod(pod *corev1.Pod, logger *log.Entry, reason string) bool {
 	if !common.IsBeingDeleted(pod) {
+		gracePeriod := r.config.GetDeleteGracePeriod()
+		var delOpt client.DeleteOptionFunc
+		if gracePeriod >= 0 {
+			delOpt = client.GracePeriodSeconds(int64(gracePeriod.Seconds()))
+		}
+
 		logger = logger.WithField("pod", pod.Name)
 		logger.Infof("Deleting pod (%v)", reason)
-		if err := r.client.Delete(context.TODO(), pod); err != nil {
+		if err := r.client.Delete(context.TODO(), pod, delOpt); err != nil {
 			logger.Errorf("Failed to delete pod (%v): %v", reason, err)
 		} else {
 			return true
@@ -43,6 +49,10 @@ func (r *BitflowReconciler) listPodsForStep(stepName string) (*corev1.PodList, e
 		err = fmt.Errorf("Failed to query matching pods: %v", err)
 	}
 	return &allPods, err
+}
+
+func (r *BitflowReconciler) genericSelector() labels.Selector {
+	return labels.SelectorFromSet(r.idLabels)
 }
 
 func (r *BitflowReconciler) selectorForStep(stepName string) labels.Selector {
@@ -76,6 +86,10 @@ func (r *BitflowReconciler) listMatchingSources(step *bitflowv1.BitflowStep) ([]
 	return matchedSources, nil
 }
 
+func (r *BitflowReconciler) listAllSteps() ([]*bitflowv1.BitflowStep, error) {
+	return r.listMatchingSteps(nil)
+}
+
 func (r *BitflowReconciler) listMatchingSteps(source *bitflowv1.BitflowSource) ([]*bitflowv1.BitflowStep, error) {
 	allSteps, err := common.GetSteps(r.client, r.namespace)
 	if err != nil {
@@ -85,19 +99,23 @@ func (r *BitflowReconciler) listMatchingSteps(source *bitflowv1.BitflowSource) (
 	// TODO instead of loading ALL sources and filtering them manually, construct a selector from step.Spec.Ingest
 	var matchedSteps []*bitflowv1.BitflowStep
 	for _, step := range allSteps {
-		if step.Matches(source.Labels) {
+		if source == nil || step.Matches(source.Labels) {
 			matchedSteps = append(matchedSteps, step)
 		}
 	}
 	return matchedSteps, nil
 }
 
-func (r *BitflowReconciler) deleteObject(obj runtime.Object, errMsg string, fmtParams ...interface{}) {
+func (r *BitflowReconciler) deleteObject(obj runtime.Object, errMsg string, fmtParams ...interface{}) (ok bool) {
+	ok = true
 	if err := r.client.Delete(context.TODO(), obj); err != nil {
 		level := log.ErrorLevel
 		if errors.IsNotFound(err) {
 			level = log.DebugLevel
+		} else {
+			ok = false
 		}
 		log.StandardLogger().Logf(level, errMsg+": %v", append(fmtParams, err)...)
 	}
+	return
 }

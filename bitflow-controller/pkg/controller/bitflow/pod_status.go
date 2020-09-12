@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
+	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -14,20 +15,54 @@ type PodStatus struct {
 	step         *bitflowv1.BitflowStep
 	inputSources []*bitflowv1.BitflowSource
 
+	targetNode *corev1.Node
+	resources  *corev1.ResourceList
 	respawning bool
-	previousIP string
 }
 
 func (spec *PodStatus) CountContainer() int {
 	return len(spec.pod.Spec.Containers)
 }
 
+func (spec *PodStatus) TargetNode() string {
+	if spec.targetNode != nil {
+		return spec.targetNode.Name
+	}
+
+	// Usually, the spec.targetNode field should be set, but in case the controller is restarted, pods might already
+	// be running before the first scheduling.
+	return common.GetTargetNode(spec.pod)
+}
+
 func (spec *PodStatus) Log() *log.Entry {
-	return log.WithFields(log.Fields{
-		"pod":  spec.pod,
+	logger := log.WithFields(log.Fields{
+		"pod":  spec.pod.Name,
 		"step": spec.step.Name,
 		"type": spec.step.Type(),
 	})
+	if stepType := spec.step.Type(); stepType == bitflowv1.StepTypeOneToOne {
+		logger = logger.WithField("source", spec.inputSources[0].Name)
+	} else if stepType == bitflowv1.StepTypeAllToOne {
+		logger = logger.WithField("num-initial-sources", len(spec.inputSources))
+	}
+	if targetNode := spec.TargetNode(); targetNode != "" {
+		logger = logger.WithField("node", targetNode)
+	}
+	return logger
+}
+
+func (spec *PodStatus) Clone() *PodStatus {
+	if spec == nil {
+		return &PodStatus{} // Default values
+	}
+	return &PodStatus{
+		pod:          spec.pod,
+		step:         spec.step,
+		inputSources: spec.inputSources,
+		targetNode:   spec.targetNode,
+		resources:    spec.resources,
+		respawning:   spec.respawning,
+	}
 }
 
 type ManagedPods struct {
@@ -72,17 +107,22 @@ func (p *ManagedPods) CleanupStep(stepName string, existingPodNames map[string]b
 
 func (p *ManagedPods) Put(pod *corev1.Pod, step *bitflowv1.BitflowStep, inputSources []*bitflowv1.BitflowSource) {
 	p.Modify(func() {
-		entry := p.pods[pod.Name]
-
 		// Re-allocate to avoid data race
-		p.pods[pod.Name] = &PodStatus{
-			pod:          pod,
-			step:         step,
-			inputSources: inputSources,
+		entry := p.pods[pod.Name].Clone()
+		entry.pod = pod
+		entry.step = step
+		entry.inputSources = inputSources
+		p.pods[pod.Name] = entry
+	})
+}
 
-			// Copy these values, if an entry existed. Otherwise filled with default values.
-			respawning: entry.respawning,
-			previousIP: entry.previousIP,
+func (p *ManagedPods) UpdateExistingPod(pod *corev1.Pod) {
+	p.Modify(func() {
+		if entry, exists := p.pods[pod.Name]; exists {
+			// Re-allocate to avoid data race
+			entry = entry.Clone()
+			entry.pod = pod.DeepCopy()
+			p.pods[pod.Name] = entry
 		}
 	})
 }
@@ -91,25 +131,8 @@ func (p *ManagedPods) MarkRespawning(pod *corev1.Pod, isRespawning bool) {
 	p.Modify(func() {
 		if status, ok := p.pods[pod.Name]; ok {
 			status.respawning = isRespawning
-			if pod.Status.PodIP != "" {
-				status.previousIP = pod.Status.PodIP
-			}
 		}
 	})
-}
-
-func (p *ManagedPods) GetSteps() (result map[string]map[string]*PodStatus) {
-	p.Read(func() {
-		result = make(map[string]map[string]*PodStatus)
-		for _, pod := range p.pods {
-			pods, ok := result[pod.step.Name]
-			if !ok {
-				pods = make(map[string]*PodStatus)
-			}
-			pods[pod.pod.Name] = pod
-		}
-	})
-	return
 }
 
 func (p *ManagedPods) ListRespawningPods() (result []string) {
@@ -122,45 +145,4 @@ func (p *ManagedPods) ListRespawningPods() (result []string) {
 		}
 	})
 	return
-}
-
-func (p *ManagedPods) IsPodRespawning(name string) (pod *PodStatus, isRespawning bool) {
-	p.Read(func() {
-		pod, isRespawning = p.pods[name]
-		isRespawning = isRespawning && pod.respawning
-	})
-	return
-}
-
-func (p *ManagedPods) IsPodRestartingOnNode(podName, nodeName string) (PodStatus, bool) {
-	p.RLock()
-	defer p.RUnlock()
-	for key, value := range p.pods {
-		// Direktzugriff auf Spec.NodeName anstelle von GetNodeName(), da die Scheduling Affinity nicht berücksichtigt werden soll
-		if podName == key && value.pod.Spec.NodeName == nodeName {
-			return value, true
-		}
-	}
-	return PodStatus{}, false
-}
-
-func (p *ManagedPods) CountRestarting(pods []*corev1.Pod, currentPod, currentNode string) int {
-	var count int
-	var found bool
-	p.RLock()
-	defer p.RUnlock()
-	for key, value := range p.pods {
-		found = false
-		for _, pod := range pods {
-			if pod.Name == key {
-				found = true
-			}
-		}
-		// Direktzugriff auf Spec.NodeName anstelle von GetNodeName(), da die Scheduling Affinity nicht berücksichtigt werden soll
-		if !found && key != currentPod && value.pod.Spec.NodeName == currentNode {
-			log.Debugln("count containers ", key)
-			count += value.CountContainer()
-		}
-	}
-	return count
 }
