@@ -1514,3 +1514,76 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenThresholdIsGre
 
 	s.NotNil(err)
 }
+
+func (s *SkdTestSuite) Test_shouldSortPodsTopologically() {
+	sortedPods, err := sortPodsUsingKahnsAlgorithm([]*PodData{
+		{
+			name:             "011(also-sends-to-010)",
+			receivesDataFrom: []string{"01"},
+			sendsDataTo:      []string{"010(also-sends-to-001)"},
+		},
+		{
+			name:             "010(also-sends-to-001)",
+			receivesDataFrom: []string{"01", "011(also-sends-to-010)"},
+			sendsDataTo:      []string{"001"},
+		},
+		{
+			name:             "001",
+			receivesDataFrom: []string{"00(also-sends-to-010)", "010(also-sends-to-001)"},
+			sendsDataTo:      []string{},
+		},
+		{
+			name:             "003",
+			receivesDataFrom: []string{"00(also-sends-to-010)"},
+			sendsDataTo:      []string{},
+		},
+		{
+			name:             "002",
+			receivesDataFrom: []string{"00(also-sends-to-010)"},
+			sendsDataTo:      []string{},
+		},
+		{
+			name:             "00(also-sends-to-010)",
+			receivesDataFrom: []string{"0"},
+			sendsDataTo:      []string{"001", "002", "003", "010(also-sends-to-001)"},
+		},
+		{
+			name:             "0",
+			receivesDataFrom: []string{},
+			sendsDataTo:      []string{"00(also-sends-to-010)", "01"},
+		},
+		{
+			name:             "01",
+			receivesDataFrom: []string{"0"},
+			sendsDataTo:      []string{"010(also-sends-to-001)", "011(also-sends-to-010)"},
+			dataSourceNodes:  []string{"test"},
+			curve: Curve{
+				a: 1,
+				b: 2,
+				c: 3,
+				d: 4,
+			},
+			minimumMemory:        22,
+			maximumExecutionTime: 23,
+		},
+	})
+
+	s.Nil(err)
+	s.Equal("0", sortedPods[0].name)
+	s.Equal("00(also-sends-to-010)", sortedPods[1].name)
+	s.Equal("01", sortedPods[2].name)
+	s.Equal("002", sortedPods[3].name)
+	s.Equal("003", sortedPods[4].name)
+	s.Equal("011(also-sends-to-010)", sortedPods[5].name)
+	s.Equal("010(also-sends-to-001)", sortedPods[6].name)
+	s.Equal("001", sortedPods[7].name)
+
+	// making sure other fields are copied properly
+	s.Equal("test", sortedPods[2].dataSourceNodes[0])
+	s.Equal(1.0, sortedPods[2].curve.a)
+	s.Equal(2.0, sortedPods[2].curve.b)
+	s.Equal(3.0, sortedPods[2].curve.c)
+	s.Equal(4.0, sortedPods[2].curve.d)
+	s.Equal(22.0, sortedPods[2].minimumMemory)
+	s.Equal(23.0, sortedPods[2].maximumExecutionTime)
+}

@@ -53,6 +53,85 @@ type AdvancedScheduler struct {
 	previousScheduling map[string]string
 }
 
+func sortPodsUsingKahnsAlgorithm(pods []*PodData) ([]PodData, error) {
+	var initialPods []PodData
+	for _, pod := range pods {
+		podCopy := PodData{
+			// TODO remove TODO at very end -> did fields get added to PodData? Add here too.
+			name:                 pod.name,
+			curve:                pod.curve,
+			dataSourceNodes:      make([]string, len(pod.dataSourceNodes)),
+			receivesDataFrom:     make([]string, len(pod.receivesDataFrom)),
+			sendsDataTo:          make([]string, len(pod.sendsDataTo)),
+			minimumMemory:        pod.minimumMemory,
+			maximumExecutionTime: pod.maximumExecutionTime,
+		}
+		copy(podCopy.dataSourceNodes, pod.dataSourceNodes)
+		copy(podCopy.receivesDataFrom, pod.receivesDataFrom)
+		copy(podCopy.sendsDataTo, pod.sendsDataTo)
+		initialPods = append(initialPods, podCopy)
+	}
+
+	sortedPodNames := []string{}
+	noIncomingEdgePods := []*PodData{}
+
+	for _, pod := range pods {
+		if len(pod.receivesDataFrom) == 0 {
+			noIncomingEdgePods = append(noIncomingEdgePods, pod)
+		}
+	}
+
+	for len(noIncomingEdgePods) != 0 {
+		newlySortedPod := noIncomingEdgePods[0]
+		noIncomingEdgePods = noIncomingEdgePods[1:]
+
+		sortedPodNames = append(sortedPodNames, newlySortedPod.name)
+
+		for _, receiverPodName := range newlySortedPod.sendsDataTo {
+			var receiverPod *PodData
+			for _, potentialReceiverPod := range pods {
+				if potentialReceiverPod.name == receiverPodName {
+					receiverPod = potentialReceiverPod
+					break
+				}
+			}
+			if receiverPod == nil || receiverPod.name == "" || receiverPod.name != receiverPodName || receiverPod.receivesDataFrom == nil || len(receiverPod.receivesDataFrom) == 0 {
+				return nil, errors.New(fmt.Sprintf("pod %s is referenced but does not exist or is missing correct receivesDataFrom entry", receiverPodName))
+			}
+			// remove edge (both ways)
+			newlySortedPod.sendsDataTo = newlySortedPod.sendsDataTo[1:]
+			for i, senderPodName := range receiverPod.receivesDataFrom {
+				if senderPodName == newlySortedPod.name {
+					// Remove the element at index i from receivedDataFrom
+					copy(receiverPod.receivesDataFrom[i:], receiverPod.receivesDataFrom[i+1:])                        // Shift a[i+1:] left one index.
+					receiverPod.receivesDataFrom[len(receiverPod.receivesDataFrom)-1] = ""                            // Erase last element (write zero value).
+					receiverPod.receivesDataFrom = receiverPod.receivesDataFrom[:len(receiverPod.receivesDataFrom)-1] // Truncate slice.
+					break
+				}
+			}
+			if len(receiverPod.receivesDataFrom) == 0 {
+				noIncomingEdgePods = append(noIncomingEdgePods, receiverPod)
+			}
+		}
+	}
+
+	for _, pod := range pods {
+		if len(pod.receivesDataFrom) != 0 || len(pod.sendsDataTo) != 0 {
+			return nil, errors.New(fmt.Sprintf("Pod %s has edge after sorting, make sure there is a 'receivesDataFrom' entry for every 'sendsDataTo' entry. Does the graph have a cycle?", pod.name))
+		}
+	}
+	sortedPods := []PodData{}
+	for _, podName := range sortedPodNames {
+		for _, pod := range initialPods {
+			if pod.name == podName {
+				sortedPods = append(sortedPods, pod)
+				break
+			}
+		}
+	}
+	return sortedPods, nil
+}
+
 func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state SystemState, podsLeft []*PodData) (SystemState, float64, error) {
 	if len(podsLeft) == 0 {
 		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
@@ -237,7 +316,7 @@ type PodData struct {
 	name                 string
 	dataSourceNodes      []string // list of node names
 	receivesDataFrom     []string // list of pod names
-	sendsDataTo		     []string // list of pod names TODO necessary?
+	sendsDataTo          []string // list of pod names TODO necessary?
 	curve                Curve
 	minimumMemory        float64 // memory in MB
 	maximumExecutionTime float64 // maximum execution time in ms
