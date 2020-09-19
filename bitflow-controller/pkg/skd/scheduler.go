@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+// TODO Error message am Ende: X Pods haben zu wenig CPU, Y Pods haben zu wenig Memory
+
 type Scheduler interface {
 	Schedule() (bool, map[string]string, error)
 }
@@ -41,6 +43,7 @@ func (eds EqualDistributionScheduler) Schedule() (bool, map[string]string, error
 	return true, m, nil
 }
 
+// TODO make available outside of package
 type AdvancedScheduler struct {
 	nodes              []*NodeData
 	pods               []*PodData
@@ -231,10 +234,13 @@ type NodeData struct {
 }
 
 type PodData struct {
-	name             string
-	receivesDataFrom []string // list of pod names
-	curve            Curve
-	minimumMemory    float64 // memory in MB
+	name                 string
+	dataSourceNodes      []string // list of node names
+	receivesDataFrom     []string // list of pod names
+	sendsDataTo		     []string // list of pod names TODO necessary?
+	curve                Curve
+	minimumMemory        float64 // memory in MB
+	maximumExecutionTime float64 // maximum execution time in ms
 }
 
 type Curve struct {
