@@ -174,16 +174,27 @@ func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state Syst
 	return lowestPenaltySystemState, lowestPenalty, nil
 }
 
-func getNodeStateByName(name string, state SystemState) (*NodeState, error) {
+func getNodeStateByName(nodeName string, state SystemState) (*NodeState, error) {
 	for _, nodeState := range state.nodes {
-		if nodeState.node.name == name {
+		if nodeState.node.name == nodeName {
 			return &nodeState, nil
 		}
 	}
 	return &NodeState{}, errors.New("could not find NodeState by name")
 }
 
-// TODO try scheduling on one of receivingFrom pods' nodes first
+func getNodeIndexOfNodeStateContainingPod(podName string, state SystemState) (int, error) {
+	for i := range state.nodes {
+		for _, pod := range state.nodes[i].pods {
+			if pod.name == podName {
+				return i, nil
+			}
+		}
+	}
+	return -1, errors.New(fmt.Sprintf("could not find NodeState which contains pod %s", podName))
+}
+
+// TODO test implementation thoroughly
 func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodData) (SystemState, float64, error) {
 	sortedPods, err := sortPodsUsingKahnsAlgorithm(pods)
 	if err != nil {
@@ -196,6 +207,7 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 
 		scheduledPod := false
 
+		// scheduling on dataSourceNode
 		for _, dataSourceNodeName := range sortedPods[podIndex].dataSourceNodes {
 			dataSourceNodeState, err := getNodeStateByName(dataSourceNodeName, state)
 			if err != nil {
@@ -232,6 +244,45 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 			scheduledPod = true
 			break
 		}
+		// scheduling on node which contains receivesDataFrom pod
+		if scheduledPod == false {
+			for _, receivedDataFromPodName := range sortedPods[podIndex].receivesDataFrom {
+				receivesDataFromNodeStateIndex, err := getNodeIndexOfNodeStateContainingPod(receivedDataFromPodName, state)
+				if err != nil {
+					return SystemState{}, -1, err
+				}
+
+				memoryPerPod, err := GetMemoryPerPod(state.nodes[receivesDataFromNodeStateIndex])
+				if err != nil {
+					return SystemState{}, -1, err
+				}
+				if memoryPerPod < sortedPods[podIndex].minimumMemory {
+					continue
+				}
+				cpuCoresPerPod, err := GetCpuCoresPerPod(state.nodes[receivesDataFromNodeStateIndex])
+				if err != nil {
+					return SystemState{}, -1, err
+				}
+				if CalculateExecutionTime(cpuCoresPerPod, sortedPods[podIndex].curve) > sortedPods[podIndex].maximumExecutionTime {
+					continue
+				}
+
+				for _, podOnNode := range state.nodes[receivesDataFromNodeStateIndex].pods {
+					if memoryPerPod < podOnNode.minimumMemory {
+						continue
+					}
+					if CalculateExecutionTime(cpuCoresPerPod, podOnNode.curve) > sortedPods[podIndex].maximumExecutionTime {
+						continue
+					}
+				}
+
+				state.nodes[receivesDataFromNodeStateIndex].pods = append(state.nodes[receivesDataFromNodeStateIndex].pods, &sortedPods[podIndex])
+				scheduledPod = true
+				break
+			}
+		}
+		// scheduling on as empty as possible node (memory wise)
+		// TODO currently schedules onto next allowed node, change so it chooses the most empty (memory wise) node
 		if scheduledPod == false {
 			for nodeIndex := range state.nodes {
 
@@ -266,11 +317,13 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 				break
 			}
 		}
+		// scheduling on random node
 		if scheduledPod == false {
 			// TODO choose more intelligently, prefer executionTime overrun over memory overrun
 			randomIndex := rand.Intn(len(state.nodes))
 			randomNodeState := &state.nodes[randomIndex]
 			randomNodeState.pods = append(randomNodeState.pods, &sortedPods[podIndex])
+			scheduledPod = true
 			// TODO print memory and executionTime overload
 			log.Error(fmt.Sprintf("Scheduled pod %s randomly on node %s because it didn't fit on any node", sortedPods[podIndex].name, randomNodeState.node.name))
 		}
