@@ -91,7 +91,7 @@ func (s *ResourcesTestSuite) TestPatchResourceLimitList() {
 func (s *ResourcesTestSuite) TestResourceAssignment1() {
 	stepName := "bitflow-step-1"
 	node := "node1"
-	sourceLabels := map[string]string{"nodename": node, "x": "y"}
+	sourceLabels := map[string]string{"bitflow-nodename": node, "x": "y"}
 	r := s.initReconciler(
 		s.Node(node), s.Step(stepName, "", "x", "y"), s.Source("source1", sourceLabels))
 
@@ -120,7 +120,7 @@ func (s *ResourcesTestSuite) assertPodResourceLimit(cl client.Client, stepName s
 func (s *ResourcesTestSuite) TestResourceAssignment2() {
 	stepName := "bitflow-step-1"
 	node := "node1"
-	sourceLabels := map[string]string{"nodename": node, "x": "y"}
+	sourceLabels := map[string]string{"bitflow-nodename": node, "x": "y"}
 	objects := s.addSources("source", common.TestNodeBufferInitSize, sourceLabels,
 		s.Node(node),
 		s.StepWithOutput(stepName, "", "out", map[string]string{"hello": "world"}, "x", "y"))
@@ -179,7 +179,7 @@ func (s *ResourcesTestSuite) TestResourceAssignment2() {
 func (s *ResourcesTestSuite) TestResourceAssignment3() {
 	stepName := "bitflow-step-1"
 	node := "node1"
-	sourceLabels := map[string]string{"nodename": node, "x": "y"}
+	sourceLabels := map[string]string{"bitflow-nodename": node, "x": "y"}
 
 	r := s.initReconciler(
 		s.addSources("source", common.TestNodeBufferInitSize, sourceLabels,
@@ -213,7 +213,7 @@ func (s *ResourcesTestSuite) TestResourceAssignment3() {
 func (s *ResourcesTestSuite) TestResourceAssignment4() {
 	stepName := "bitflow-step-1"
 	node := "node1"
-	sourceLabels := map[string]string{"nodename": node, "x": "y"}
+	sourceLabels := map[string]string{"bitflow-nodename": node, "x": "y"}
 
 	r := s.initReconciler(
 		s.addSources("source", common.TestNodeBufferInitSize, sourceLabels,

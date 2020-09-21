@@ -38,10 +38,10 @@ func (s *SchedulerTestSuite) testScheduler(schedulerName string, numReconciles i
 
 		numNodes := len(expectedPodsOnNodes)
 		objects := []runtime.Object{
-			s.Source("source1", map[string]string{"type": "input", "s": "a", "nodename": "node" + strconv.Itoa((numNodes+0)%numNodes)}),
-			s.Source("source2", map[string]string{"type": "input", "s": "b", "nodename": "node" + strconv.Itoa((numNodes+1)%numNodes)}),
-			s.Source("source3", map[string]string{"type": "input", "s": "c", "nodename": "node" + strconv.Itoa((numNodes+2)%numNodes)}),
-			s.Source("source4", map[string]string{"type": "input", "s": "d", "nodename": "node" + strconv.Itoa((numNodes+3)%numNodes)}),
+			s.Source("source1", map[string]string{"type": "input", "s": "a", "bitflow-nodename": "node" + strconv.Itoa((numNodes+0)%numNodes)}),
+			s.Source("source2", map[string]string{"type": "input", "s": "b", "bitflow-nodename": "node" + strconv.Itoa((numNodes+1)%numNodes)}),
+			s.Source("source3", map[string]string{"type": "input", "s": "c", "bitflow-nodename": "node" + strconv.Itoa((numNodes+2)%numNodes)}),
+			s.Source("source4", map[string]string{"type": "input", "s": "d", "bitflow-nodename": "node" + strconv.Itoa((numNodes+3)%numNodes)}),
 			s.StepWithOutput("step-one", v1.StepTypeOneToOne,
 				"out", map[string]string{"type": "processed"}, "type", "input"),
 			s.StepWithOutput("step-all", v1.StepTypeAllToOne,
@@ -58,7 +58,7 @@ func (s *SchedulerTestSuite) testScheduler(schedulerName string, numReconciles i
 		r := s.initReconciler(objects...)
 
 		// Configure the tested scheduler
-		s.SetConfigValue(r.client, "bitflow-config", "schedulers", schedulerName)
+		s.SetConfigValue(r.client, "bitflow-config", "scheduler", schedulerName)
 
 		// Make sure all pods and output sources are created
 		for i := 0; i < numReconciles; i++ {

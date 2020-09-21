@@ -39,6 +39,6 @@ spec:
             - name: POD_ID_LABELS
               value: "controller=bitflow,operator=bitflow"
             - name: CONCURRENT_RECONCILE
-              value: "3"
+              value: "1"
             - name: RECORD_STATISTICS
               value: "true"

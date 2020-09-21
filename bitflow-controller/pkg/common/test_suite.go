@@ -117,9 +117,10 @@ func (suite *AbstractTestSuite) ConfigMap(name string) *corev1.ConfigMap {
 			Labels:    nil,
 		},
 		Data: map[string]string{
-			"resource.buffer.init":   fmt.Sprintf("%v", TestNodeBufferInitSize),
-			"resource.buffer.factor": fmt.Sprintf("%v", TestNodeBufferFactor),
-			"resource.limit":         fmt.Sprintf("%v", TestNodeResourceLimit),
+			"resource.limit.slots":      fmt.Sprintf("%v", TestNodeBufferInitSize),
+			"resource.limit.slots.grow": fmt.Sprintf("%v", TestNodeBufferFactor),
+			"resource.limit":            fmt.Sprintf("%v", TestNodeResourceLimit),
+			"pod.spawn.period":          "0",
 		},
 	}
 }
