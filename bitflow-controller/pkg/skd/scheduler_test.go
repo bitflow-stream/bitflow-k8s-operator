@@ -39,7 +39,7 @@ func (s *SkdTestSuite) Test_EqualDistributionScheduler_shouldReturnCorrectMap() 
 }
 
 func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetworkPenalty() {
-	var scheduler Scheduler
+	var scheduler AdvancedScheduler
 	scheduler = AdvancedScheduler{
 		nodes: []*NodeData{
 			{
@@ -71,6 +71,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p1",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p7", "p8"},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -82,6 +83,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p2",
 				receivesDataFrom: []string{"p10"},
+				sendsDataTo:      []string{"p9"},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -93,6 +95,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p3",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p9"},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -104,6 +107,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p4",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -115,6 +119,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p5",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -126,6 +131,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p6",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -137,6 +143,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p7",
 				receivesDataFrom: []string{"p1"},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -148,6 +155,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p8",
 				receivesDataFrom: []string{"p1"},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -158,7 +166,8 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			},
 			{
 				name:             "p9",
-				receivesDataFrom: []string{"p2, p3"},
+				receivesDataFrom: []string{"p2", "p3"},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -170,6 +179,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p10",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p2"},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -181,6 +191,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p11",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -192,6 +203,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p12",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -203,6 +215,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			{
 				name:             "p13",
 				receivesDataFrom: []string{},
+				sendsDataTo:      []string{},
 				curve: Curve{
 					a: 6.71881241016441,
 					b: 0.0486498280492762,
@@ -213,10 +226,11 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 			},
 		},
 		networkPenalty:   0,
+		memoryPenalty:    10,
 		thresholdPercent: 10,
 	}
 
-	schedulingChanged, scheduledMap, err := scheduler.Schedule()
+	schedulingChanged, scheduledMap, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err)
 	s.True(schedulingChanged)
@@ -236,7 +250,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithoutNetwo
 }
 
 func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkPenalty() {
-	var scheduler Scheduler
+	var scheduler AdvancedScheduler
 	nodes := []*NodeData{
 		{
 			name:                    "n1",
@@ -412,10 +426,11 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkP
 		nodes:            nodes,
 		pods:             pods,
 		networkPenalty:   1_000_000,
+		memoryPenalty:    0,
 		thresholdPercent: 10,
 	}
 
-	schedulingChanged, scheduledMap, err := scheduler.Schedule()
+	schedulingChanged, scheduledMap, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err)
 	s.True(schedulingChanged)
@@ -430,7 +445,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkP
 }
 
 //func (s *SkdTestSuite) Test_AdvancedScheduler_shouldScheduleRealisticScenarioWithNetworkPenalty() {
-//	var scheduler Scheduler
+//	var scheduler AdvancedScheduler
 //	nodes := []*NodeData{
 //		{
 //			name:                    "n1",
@@ -935,10 +950,11 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkP
 //		nodes:            nodes,
 //		pods:             pods,
 //		networkPenalty:   1_000,
+//		memoryPenalty: 100,
 //		thresholdPercent: 10,
 //	}
 //
-//	schedulingChanged, scheduledMap, err := scheduler.Schedule()
+//	schedulingChanged, scheduledMap, err := scheduler.ScheduleCheckingAllPermutations()
 //
 //	s.Nil(err)
 //	s.True(schedulingChanged)
@@ -953,7 +969,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkP
 //}
 
 func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasNotChangedWithThreshold() {
-	var scheduler Scheduler
+	var scheduler AdvancedScheduler
 	nodes := []*NodeData{
 		{
 			name:                    "n1",
@@ -1065,7 +1081,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasNotCha
 		thresholdPercent: 10,
 	}
 
-	schedulingChanged1, scheduledMap, err1 := scheduler.Schedule()
+	schedulingChanged1, scheduledMap, err1 := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err1)
 	s.True(schedulingChanged1)
@@ -1077,14 +1093,14 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasNotCha
 		previousScheduling: scheduledMap,
 	}
 
-	schedulingChanged2, _, err2 := scheduler.Schedule()
+	schedulingChanged2, _, err2 := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err2)
 	s.False(schedulingChanged2)
 }
 
 func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasChangedWithoutThreshold() {
-	var scheduler Scheduler
+	var scheduler AdvancedScheduler
 	nodes := []*NodeData{
 		{
 			name:                    "n1",
@@ -1195,7 +1211,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasChange
 		pods:  pods,
 	}
 
-	schedulingChanged1, scheduledMap, err1 := scheduler.Schedule()
+	schedulingChanged1, scheduledMap, err1 := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err1)
 	s.True(schedulingChanged1)
@@ -1206,7 +1222,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasChange
 		previousScheduling: scheduledMap,
 	}
 
-	schedulingChanged2, _, err2 := scheduler.Schedule()
+	schedulingChanged2, _, err2 := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err2)
 	s.True(schedulingChanged2)
@@ -1255,7 +1271,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldNotThrowErrorWhenAllNecessar
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.Nil(err)
 }
@@ -1286,7 +1302,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeMemoryIsMi
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1318,7 +1334,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeMemoryIs0(
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1349,7 +1365,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeResourceLi
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1381,7 +1397,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenNodeResourceLi
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1412,7 +1428,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenPodMinimumMemo
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1444,7 +1460,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenPodMinimumMemo
 		},
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1477,7 +1493,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenThresholdIsLes
 		thresholdPercent: -1,
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }
@@ -1510,7 +1526,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldThrowErrorWhenThresholdIsGre
 		thresholdPercent: 101,
 	}
 
-	_, _, err := scheduler.Schedule()
+	_, _, err := scheduler.ScheduleCheckingAllPermutations()
 
 	s.NotNil(err)
 }

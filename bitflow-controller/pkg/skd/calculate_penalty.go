@@ -33,25 +33,61 @@ func NodeContainsPod(nodeState NodeState, podName string) bool {
 	return false
 }
 
+func GetCpuCoresPerPodAddingPods(nodeState *NodeState, addingPods int) (float64, error) {
+	if nodeState.node == nil {
+		return -1, errors.New("nodeData is nil")
+	}
+	nodeData := nodeState.node
+	numberOfPodSlots, err := GetNumberOfPodSlots(nodeData, len(nodeState.pods)+addingPods)
+	if err != nil {
+		return -1, err
+	}
+	return nodeData.allocatableCpu * nodeData.resourceLimit / float64(numberOfPodSlots), nil
+}
+
+func GetCpuCoresPerPod(nodeState NodeState) (float64, error) {
+	return GetCpuCoresPerPodAddingPods(&nodeState, 0)
+}
+
+func GetMemoryPerPodAddingPods(nodeState *NodeState, addingPods int) (float64, error) {
+	if nodeState.node == nil {
+		return -1, errors.New("nodeData is nil")
+	}
+	nodeData := nodeState.node
+	numberOfPodSlots, err := GetNumberOfPodSlots(nodeData, len(nodeState.pods)+addingPods)
+	if err != nil {
+		return -1, err
+	}
+	return nodeData.memory * nodeData.resourceLimit / float64(numberOfPodSlots), nil
+}
+
+func GetMemoryPerPod(nodeState NodeState) (float64, error) {
+	return GetMemoryPerPodAddingPods(&nodeState, 0)
+}
+
 func CalculatePenalty(state SystemState, networkPenalty float64, memoryPenalty float64) (float64, error) {
 	var penalty = 0.0
 
 	for _, nodeState := range state.nodes {
-		nodeData := nodeState.node
-
-		numberOfPodSlots, err := GetNumberOfPodSlots(nodeData, len(nodeState.pods))
+		cpuCoresPerPod, err := GetCpuCoresPerPod(nodeState)
 		if err != nil {
 			return -1, err
 		}
 
-		cpuCoresPerPod := nodeData.allocatableCpu * nodeData.resourceLimit / float64(numberOfPodSlots)
-
-		memoryPerPod := nodeData.memory * nodeData.resourceLimit / float64(numberOfPodSlots)
+		memoryPerPod, err := GetMemoryPerPod(nodeState)
+		if err != nil {
+			return -1, err
+		}
 
 		for _, podData := range nodeState.pods {
 			penalty += CalculateExecutionTime(cpuCoresPerPod, podData.curve)
 			for _, receivesDataFrom := range podData.receivesDataFrom {
 				if !NodeContainsPod(nodeState, receivesDataFrom) {
+					penalty += networkPenalty
+				}
+			}
+			for _, dataSourceNodeName := range podData.dataSourceNodes {
+				if nodeState.node.name != dataSourceNodeName {
 					penalty += networkPenalty
 				}
 			}

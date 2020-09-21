@@ -3,6 +3,8 @@ package skd
 import (
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	"math/rand"
 )
 
 // TODO Error message am Ende: X Pods haben zu wenig CPU, Y Pods haben zu wenig Memory
@@ -172,50 +174,114 @@ func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state Syst
 	return lowestPenaltySystemState, lowestPenalty, nil
 }
 
-func (as AdvancedScheduler) findGoodScheduling(state SystemState, podsLeft []*PodData, currentlyLowestPenalty float64) (SystemState, float64, error) {
-	if len(podsLeft) == 0 {
-		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
-		calculationCount++
-		return state, penalty, err
-	} else if currentlyLowestPenalty != -1 {
-		penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
-		// TODO score might be lowered by added pods which communicate (removing network-penalty), needs to be taken into account
-		if err != nil || penalty > currentlyLowestPenalty {
-			return state, penalty, errors.New("permutation does not have lower penalty, skipping")
+func getNodeStateByName(name string, state SystemState) (*NodeState, error) {
+	for _, nodeState := range state.nodes {
+		if nodeState.node.name == name {
+			return &nodeState, nil
 		}
 	}
+	return &NodeState{}, errors.New("could not find NodeState by name")
+}
 
-	currentPod := podsLeft[0]
+// TODO try scheduling on one of receivingFrom pods' nodes first
+func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodData) (SystemState, float64, error) {
+	sortedPods, err := sortPodsUsingKahnsAlgorithm(pods)
+	if err != nil {
+		return state, -1, err
+	}
 
-	var lowestPenalty float64 = -1
-	var lowestPenaltySystemState SystemState
+	for podIndex := range sortedPods {
 
-	for i, nodeState := range state.nodes {
-		nodeState.pods = append(nodeState.pods, currentPod)
-		state.nodes[i] = nodeState
-		newSystemState, currentPenalty, err := as.findGoodScheduling(state, podsLeft[1:], lowestPenalty)
-		if err != nil {
-			state.nodes[i].pods = removeLastPodFromSlice(state.nodes[i].pods)
-			continue
+		// ↓ scheduling each pod ↓
+
+		scheduledPod := false
+
+		for _, dataSourceNodeName := range sortedPods[podIndex].dataSourceNodes {
+			dataSourceNodeState, err := getNodeStateByName(dataSourceNodeName, state)
+			if err != nil {
+				return SystemState{}, -1, err
+			}
+
+			// ↓ iterating dataSourceNodeStates ↓
+
+			memoryPerPod, err := GetMemoryPerPodAddingPods(dataSourceNodeState, 1)
+			if err != nil {
+				return SystemState{}, -1, err
+			}
+			if memoryPerPod < sortedPods[podIndex].minimumMemory {
+				continue
+			}
+			cpuCoresPerPod, err := GetCpuCoresPerPodAddingPods(dataSourceNodeState, 1)
+			if err != nil {
+				return SystemState{}, -1, err
+			}
+			if CalculateExecutionTime(cpuCoresPerPod, sortedPods[podIndex].curve) > sortedPods[podIndex].maximumExecutionTime {
+				continue
+			}
+
+			for _, podOnNode := range dataSourceNodeState.pods {
+				if memoryPerPod < podOnNode.minimumMemory {
+					continue
+				}
+				if CalculateExecutionTime(cpuCoresPerPod, podOnNode.curve) > sortedPods[podIndex].maximumExecutionTime {
+					continue
+				}
+			}
+
+			dataSourceNodeState.pods = append(dataSourceNodeState.pods, &sortedPods[podIndex])
+			scheduledPod = true
+			break
 		}
-		if lowestPenalty == -1 || currentPenalty < lowestPenalty {
-			lowestPenalty = currentPenalty
+		if scheduledPod == false {
+			for nodeIndex := range state.nodes {
 
-			// copying "manually" to prevent lowestPenaltySystemState and newSystemState from having the same memory address, which leads to problems
-			lowestPenaltySystemState = SystemState{}
-			for _, newSystemStateNodeState := range newSystemState.nodes {
-				lowestPenaltySystemState.nodes = append(lowestPenaltySystemState.nodes, newSystemStateNodeState)
+				// ↓ iterating nodeStates ↓
+
+				memoryPerPod, err := GetMemoryPerPod(state.nodes[nodeIndex])
+				if err != nil {
+					return SystemState{}, -1, err
+				}
+				if memoryPerPod < sortedPods[podIndex].minimumMemory {
+					continue
+				}
+				cpuCoresPerPod, err := GetCpuCoresPerPod(state.nodes[nodeIndex])
+				if err != nil {
+					return SystemState{}, -1, err
+				}
+				if CalculateExecutionTime(cpuCoresPerPod, sortedPods[podIndex].curve) > sortedPods[podIndex].maximumExecutionTime {
+					continue
+				}
+
+				for _, podOnNode := range state.nodes[nodeIndex].pods {
+					if memoryPerPod < podOnNode.minimumMemory {
+						continue
+					}
+					if CalculateExecutionTime(cpuCoresPerPod, podOnNode.curve) > sortedPods[podIndex].maximumExecutionTime {
+						continue
+					}
+				}
+
+				state.nodes[nodeIndex].pods = append(state.nodes[nodeIndex].pods, &sortedPods[podIndex])
+				scheduledPod = true
+				break
 			}
 		}
+		if scheduledPod == false {
+			// TODO choose more intelligently, prefer executionTime overrun over memory overrun
+			randomIndex := rand.Intn(len(state.nodes))
+			randomNodeState := &state.nodes[randomIndex]
+			randomNodeState.pods = append(randomNodeState.pods, &sortedPods[podIndex])
+			// TODO print memory and executionTime overload
+			log.Error(fmt.Sprintf("Scheduled pod %s randomly on node %s because it didn't fit on any node", sortedPods[podIndex].name, randomNodeState.node.name))
+		}
+	}
+	penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
 
-		state.nodes[i].pods = removeLastPodFromSlice(state.nodes[i].pods)
+	if err != nil {
+		return SystemState{}, -1, err
 	}
 
-	if lowestPenalty == -1 {
-		return SystemState{}, -1, errors.New("pod " + currentPod.name + " could not be scheduled onto any node")
-	}
-
-	return lowestPenaltySystemState, lowestPenalty, nil
+	return state, penalty, nil
 }
 
 func removeLastPodFromSlice(pods []*PodData) []*PodData {
@@ -275,10 +341,47 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 		})
 	}
 
+	bestDistributionState, bestDistributionPenalty, err := as.findGoodScheduling(systemState, as.pods)
+
+	if as.previousScheduling != nil {
+		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
+		if err == nil && !NewDistributionPenaltyLowerConsideringThreshold(previousPenalty, bestDistributionPenalty, as.thresholdPercent) {
+			return false, nil, nil
+		}
+	}
+
+	if err != nil {
+		return false, nil, err
+	}
+
+	m := make(map[string]string)
+	for _, nodeState := range bestDistributionState.nodes {
+		nodeName := nodeState.node.name
+		for _, pod := range nodeState.pods {
+			m[pod.name] = nodeName
+		}
+	}
+
+	println(fmt.Sprintf("Penalty: %f", bestDistributionPenalty))
+	return true, m, nil
+}
+
+func (as AdvancedScheduler) ScheduleCheckingAllPermutations() (bool, map[string]string, error) {
+	if err := validateAdvancedScheduler(as); err != nil {
+		return false, nil, err
+	}
+
+	systemState := SystemState{[]NodeState{}}
+	for _, node := range as.nodes {
+		systemState.nodes = append(systemState.nodes, NodeState{
+			node: node,
+			pods: []*PodData{},
+		})
+	}
+
 	calculationCount = 0
 
-	//bestDistributionState, bestDistributionPenalty, err := as.findBestSchedulingCheckingAllPermutations(systemState, as.pods)
-	bestDistributionState, bestDistributionPenalty, err := as.findGoodScheduling(systemState, as.pods, -1)
+	bestDistributionState, bestDistributionPenalty, err := as.findBestSchedulingCheckingAllPermutations(systemState, as.pods)
 
 	if as.previousScheduling != nil {
 		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
