@@ -36,7 +36,7 @@ func (s *ProxyServer) registerFlags() {
 
 	flag.StringVar(&s.OperatorApiPort, "operator-api-port", "8888", "Port of the REST API of the operator")
 	flag.StringVar(&s.OperatorSelectorKey, "operator-selector", "app.kubernetes.io/instance", "Kubernetes pod label selector key for finding the operator")
-	flag.StringVar(&s.OperatorSelectorValue, "operator-selector-value", "bitflow-operator", "Kubernetes pod label selector value for finding the operator")
+	flag.StringVar(&s.OperatorSelectorValue, "operator-selector-value", "bitflow-controller", "Kubernetes pod label selector value for finding the operator")
 
 	s.metrics.registerFlags()
 }
