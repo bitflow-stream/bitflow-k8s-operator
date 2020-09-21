@@ -2,8 +2,6 @@ package scheduler
 
 import (
 	"sort"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type StaticScheduler struct {
@@ -22,11 +20,6 @@ type StaticScheduler struct {
 type nodeSelectionFunc func(nodes []string, podsPerNode map[string]int) string
 
 func (s *StaticScheduler) schedule(selectNode nodeSelectionFunc) (bool, map[string]string, error) {
-
-	log.Warnf("---- CURRENT STATE: %v", s.CurrentState)
-	log.Warnf("---- DATA SOURCES : %v", s.DataSourceNodes)
-	log.Warnf("---- AVAILABLE NOD: %v", s.AvailableNodes)
-
 	// Construct the current schedule and count number of pods on each node
 	schedule := make(map[string]string)
 	podsPerNode := make(map[string]int)
@@ -60,9 +53,6 @@ func (s *StaticScheduler) schedule(selectNode nodeSelectionFunc) (bool, map[stri
 			changed = true
 		}
 	}
-
-	log.Warnf("---- SCHEDULING RE: %v", schedule)
-
 	return changed, schedule, nil
 }
 

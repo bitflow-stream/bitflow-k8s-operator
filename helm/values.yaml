@@ -34,16 +34,16 @@ controller:
     name: bitflow-controller-config
     enabled: true
     data:
-      external.source.node.label: "nodename"
-      resource.buffer.init: "10"
-      resource.buffer.factor: "2"
+      external.source.label: "bitflow-nodename"
+      resource.limit.slots: "10"
+      resource.limit.slots.grow: "2"
       resource.limit: "1.0"
-      resource.limit.annotation: "bitflow-resource-limit"
+      resource.limit.node.annotation: "bitflow-resource-limit"
       extra.env: "" # comma-separated list: a=b,x=y
-      delete.grace.period: "30s"
-      state.validation.period: "30s"
-      state.validation.heartbeat: "60s"
-      schedulers: "sourceAffinity,leastContainers,random"
+      delete.grace.period: "15s"
+      pod.spawn.period: "3s"
+      reconcile.heartbeat: "30s"
+      scheduler: "least-occupied"
 
 api_proxy:
   deployment:

@@ -14,7 +14,7 @@ const (
 )
 
 func (r *BitflowReconciler) schedulePods(nodes map[string]*corev1.Node) {
-	schedulerName := r.config.GetDefaultScheduler()
+	schedulerName := r.config.GetSchedulerName()
 	logger := log.WithField("schedule-strategy", schedulerName)
 	sched := r.createScheduler(schedulerName, nodes, logger)
 
@@ -25,7 +25,6 @@ func (r *BitflowReconciler) schedulePods(nodes map[string]*corev1.Node) {
 		logger.Errorln("Schedule routine returned error:", err)
 		return
 	}
-	// TODO the changed-flag is not really beneficial here, remove from API?
 	if changed {
 		r.assignSchedulingResults(assignedNodes, nodes, logger)
 	}
@@ -134,12 +133,8 @@ func (r *BitflowReconciler) getDataSourceNodesForPods(pods map[string]*PodStatus
 	for name, pod := range pods {
 		for _, source := range pod.inputSources {
 			node := r.findNodeForDataSource(source, nodes, pods)
-
 			if node != nil {
 				result[name] = append(result[name], node.Name)
-				log.Errorf("=> Node for data source %v: %v", source.Name, node.Name)
-			} else{
-				log.Errorf("=> NO Node for data source %v", source.Name)
 			}
 		}
 	}
