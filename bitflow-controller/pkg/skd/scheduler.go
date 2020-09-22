@@ -377,11 +377,10 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 			randomNodeState := &state.nodes[randomIndex]
 			randomNodeState.pods = append(randomNodeState.pods, &sortedPods[podIndex])
 			scheduledPod = true
-			// TODO print memory and executionTime overload
 			log.Error(fmt.Sprintf("Scheduled pod %s randomly on node %s because it didn't fit on any node", sortedPods[podIndex].name, randomNodeState.node.name))
 		}
 	}
-	penalty, err := CalculatePenalty(state, as.networkPenalty, as.memoryPenalty)
+	penalty, err := CalculatePenaltyOptionallyPrintingErrors(state, as.networkPenalty, as.memoryPenalty, true)
 
 	if err != nil {
 		return SystemState{}, -1, err
