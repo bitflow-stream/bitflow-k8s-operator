@@ -33,7 +33,7 @@ func NodeContainsPod(nodeState NodeState, podName string) bool {
 	return false
 }
 
-func GetCpuCoresPerPodAddingPods(nodeState *NodeState, addingPods int) (float64, error) {
+func GetCpuCoresPerPodAddingPods(nodeState NodeState, addingPods int) (float64, error) {
 	if nodeState.node == nil {
 		return -1, errors.New("nodeData is nil")
 	}
@@ -46,10 +46,10 @@ func GetCpuCoresPerPodAddingPods(nodeState *NodeState, addingPods int) (float64,
 }
 
 func GetCpuCoresPerPod(nodeState NodeState) (float64, error) {
-	return GetCpuCoresPerPodAddingPods(&nodeState, 0)
+	return GetCpuCoresPerPodAddingPods(nodeState, 0)
 }
 
-func GetMemoryPerPodAddingPods(nodeState *NodeState, addingPods int) (float64, error) {
+func GetMemoryPerPodAddingPods(nodeState NodeState, addingPods int) (float64, error) {
 	if nodeState.node == nil {
 		return -1, errors.New("nodeData is nil")
 	}
@@ -62,7 +62,7 @@ func GetMemoryPerPodAddingPods(nodeState *NodeState, addingPods int) (float64, e
 }
 
 func GetMemoryPerPod(nodeState NodeState) (float64, error) {
-	return GetMemoryPerPodAddingPods(&nodeState, 0)
+	return GetMemoryPerPodAddingPods(nodeState, 0)
 }
 
 func CalculatePenalty(state SystemState, networkPenalty float64, memoryPenalty float64) (float64, error) {
@@ -80,7 +80,7 @@ func CalculatePenalty(state SystemState, networkPenalty float64, memoryPenalty f
 		}
 
 		for _, podData := range nodeState.pods {
-			penalty += CalculateExecutionTime(cpuCoresPerPod, podData.curve)
+			penalty += math.Max(CalculateExecutionTime(cpuCoresPerPod, podData.curve)-podData.maximumExecutionTime, 0)
 			for _, receivesDataFrom := range podData.receivesDataFrom {
 				if !NodeContainsPod(nodeState, receivesDataFrom) {
 					penalty += networkPenalty

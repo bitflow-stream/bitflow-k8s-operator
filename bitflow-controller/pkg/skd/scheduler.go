@@ -174,13 +174,13 @@ func (as AdvancedScheduler) findBestSchedulingCheckingAllPermutations(state Syst
 	return lowestPenaltySystemState, lowestPenalty, nil
 }
 
-func getNodeStateByName(nodeName string, state SystemState) (*NodeState, error) {
-	for _, nodeState := range state.nodes {
+func getNodeStateIndexByName(nodeName string, state SystemState) (int, error) {
+	for i, nodeState := range state.nodes {
 		if nodeState.node.name == nodeName {
-			return &nodeState, nil
+			return i, nil
 		}
 	}
-	return &NodeState{}, errors.New("could not find NodeState by name")
+	return -1, errors.New("could not find NodeState by name")
 }
 
 func getNodeIndexOfNodeStateContainingPod(podName string, state SystemState) (int, error) {
@@ -192,6 +192,35 @@ func getNodeIndexOfNodeStateContainingPod(podName string, state SystemState) (in
 		}
 	}
 	return -1, errors.New(fmt.Sprintf("could not find NodeState which contains pod %s", podName))
+}
+
+func getIndexSliceSortedByNumberOfPods(nodeStates []NodeState) []int {
+	var indexSlice []int
+
+	for len(indexSlice) < len(nodeStates) {
+		lowestNumberOfPods := -1
+		lowestNumberOfPodsIndex := -1
+		for nodeStateIndex, nodeState := range nodeStates {
+			stateAlreadyInSlice := false
+			for _, indexInSlice := range indexSlice {
+				if nodeStateIndex == indexInSlice {
+					stateAlreadyInSlice = true
+					break
+				}
+			}
+			if stateAlreadyInSlice {
+				continue
+			}
+
+			if lowestNumberOfPodsIndex == -1 || len(nodeState.pods) < lowestNumberOfPods {
+				lowestNumberOfPodsIndex = nodeStateIndex
+				lowestNumberOfPods = len(nodeState.pods)
+			}
+		}
+		indexSlice = append(indexSlice, lowestNumberOfPodsIndex)
+	}
+
+	return indexSlice
 }
 
 // TODO test implementation thoroughly
@@ -209,21 +238,21 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 
 		// scheduling on dataSourceNode
 		for _, dataSourceNodeName := range sortedPods[podIndex].dataSourceNodes {
-			dataSourceNodeState, err := getNodeStateByName(dataSourceNodeName, state)
+			dataSourceNodeStateIndex, err := getNodeStateIndexByName(dataSourceNodeName, state)
 			if err != nil {
 				return SystemState{}, -1, err
 			}
 
 			// ↓ iterating dataSourceNodeStates ↓
 
-			memoryPerPod, err := GetMemoryPerPodAddingPods(dataSourceNodeState, 1)
+			memoryPerPod, err := GetMemoryPerPodAddingPods(state.nodes[dataSourceNodeStateIndex], 1)
 			if err != nil {
 				return SystemState{}, -1, err
 			}
 			if memoryPerPod < sortedPods[podIndex].minimumMemory {
 				continue
 			}
-			cpuCoresPerPod, err := GetCpuCoresPerPodAddingPods(dataSourceNodeState, 1)
+			cpuCoresPerPod, err := GetCpuCoresPerPodAddingPods(state.nodes[dataSourceNodeStateIndex], 1)
 			if err != nil {
 				return SystemState{}, -1, err
 			}
@@ -231,7 +260,7 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 				continue
 			}
 
-			for _, podOnNode := range dataSourceNodeState.pods {
+			for _, podOnNode := range state.nodes[dataSourceNodeStateIndex].pods {
 				if memoryPerPod < podOnNode.minimumMemory {
 					continue
 				}
@@ -240,7 +269,7 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 				}
 			}
 
-			dataSourceNodeState.pods = append(dataSourceNodeState.pods, &sortedPods[podIndex])
+			state.nodes[dataSourceNodeStateIndex].pods = append(state.nodes[dataSourceNodeStateIndex].pods, &sortedPods[podIndex])
 			scheduledPod = true
 			break
 		}
@@ -252,14 +281,14 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 					return SystemState{}, -1, err
 				}
 
-				memoryPerPod, err := GetMemoryPerPod(state.nodes[receivesDataFromNodeStateIndex])
+				memoryPerPod, err := GetMemoryPerPodAddingPods(state.nodes[receivesDataFromNodeStateIndex], 1)
 				if err != nil {
 					return SystemState{}, -1, err
 				}
 				if memoryPerPod < sortedPods[podIndex].minimumMemory {
 					continue
 				}
-				cpuCoresPerPod, err := GetCpuCoresPerPod(state.nodes[receivesDataFromNodeStateIndex])
+				cpuCoresPerPod, err := GetCpuCoresPerPodAddingPods(state.nodes[receivesDataFromNodeStateIndex], 1)
 				if err != nil {
 					return SystemState{}, -1, err
 				}
@@ -281,21 +310,21 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 				break
 			}
 		}
-		// scheduling on as empty as possible node (memory wise)
-		// TODO currently schedules onto next allowed node, change so it chooses the most empty (memory wise) node
+		// scheduling on as empty as possible node (pod wise)
 		if scheduledPod == false {
-			for nodeIndex := range state.nodes {
+			indexSlice := getIndexSliceSortedByNumberOfPods(state.nodes)
+			for nodeIndex := range indexSlice {
 
 				// ↓ iterating nodeStates ↓
 
-				memoryPerPod, err := GetMemoryPerPod(state.nodes[nodeIndex])
+				memoryPerPod, err := GetMemoryPerPodAddingPods(state.nodes[nodeIndex], 1)
 				if err != nil {
 					return SystemState{}, -1, err
 				}
 				if memoryPerPod < sortedPods[podIndex].minimumMemory {
 					continue
 				}
-				cpuCoresPerPod, err := GetCpuCoresPerPod(state.nodes[nodeIndex])
+				cpuCoresPerPod, err := GetCpuCoresPerPodAddingPods(state.nodes[nodeIndex], 1)
 				if err != nil {
 					return SystemState{}, -1, err
 				}
@@ -317,9 +346,33 @@ func (as AdvancedScheduler) findGoodScheduling(state SystemState, pods []*PodDat
 				break
 			}
 		}
+		// scheduling on node where memory is not overrun, but execution time is
+		if scheduledPod == false {
+			for nodeIndex := range state.nodes {
+
+				// ↓ iterating nodeStates ↓
+
+				memoryPerPod, err := GetMemoryPerPodAddingPods(state.nodes[nodeIndex], 1)
+				if err != nil {
+					return SystemState{}, -1, err
+				}
+				if memoryPerPod < sortedPods[podIndex].minimumMemory {
+					continue
+				}
+
+				for _, podOnNode := range state.nodes[nodeIndex].pods {
+					if memoryPerPod < podOnNode.minimumMemory {
+						continue
+					}
+				}
+
+				state.nodes[nodeIndex].pods = append(state.nodes[nodeIndex].pods, &sortedPods[podIndex])
+				scheduledPod = true
+				break
+			}
+		}
 		// scheduling on random node
 		if scheduledPod == false {
-			// TODO choose more intelligently, prefer executionTime overrun over memory overrun
 			randomIndex := rand.Intn(len(state.nodes))
 			randomNodeState := &state.nodes[randomIndex]
 			randomNodeState.pods = append(randomNodeState.pods, &sortedPods[podIndex])
@@ -350,7 +403,7 @@ func removeLastPodFromSlice(pods []*PodData) []*PodData {
 	return tempPods
 }
 
-func NewDistributionPenaltyLowerConsideringThreshold(previousPenalty float64, newPenalty float64, thresholdPercent float64) bool {
+func NewDistributionPenaltyIsLowerConsideringThreshold(previousPenalty float64, newPenalty float64, thresholdPercent float64) bool {
 	var previousPenaltyMinusThreshold = previousPenalty * ((100 - thresholdPercent) / 100)
 	if newPenalty <= previousPenaltyMinusThreshold {
 		return true
@@ -394,11 +447,11 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 		})
 	}
 
-	bestDistributionState, bestDistributionPenalty, err := as.findGoodScheduling(systemState, as.pods)
+	distributionState, distributionPenalty, err := as.findGoodScheduling(systemState, as.pods)
 
 	if as.previousScheduling != nil {
 		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
-		if err == nil && !NewDistributionPenaltyLowerConsideringThreshold(previousPenalty, bestDistributionPenalty, as.thresholdPercent) {
+		if err == nil && !NewDistributionPenaltyIsLowerConsideringThreshold(previousPenalty, distributionPenalty, as.thresholdPercent) {
 			return false, nil, nil
 		}
 	}
@@ -408,14 +461,14 @@ func (as AdvancedScheduler) Schedule() (bool, map[string]string, error) {
 	}
 
 	m := make(map[string]string)
-	for _, nodeState := range bestDistributionState.nodes {
+	for _, nodeState := range distributionState.nodes {
 		nodeName := nodeState.node.name
 		for _, pod := range nodeState.pods {
 			m[pod.name] = nodeName
 		}
 	}
 
-	println(fmt.Sprintf("Penalty: %f", bestDistributionPenalty))
+	println(fmt.Sprintf("Penalty: %f", distributionPenalty))
 	return true, m, nil
 }
 
@@ -438,7 +491,7 @@ func (as AdvancedScheduler) ScheduleCheckingAllPermutations() (bool, map[string]
 
 	if as.previousScheduling != nil {
 		previousPenalty, err := CalculatePenalty(as.getPreviousSystemState(), as.networkPenalty, as.memoryPenalty)
-		if err == nil && !NewDistributionPenaltyLowerConsideringThreshold(previousPenalty, bestDistributionPenalty, as.thresholdPercent) {
+		if err == nil && !NewDistributionPenaltyIsLowerConsideringThreshold(previousPenalty, bestDistributionPenalty, as.thresholdPercent) {
 			return false, nil, nil
 		}
 	}

@@ -444,530 +444,6 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldMapPodsCorrectlyWithNetworkP
 	s.Equal(scheduledMap["p9"], scheduledMap["p8"])
 }
 
-//func (s *SkdTestSuite) Test_AdvancedScheduler_shouldScheduleRealisticScenarioWithNetworkPenalty() {
-//	var scheduler AdvancedScheduler
-//	nodes := []*NodeData{
-//		{
-//			name:                    "n1",
-//			allocatableCpu:          4000,
-//			memory:                  64,
-//			initialNumberOfPodSlots: 2,
-//			podSlotScalingFactor:    2,
-//			resourceLimit:           0.1,
-//		},
-//		{
-//			name:                    "n2",
-//			allocatableCpu:          4000,
-//			memory:                  64,
-//			initialNumberOfPodSlots: 2,
-//			podSlotScalingFactor:    2,
-//			resourceLimit:           0.1,
-//		},
-//		{
-//			name:                    "n3",
-//			allocatableCpu:          4000,
-//			memory:                  64,
-//			initialNumberOfPodSlots: 2,
-//			podSlotScalingFactor:    2,
-//			resourceLimit:           0.1,
-//		},
-//		{
-//			name:                    "n4",
-//			allocatableCpu:          4000,
-//			memory:                  64,
-//			initialNumberOfPodSlots: 2,
-//			podSlotScalingFactor:    2,
-//			resourceLimit:           0.1,
-//		},
-//		{
-//			name:                    "n5",
-//			allocatableCpu:          4000,
-//			memory:                  64,
-//			initialNumberOfPodSlots: 2,
-//			podSlotScalingFactor:    2,
-//			resourceLimit:           0.1,
-//		},
-//	}
-//	curve := Curve{
-//		a: 6.71881241016441,
-//		b: 0.0486498280492762,
-//		c: 2.0417306475862214,
-//		d: 15.899403720950454,
-//	}
-//	pods := []*PodData{
-//		{
-//			name:             "p1_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p2_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p3_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p4_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p5_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p6_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p7_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p8_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p9_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p10_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p11_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p12_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p13_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p14_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p15_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p16_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p17_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p18_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p19_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p20_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p21_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p22_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p23_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p24_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p25_1",
-//			receivesDataFrom: []string{},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p1_2",
-//			receivesDataFrom: []string{"p1_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p2_2",
-//			receivesDataFrom: []string{"p2_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p3_2",
-//			receivesDataFrom: []string{"p3_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p4_2",
-//			receivesDataFrom: []string{"p4_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p5_2",
-//			receivesDataFrom: []string{"p5_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p6_2",
-//			receivesDataFrom: []string{"p6_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p7_2",
-//			receivesDataFrom: []string{"p7_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p8_2",
-//			receivesDataFrom: []string{"p8_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p9_2",
-//			receivesDataFrom: []string{"p9_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p10_2",
-//			receivesDataFrom: []string{"p10_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p11_2",
-//			receivesDataFrom: []string{"p11_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p12_2",
-//			receivesDataFrom: []string{"p12_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p13_2",
-//			receivesDataFrom: []string{"p13_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p14_2",
-//			receivesDataFrom: []string{"p14_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p15_2",
-//			receivesDataFrom: []string{"p15_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p16_2",
-//			receivesDataFrom: []string{"p16_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p17_2",
-//			receivesDataFrom: []string{"p17_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p18_2",
-//			receivesDataFrom: []string{"p18_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p19_2",
-//			receivesDataFrom: []string{"p19_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p20_2",
-//			receivesDataFrom: []string{"p20_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p21_2",
-//			receivesDataFrom: []string{"p21_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p22_2",
-//			receivesDataFrom: []string{"p22_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p23_2",
-//			receivesDataFrom: []string{"p23_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p24_2",
-//			receivesDataFrom: []string{"p24_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p25_2",
-//			receivesDataFrom: []string{"p25_1"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p1_3",
-//			receivesDataFrom: []string{"p1_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p2_3",
-//			receivesDataFrom: []string{"p2_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p3_3",
-//			receivesDataFrom: []string{"p3_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p4_3",
-//			receivesDataFrom: []string{"p4_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p5_3",
-//			receivesDataFrom: []string{"p5_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p6_3",
-//			receivesDataFrom: []string{"p6_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p7_3",
-//			receivesDataFrom: []string{"p7_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p8_3",
-//			receivesDataFrom: []string{"p8_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p9_3",
-//			receivesDataFrom: []string{"p9_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p10_3",
-//			receivesDataFrom: []string{"p10_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p11_3",
-//			receivesDataFrom: []string{"p11_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p12_3",
-//			receivesDataFrom: []string{"p12_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p13_3",
-//			receivesDataFrom: []string{"p13_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p14_3",
-//			receivesDataFrom: []string{"p14_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p15_3",
-//			receivesDataFrom: []string{"p15_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p16_3",
-//			receivesDataFrom: []string{"p16_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p17_3",
-//			receivesDataFrom: []string{"p17_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p18_3",
-//			receivesDataFrom: []string{"p18_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p19_3",
-//			receivesDataFrom: []string{"p19_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p20_3",
-//			receivesDataFrom: []string{"p20_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p21_3",
-//			receivesDataFrom: []string{"p21_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p22_3",
-//			receivesDataFrom: []string{"p22_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p23_3",
-//			receivesDataFrom: []string{"p23_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p24_3",
-//			receivesDataFrom: []string{"p24_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//		{
-//			name:             "p25_3",
-//			receivesDataFrom: []string{"p25_2"},
-//			curve:            curve,
-//			minimumMemory:    16,
-//		},
-//	}
-//	scheduler = AdvancedScheduler{
-//		nodes:            nodes,
-//		pods:             pods,
-//		networkPenalty:   1_000,
-//		memoryPenalty: 100,
-//		thresholdPercent: 10,
-//	}
-//
-//	schedulingChanged, scheduledMap, err := scheduler.ScheduleCheckingAllPermutations()
-//
-//	s.Nil(err)
-//	s.True(schedulingChanged)
-//	s.Equal(scheduledMap["p2"], scheduledMap["p10"])
-//	s.Equal(scheduledMap["p7"], scheduledMap["p1"])
-//	s.Equal(scheduledMap["p8"], scheduledMap["p1"])
-//	s.Equal(scheduledMap["p9"], scheduledMap["p3"])
-//	s.Equal(scheduledMap["p9"], scheduledMap["p4"])
-//	s.Equal(scheduledMap["p9"], scheduledMap["p6"])
-//	s.Equal(scheduledMap["p9"], scheduledMap["p7"])
-//	s.Equal(scheduledMap["p9"], scheduledMap["p8"])
-//}
-
 func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasNotChangedWithThreshold() {
 	var scheduler AdvancedScheduler
 	nodes := []*NodeData{
@@ -1230,7 +706,7 @@ func (s *SkdTestSuite) Test_AdvancedScheduler_shouldRecognizeSchedulingHasChange
 
 func (s *SkdTestSuite) testNewDistributionPenaltyLowerConsideringThreshold(previousPenalty float64, newPenalty float64, thresholdPercent float64, expectedOutcome bool) {
 	s.SubTest(fmt.Sprintf("previous%f:new%f:threshold%f->%v", previousPenalty, newPenalty, thresholdPercent, expectedOutcome), func() {
-		actualOutcome := NewDistributionPenaltyLowerConsideringThreshold(previousPenalty, newPenalty, thresholdPercent)
+		actualOutcome := NewDistributionPenaltyIsLowerConsideringThreshold(previousPenalty, newPenalty, thresholdPercent)
 		s.Equal(expectedOutcome, actualOutcome)
 	})
 }
@@ -1602,4 +1078,956 @@ func (s *SkdTestSuite) Test_shouldSortPodsTopologically() {
 	s.Equal(4.0, sortedPods[2].curve.d)
 	s.Equal(22.0, sortedPods[2].minimumMemory)
 	s.Equal(23.0, sortedPods[2].maximumExecutionTime)
+}
+
+func (s *SkdTestSuite) Test_shouldReturnIndicesSortedByNumberOfPods() {
+	nodeStates := []NodeState{
+		{
+			node: &NodeData{
+				name: "n1",
+			},
+			pods: []*PodData{
+				{
+					name: "p1",
+				},
+				{
+					name: "p2",
+				},
+				{
+					name: "p3",
+				},
+				{
+					name: "p4",
+				},
+			},
+		},
+		{
+			node: &NodeData{
+				name: "n2",
+			},
+			pods: []*PodData{},
+		},
+		{
+			node: &NodeData{
+				name: "n3",
+			},
+			pods: []*PodData{
+				{
+					name: "p5",
+				},
+				{
+					name: "p6",
+				},
+				{
+					name: "p7",
+				},
+			},
+		},
+		{
+			node: &NodeData{
+				name: "n4",
+			},
+			pods: []*PodData{
+				{
+					name: "p8",
+				},
+			},
+		},
+		{
+			node: &NodeData{
+				name: "n5",
+			},
+			pods: []*PodData{
+				{
+					name: "p9",
+				},
+				{
+					name: "p10",
+				},
+			},
+		},
+	}
+	indexSlice := getIndexSliceSortedByNumberOfPods(nodeStates)
+
+	s.Equal(5, len(indexSlice))
+	s.Equal("n2", nodeStates[indexSlice[0]].node.name)
+	s.Equal("n4", nodeStates[indexSlice[1]].node.name)
+	s.Equal("n5", nodeStates[indexSlice[2]].node.name)
+	s.Equal("n3", nodeStates[indexSlice[3]].node.name)
+	s.Equal("n1", nodeStates[indexSlice[4]].node.name)
+}
+
+func (s *SkdTestSuite) Test_shouldGetNodeIndexOfNodeStateContainingPod() {
+	systemState := SystemState{
+		nodes: []NodeState{
+			{
+				node: &NodeData{
+					name: "n1",
+				},
+				pods: []*PodData{
+					{
+						name: "p1",
+					},
+					{
+						name: "p2",
+					},
+					{
+						name: "p3",
+					},
+					{
+						name: "p4",
+					},
+				},
+			},
+			{
+				node: &NodeData{
+					name: "n2",
+				},
+				pods: []*PodData{},
+			},
+			{
+				node: &NodeData{
+					name: "n3",
+				},
+				pods: []*PodData{
+					{
+						name: "p5",
+					},
+					{
+						name: "p6",
+					},
+					{
+						name: "p7",
+					},
+				},
+			},
+			{
+				node: &NodeData{
+					name: "n4",
+				},
+				pods: []*PodData{
+					{
+						name: "p8",
+					},
+				},
+			},
+			{
+				node: &NodeData{
+					name: "n5",
+				},
+				pods: []*PodData{
+					{
+						name: "p9",
+					},
+					{
+						name: "p10",
+					},
+				},
+			},
+		},
+	}
+
+	index, err := getNodeIndexOfNodeStateContainingPod("p6", systemState)
+
+	s.Nil(err)
+	s.Equal("n3", systemState.nodes[index].node.name)
+
+	_, err = getNodeIndexOfNodeStateContainingPod("pDoesNotExist", systemState)
+
+	s.NotNil(err)
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldFindGoodScheduling() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  640,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+			{
+				name:                    "n2",
+				allocatableCpu:          4000,
+				memory:                  640,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				dataSourceNodes:  []string{"n1"},
+				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p2"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p2",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p1"},
+				sendsDataTo:      []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p3",
+				dataSourceNodes:  []string{"n2"},
+				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p4"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p4",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p3"},
+				sendsDataTo:      []string{"p5"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p5",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p4"},
+				sendsDataTo:      []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+		},
+		networkPenalty:   10,
+		memoryPenalty:    50,
+		thresholdPercent: 5,
+	}
+
+	_, schedulingMap, err := scheduler.Schedule()
+
+	s.Nil(err)
+	s.Equal("n1", schedulingMap["p1"])
+	s.Equal("n1", schedulingMap["p2"])
+	s.Equal("n2", schedulingMap["p3"])
+	s.Equal("n2", schedulingMap["p4"])
+	s.Equal("n2", schedulingMap["p5"])
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldFindGoodSchedulingIfNetworkPenaltyPlaysARole() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  160,
+				initialNumberOfPodSlots: 1,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+			{
+				name:                    "n2",
+				allocatableCpu:          40000,
+				memory:                  6400,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				dataSourceNodes:  []string{"n1"},
+				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p2"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p2",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p1"},
+				sendsDataTo:      []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p3",
+				dataSourceNodes:  []string{"n2"},
+				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p4"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p4",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p3"},
+				sendsDataTo:      []string{"p5"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p5",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p4"},
+				sendsDataTo:      []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+		},
+		networkPenalty:   10,
+		memoryPenalty:    50,
+		thresholdPercent: 5,
+	}
+
+	_, schedulingMap, err := scheduler.Schedule()
+
+	s.Nil(err)
+	s.Equal("n1", schedulingMap["p1"])
+	s.Equal("n2", schedulingMap["p2"])
+	s.Equal("n2", schedulingMap["p3"])
+	s.Equal("n2", schedulingMap["p4"])
+	s.Equal("n2", schedulingMap["p5"])
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldFindGoodSchedulingAndPreferExecutionTimeOverrunOverMemoryOverrun() {
+	var scheduler = AdvancedScheduler{
+		nodes: []*NodeData{
+			{
+				name:                    "n1",
+				allocatableCpu:          4000,
+				memory:                  160,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+			{
+				name:                    "n2",
+				allocatableCpu:          50,
+				memory:                  6400,
+				initialNumberOfPodSlots: 2,
+				podSlotScalingFactor:    2,
+				resourceLimit:           0.1,
+			},
+		},
+		pods: []*PodData{
+			{
+				name:             "p1",
+				dataSourceNodes:  []string{"n1"},
+				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p2"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p2",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p1"},
+				sendsDataTo:      []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p3",
+				dataSourceNodes:  []string{"n2"},
+				receivesDataFrom: []string{},
+				sendsDataTo:      []string{"p4"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p4",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p3"},
+				sendsDataTo:      []string{"p5"},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+			{
+				name:             "p5",
+				dataSourceNodes:  []string{},
+				receivesDataFrom: []string{"p4"},
+				sendsDataTo:      []string{},
+				curve: Curve{
+					a: 6.71881241016441,
+					b: 0.0486498280492762,
+					c: 2.0417306475862214,
+					d: 15.899403720950454,
+				},
+				minimumMemory:        16,
+				maximumExecutionTime: 3000,
+			},
+		},
+		networkPenalty:   50,
+		memoryPenalty:    1000,
+		thresholdPercent: 5,
+	}
+
+	_, schedulingMap, err := scheduler.Schedule()
+
+	s.Nil(err)
+	s.Equal("n2", schedulingMap["p1"])
+	s.Equal("n2", schedulingMap["p2"])
+	s.Equal("n2", schedulingMap["p3"])
+	s.Equal("n2", schedulingMap["p4"])
+	s.Equal("n2", schedulingMap["p5"])
+}
+
+func (s *SkdTestSuite) Test_AdvancedScheduler_shouldFindGoodSchedulingInRealisticScenario() {
+	var scheduler AdvancedScheduler
+	nodes := []*NodeData{
+		{
+			name:                    "n1",
+			allocatableCpu:          80000,
+			memory:                  2560,
+			initialNumberOfPodSlots: 2,
+			podSlotScalingFactor:    2,
+			resourceLimit:           0.1,
+		},
+		{
+			name:                    "n2",
+			allocatableCpu:          80000,
+			memory:                  2560,
+			initialNumberOfPodSlots: 2,
+			podSlotScalingFactor:    2,
+			resourceLimit:           0.1,
+		},
+		{
+			name:                    "n3",
+			allocatableCpu:          80000,
+			memory:                  2560,
+			initialNumberOfPodSlots: 2,
+			podSlotScalingFactor:    2,
+			resourceLimit:           0.1,
+		},
+		{
+			name:                    "n4",
+			allocatableCpu:          80000,
+			memory:                  2560,
+			initialNumberOfPodSlots: 2,
+			podSlotScalingFactor:    2,
+			resourceLimit:           0.1,
+		},
+		{
+			name:                    "n5",
+			allocatableCpu:          80000,
+			memory:                  2560,
+			initialNumberOfPodSlots: 2,
+			podSlotScalingFactor:    2,
+			resourceLimit:           0.1,
+		},
+	}
+	curve := Curve{
+		a: 6.71881241016441,
+		b: 0.0486498280492762,
+		c: 2.0417306475862214,
+		d: 15.899403720950454,
+	}
+	pods := []*PodData{
+		{
+			name:                 "p1_1",
+			dataSourceNodes:      []string{"n1"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p1_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p2_1",
+			dataSourceNodes:      []string{"n1"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p2_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p3_1",
+			dataSourceNodes:      []string{"n1"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p3_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p4_1",
+			dataSourceNodes:      []string{"n1"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p4_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p5_1",
+			dataSourceNodes:      []string{"n1"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p5_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p6_1",
+			dataSourceNodes:      []string{"n2"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p6_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p7_1",
+			dataSourceNodes:      []string{"n2"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p7_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p8_1",
+			dataSourceNodes:      []string{"n2"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p8_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p9_1",
+			dataSourceNodes:      []string{"n2"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p9_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p10_1",
+			dataSourceNodes:      []string{"n2"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p10_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p11_1",
+			dataSourceNodes:      []string{"n3"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p11_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p12_1",
+			dataSourceNodes:      []string{"n3"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p12_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p13_1",
+			dataSourceNodes:      []string{"n3"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p13_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p14_1",
+			dataSourceNodes:      []string{"n3"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p14_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p15_1",
+			dataSourceNodes:      []string{"n3"},
+			receivesDataFrom:     []string{},
+			sendsDataTo:          []string{"p15_2"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p1_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p1_1"},
+			sendsDataTo:          []string{"p1_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p2_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p2_1"},
+			sendsDataTo:          []string{"p2_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p3_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p3_1"},
+			sendsDataTo:          []string{"p3_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p4_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p4_1"},
+			sendsDataTo:          []string{"p4_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p5_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p5_1"},
+			sendsDataTo:          []string{"p5_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p6_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p6_1"},
+			sendsDataTo:          []string{"p6_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p7_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p7_1"},
+			sendsDataTo:          []string{"p7_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p8_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p8_1"},
+			sendsDataTo:          []string{"p8_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p9_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p9_1"},
+			sendsDataTo:          []string{"p9_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p10_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p10_1"},
+			sendsDataTo:          []string{"p10_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p11_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p11_1"},
+			sendsDataTo:          []string{"p11_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p12_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p12_1"},
+			sendsDataTo:          []string{"p12_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p13_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p13_1"},
+			sendsDataTo:          []string{"p13_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p14_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p14_1"},
+			sendsDataTo:          []string{"p14_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p15_2",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p15_1"},
+			sendsDataTo:          []string{"p15_3"},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p1_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p1_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p2_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p2_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p3_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p3_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p4_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p4_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p5_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p5_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p6_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p6_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p7_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p7_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p8_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p8_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p9_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p9_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p10_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p10_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p11_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p11_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p12_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p12_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p13_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p13_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p14_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p14_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+		{
+			name:                 "p15_3",
+			dataSourceNodes:      []string{},
+			receivesDataFrom:     []string{"p15_2"},
+			sendsDataTo:          []string{},
+			curve:                curve,
+			minimumMemory:        16,
+			maximumExecutionTime: 200,
+		},
+	}
+	scheduler = AdvancedScheduler{
+		nodes:            nodes,
+		pods:             pods,
+		networkPenalty:   500,
+		memoryPenalty:    100,
+		thresholdPercent: 10,
+	}
+
+	schedulingChanged, scheduledMap, err := scheduler.Schedule()
+
+	s.Nil(err)
+	s.True(schedulingChanged)
+	penalty, err := CalculatePenalty(getSystemStateFromSchedulingMap(scheduler.nodes, scheduler.pods, scheduledMap), scheduler.networkPenalty, scheduler.memoryPenalty)
+	s.Nil(err)
+	s.Equal(0.0, penalty)
 }
