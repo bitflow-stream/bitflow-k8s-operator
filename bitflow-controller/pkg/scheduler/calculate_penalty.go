@@ -2,75 +2,115 @@ package scheduler
 
 import (
 	"errors"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/common"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/config"
-	"github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/resources"
-	corev1 "k8s.io/api/core/v1"
+	log "github.com/sirupsen/logrus"
 	"math"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getStepCurveParameters(stepName string) (float64, float64, float64, float64) {
-	// dummy data until steps contain curve parameters
-	a := 6.71881241016441
-	b := 0.0486498280492762
-	c := 2.0417306475862214
-	d := 15.899403720950454
-	return a, b, c, d
+func CalculateExecutionTime(cpuMillis float64, curve Curve) float64 {
+	return curve.a*math.Pow((cpuMillis/1000)+curve.b, -curve.c) + curve.d
 }
 
-func getAllocatableCpu(node corev1.Node) float64 {
-	// TODO MilliValue() is correct, for memory use Value()
-	return float64(node.Status.Allocatable.Cpu().MilliValue())
-}
-
-func GetTotalResourceLimit(node corev1.Node, config *config.Config) float64 {
-	return resources.RequestBitflowResourceLimitByNode(&node, config)
-}
-
-func getNumberOfPodsForNode(client client.Client, nodeName string) int {
-	count, err := common.GetNumberOfPodsForNode(client, nodeName)
-	if err != nil {
-		return 0
+func GetNumberOfPodSlots(nodeData *NodeData, numberOfPods int) (int, error) {
+	initialNumberOfPodSlots := nodeData.initialNumberOfPodSlots
+	if numberOfPods < initialNumberOfPodSlots {
+		return initialNumberOfPodSlots, nil
 	}
-	return count
-}
-
-func getNextHigherNumberOfPodSlots(incrementFactor float64, value float64) (float64, error) {
-	if value < incrementFactor {
-		return incrementFactor, nil
-	}
-	count := incrementFactor
+	updatedNumberOfPodSlots := initialNumberOfPodSlots
 	for true {
-		if count >= value {
-			return count, nil
+		if updatedNumberOfPodSlots >= numberOfPods {
+			return updatedNumberOfPodSlots, nil
 		}
-		count *= incrementFactor
+		updatedNumberOfPodSlots *= nodeData.podSlotScalingFactor
 	}
-	return -1, errors.New("Should never happen")
+	return -1, errors.New("should never happen")
 }
 
-func GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(client client.Client, config *config.Config, nodeName string, numberOfPodsToAdd float64) float64 {
-	incrementFactor := config.GetResourceBufferIncrementFactor()
-	numberOfPodsOnNode := float64(getNumberOfPodsForNode(client, nodeName))
-	slots, _ := getNextHigherNumberOfPodSlots(incrementFactor, numberOfPodsOnNode+numberOfPodsToAdd)
-	return slots
+func NodeContainsPod(nodeState NodeState, podName string) bool {
+	for _, pod := range nodeState.pods {
+		if pod.name == podName {
+			return true
+		}
+	}
+	return false
 }
 
-func CalculateExecutionTime(cpus float64) float64 {
-	a, b, c, d := getStepCurveParameters("some-step-name")
-	return a*math.Pow(cpus+b, -c) + d
+func GetCpuCoresPerPodAddingPods(nodeState NodeState, addingPods int) (float64, error) {
+	if nodeState.node == nil {
+		return -1, errors.New("nodeData is nil")
+	}
+	nodeData := nodeState.node
+	numberOfPodSlots, err := GetNumberOfPodSlots(nodeData, len(nodeState.pods)+addingPods)
+	if err != nil {
+		return -1, err
+	}
+	return nodeData.allocatableCpu * nodeData.resourceLimit / float64(numberOfPodSlots), nil
 }
 
-// lower is better
-func CalculatePenaltyForNode(client client.Client, config *config.Config, node corev1.Node) (float64, error) {
-	return CalculatePenaltyForNodeAfterAddingPods(client, config, node, 0)
+func GetCpuCoresPerPod(nodeState NodeState) (float64, error) {
+	return GetCpuCoresPerPodAddingPods(nodeState, 0)
 }
 
-// lower is better
-func CalculatePenaltyForNodeAfterAddingPods(client client.Client, config *config.Config, node corev1.Node, numberOfPodsToAdd float64) (float64, error) {
-	R := getAllocatableCpu(node) * GetTotalResourceLimit(node, config) / GetNumberOfPodSlotsAllocatedForNodeAfterAddingPods(client, config, node.Name, numberOfPodsToAdd)
+func GetMemoryPerPodAddingPods(nodeState NodeState, addingPods int) (float64, error) {
+	if nodeState.node == nil {
+		return -1, errors.New("nodeData is nil")
+	}
+	nodeData := nodeState.node
+	numberOfPodSlots, err := GetNumberOfPodSlots(nodeData, len(nodeState.pods)+addingPods)
+	if err != nil {
+		return -1, err
+	}
+	return nodeData.memory * nodeData.resourceLimit / float64(numberOfPodSlots), nil
+}
 
-	// TODO error in return necessary?
-	return CalculateExecutionTime(R), nil
+func GetMemoryPerPod(nodeState NodeState) (float64, error) {
+	return GetMemoryPerPodAddingPods(nodeState, 0)
+}
+
+func CalculatePenalty(state SystemState, networkPenalty float64, memoryPenalty float64) (float64, error) {
+	return CalculatePenaltyOptionallyPrintingErrors(state, networkPenalty, memoryPenalty, false)
+}
+
+func CalculatePenaltyOptionallyPrintingErrors(state SystemState, networkPenalty float64, memoryPenalty float64, printErrors bool) (float64, error) {
+	var penalty = 0.0
+
+	for _, nodeState := range state.nodes {
+		cpuCoresPerPod, err := GetCpuCoresPerPod(nodeState)
+		if err != nil {
+			return -1, err
+		}
+
+		memoryPerPod, err := GetMemoryPerPod(nodeState)
+		if err != nil {
+			return -1, err
+		}
+
+		for _, podData := range nodeState.pods {
+			executionTime := CalculateExecutionTime(cpuCoresPerPod, podData.curve)
+			if executionTime > podData.maximumExecutionTime {
+				penalty += executionTime - podData.maximumExecutionTime
+				if printErrors {
+					log.Errorf("pod %s execution time is too high (wanted: %f, actual: %f)", podData.name, podData.maximumExecutionTime, executionTime)
+				}
+			}
+
+			for _, receivesDataFrom := range podData.receivesDataFrom {
+				if !NodeContainsPod(nodeState, receivesDataFrom) {
+					penalty += networkPenalty
+				}
+			}
+			for _, dataSourceNodeName := range podData.dataSourceNodes {
+				if nodeState.node.name != dataSourceNodeName {
+					penalty += networkPenalty
+				}
+			}
+			if memoryPerPod < podData.minimumMemory {
+				if printErrors {
+					log.Errorf("pod %s has too little memory (wanted: %f, available: %f)", podData.name, podData.minimumMemory, memoryPerPod)
+				}
+				penalty += memoryPenalty * (1 - memoryPerPod/podData.minimumMemory)
+			}
+		}
+	}
+
+	return penalty, nil
 }

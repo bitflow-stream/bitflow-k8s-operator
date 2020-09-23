@@ -1,4 +1,4 @@
-package skd
+package scheduler
 
 import (
 	"fmt"
