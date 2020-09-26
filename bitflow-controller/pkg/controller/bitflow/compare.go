@@ -24,14 +24,29 @@ func (r *BitflowReconciler) comparePods(pod1, pod2 *corev1.Pod) string {
 		return "node-affinity"
 	}
 
-	// Compare the rest of the pod
-	pod1Spec := pod1.Spec.DeepCopy()
-	pod2Spec := pod2.Spec.DeepCopy()
-	pod1Spec.Containers = nil
-	pod2Spec.Containers = nil
-	pod1Spec.Affinity = nil
-	pod2Spec.Affinity = nil
-	return r.compare(pod1Spec, pod2Spec, "pod-spec")
+	// Compare the rest of the pod spec
+	clean := func(pod *corev1.Pod) *corev1.PodSpec {
+		spec := pod.Spec.DeepCopy()
+		spec.Containers = nil
+		spec.Affinity = nil
+
+		// The following fields are partially automatically populated by Kubernetes
+		// TODO they should still be compared somehow
+		spec.Volumes = nil
+		spec.RestartPolicy = ""
+		spec.TerminationGracePeriodSeconds = nil
+		spec.DNSPolicy = ""
+		spec.ServiceAccountName = ""
+		spec.DeprecatedServiceAccount = ""
+		spec.NodeName = ""
+		spec.SecurityContext = nil
+		spec.SchedulerName = ""
+		spec.Tolerations = nil
+		spec.Priority = nil
+		spec.EnableServiceLinks = nil
+		return spec
+	}
+	return r.compare(clean(pod1), clean(pod2), "pod-spec")
 }
 
 func (r *BitflowReconciler) compareContainers(container1, container2 *corev1.Container) string {
@@ -51,26 +66,32 @@ func (r *BitflowReconciler) compareContainers(container1, container2 *corev1.Con
 	}
 
 	// Compare the remaining fields of the container
-	copy1 := container1.DeepCopy()
-	copy2 := container2.DeepCopy()
-	copy1.Ports = nil
-	copy2.Ports = nil
-	copy1.Env = nil
-	copy2.Env = nil
-	copy1.EnvFrom = nil
-	copy2.EnvFrom = nil
-	copy1.Resources = corev1.ResourceRequirements{}
-	copy2.Resources = corev1.ResourceRequirements{}
-	return r.compare(copy1, copy2, "spec")
+	clean := func(container *corev1.Container) *corev1.Container {
+		container = container.DeepCopy()
+		container.Ports = nil
+		container.Env = nil
+		container.EnvFrom = nil
+		container.Resources = corev1.ResourceRequirements{}
+		// Ignore VolumeMounts, because Kubernetes adds some automatically. TODO should still be checked somehow.
+		container.VolumeMounts = nil
+		return container
+	}
+	return r.compare(clean(container1), clean(container2), "spec")
 }
 
 func (r *BitflowReconciler) compareContainerPorts(ports1, ports2 []corev1.ContainerPort) string {
 	map1 := make(map[string]corev1.ContainerPort)
 	for _, obj := range ports1 {
+		if obj.Protocol == "" {
+			obj.Protocol = corev1.ProtocolTCP
+		}
 		map1[obj.String()] = obj
 	}
 	map2 := make(map[string]corev1.ContainerPort)
 	for _, obj := range ports2 {
+		if obj.Protocol == "" {
+			obj.Protocol = corev1.ProtocolTCP
+		}
 		map2[obj.String()] = obj
 	}
 
@@ -130,10 +151,14 @@ func (r *BitflowReconciler) compareMetaData(type1, type2 metav1.TypeMeta, meta1,
 		[3]interface{}{meta1.ClusterName, meta2.ClusterName, "ClusterName"},
 		[3]interface{}{meta1.DeletionGracePeriodSeconds, meta2.DeletionGracePeriodSeconds, "DeletionGracePeriodSeconds"},
 		[3]interface{}{meta1.Labels, meta2.Labels, "Labels"},
-		[3]interface{}{meta1.Annotations, meta2.Annotations, "Annotations"},
 		[3]interface{}{meta1.OwnerReferences, meta2.OwnerReferences, "OwnerReferences"},
 		[3]interface{}{meta1.Initializers, meta2.Initializers, "Initializers"},
-		[3]interface{}{meta1.Finalizers, meta2.Finalizers, "Finalizers"})
+		[3]interface{}{meta1.Finalizers, meta2.Finalizers, "Finalizers"},
+
+		// Annotations are excluded, because Kubernetes adds some Annotations automatically
+		// TODO find way to still check, if the necessary annotations exist
+		// [3]interface{}{meta1.Annotations, meta2.Annotations, "Annotations"},
+	)
 }
 
 func (r *BitflowReconciler) compareMultipleAspects(aspects ...[3]interface{}) string {
