@@ -59,6 +59,9 @@ func (s *ReconcileOneToOneTestSuite) TestOneSourceOneStepDeletePod() {
 		s.NoError(r.client.Delete(context.TODO(), &pod))
 	}
 
+	// Reset the modification cache since the last creation just happened few milliseconds ago
+	r.modifications.Reset()
+
 	// Re-do the reconcile
 	s.testReconcile(r, name)
 	s.assignIPToPods(r.client)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/antongulenko/golib"
 	log "github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ const (
 	EnvRestApiPort         = "API_LISTEN_PORT"
 	EnvConcurrentReconcile = "CONCURRENT_RECONCILE"
 	EnvPodIdLabels         = "POD_ID_LABELS"
+	EnvOperationTimeout    = "OPERATION_TIMEOUT"
 	EnvRecordStatistics    = "RECORD_STATISTICS"
 )
 
@@ -27,6 +29,7 @@ type ControllerParameters struct {
 	configMapName       string
 	concurrentReconcile int
 	controllerIdLabels  map[string]string // Attached to all managed objects to identify them
+	operationTimeout    time.Duration
 	recordStatistics    bool
 }
 
@@ -43,6 +46,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	// Optional variables
 	concurrentReconcileStr := os.Getenv(EnvConcurrentReconcile)
 	recordStatisticsStr := os.Getenv(EnvRecordStatistics)
+	operationTimeoutStr := os.Getenv(EnvOperationTimeout)
 
 	// Make sure the required variables are present
 	var missing []string
@@ -87,6 +91,16 @@ func readControllerEnvVars() (ControllerParameters, error) {
 		r.concurrentReconcile = 1
 	}
 
+	if operationTimeoutStr != "" {
+		r.operationTimeout, err = time.ParseDuration(operationTimeoutStr)
+		if err != nil {
+			return r, fmt.Errorf("Failed to parse %v=%v as duration: %v", EnvOperationTimeout, operationTimeoutStr, err)
+		}
+	}
+	if r.operationTimeout <= 0 {
+		r.operationTimeout = 5 * time.Second // Default value
+	}
+
 	if recordStatisticsStr != "" {
 		r.recordStatistics, err = strconv.ParseBool(recordStatisticsStr)
 		if err != nil {
@@ -101,6 +115,7 @@ func readControllerEnvVars() (ControllerParameters, error) {
 	log.Infof("%v: %v = %v", "pod IP", EnvOwnPodIp, r.ownPodIP)
 	log.Infof("%v: %v = %v", "REST API port", EnvRestApiPort, r.apiPort)
 	log.Infof("%v: %v = %v", "Concurrent reconcile routines", EnvConcurrentReconcile, r.concurrentReconcile)
+	log.Infof("%v: %v = %v", "Operation Timeout", EnvOperationTimeout, r.operationTimeout)
 	log.Infof("%v: %v = %v", "Record statistics", EnvRecordStatistics, r.recordStatistics)
 	return r, nil
 }

@@ -48,9 +48,10 @@ type BitflowReconciler struct {
 	apiPort   int
 	idLabels  map[string]string
 
-	pods      *ManagedPods
-	config    *config.Config
-	statistic *ReconcileStatistics
+	pods          *ManagedPods
+	modifications *ModificationCache
+	config        *config.Config
+	statistic     *ReconcileStatistics
 
 	recurringReconcileStarted sync.Once
 	lastSpawnRoutine          time.Time
@@ -62,15 +63,17 @@ func startReconciler(mgr manager.Manager, watchNamespace string) error {
 		return err
 	}
 
+	cl := mgr.GetClient()
 	reconciler := &BitflowReconciler{
-		client:    mgr.GetClient(),
-		scheme:    mgr.GetScheme(), // include the cache for sync-function
-		cache:     mgr.GetCache(),
-		pods:      NewManagedPods(),
-		namespace: watchNamespace,
-		ownPodIP:  params.ownPodIP,
-		apiPort:   params.apiPort,
-		idLabels:  params.controllerIdLabels,
+		client:        cl,
+		scheme:        mgr.GetScheme(), // include the cache for sync-function
+		cache:         mgr.GetCache(),
+		pods:          NewManagedPods(),
+		modifications: NewModificationCache(cl, params.operationTimeout),
+		namespace:     watchNamespace,
+		ownPodIP:      params.ownPodIP,
+		apiPort:       params.apiPort,
+		idLabels:      params.controllerIdLabels,
 	}
 	if params.recordStatistics {
 		reconciler.statistic = new(ReconcileStatistics)
@@ -156,7 +159,7 @@ func (r *BitflowReconciler) addPodWatcher(ctl controller.Controller) error {
 						}}}
 				} else {
 					log.Warnf("Controlled pod '%v' does not contain label '%v'. Deleting pod...", pod.Name, bitflowv1.LabelStepName)
-					r.deleteObject(pod, "Failed to delete controlled pod '%v' with missing '%v' label", pod.Name, bitflowv1.LabelStepName)
+					r.deletePod(pod, nil, "missing label "+bitflowv1.LabelStepName)
 				}
 			}
 			return
@@ -187,7 +190,7 @@ func (r *BitflowReconciler) addSourceWatcher(ctl controller.Controller) error {
 						}})
 				} else {
 					log.Warnf("Bogus controlled source '%v' does not contain label '%v'. Deleting source...", source.Name, bitflowv1.LabelStepName)
-					r.deleteObject(source, "Failed to delete controlled source '%v' with missing '%v' label", source.Name, bitflowv1.LabelStepName)
+					r.deleteSource(source, nil, "missing label "+bitflowv1.LabelStepName)
 				}
 			}
 

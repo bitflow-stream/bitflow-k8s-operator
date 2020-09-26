@@ -103,16 +103,16 @@ func (r *BitflowReconciler) ensurePodsForStep(stepName string, pods map[string]*
 }
 
 func (r *BitflowReconciler) spawnPod(pod *PodStatus) {
+	created, err := r.modifications.Create(pod.pod, "pod", pod.pod.GetName())
 	logger := pod.Log()
-	if pod.respawning {
-		logger.Info("Respawning pod")
-	} else {
-		logger.Info("Spawning pod")
-	}
-	err := r.client.Create(context.TODO(), pod.pod)
 	if err != nil {
 		logger.Errorf("Error spawning pod: %v", err)
-	} else {
+	} else if created {
+		if pod.respawning {
+			logger.Info("Respawning pod")
+		} else {
+			logger.Info("Spawning pod")
+		}
 		r.pods.MarkRespawning(pod.pod, false)
 	}
 }
@@ -144,6 +144,6 @@ func (r *BitflowReconciler) cleanupDanglingPods(expectedSteps []string) {
 
 	// ... and delete them one by one
 	for _, pod := range danglingPods.Items {
-		r.deletePod(&pod, log.WithField("pod", pod.Name), "dangling")
+		r.deletePod(&pod, nil, "dangling")
 	}
 }

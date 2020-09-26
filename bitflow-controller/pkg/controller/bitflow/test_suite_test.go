@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/antongulenko/golib"
 	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
@@ -76,9 +77,10 @@ func (s *BitflowControllerTestHelpers) initReconciler(objects ...runtime.Object)
 		ownPodIP:  "",
 		apiPort:   0,
 
-		pods:      NewManagedPods(),
-		config:    conf,
-		statistic: nil,
+		modifications: NewModificationCache(cl, 5*time.Second),
+		pods:          NewManagedPods(),
+		config:        conf,
+		statistic:     nil,
 	}
 }
 

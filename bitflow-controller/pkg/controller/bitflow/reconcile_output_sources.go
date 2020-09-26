@@ -63,28 +63,28 @@ func (r *BitflowReconciler) reconcileOutputSources() {
 
 	// Check existing sources and delete those that are not necessary. Try to update instead of re-creating, if possible.
 	for _, existing := range allOutputSources {
-		deleteSource := false
+		deleteSourceReason := ""
 		if required, ok := requiredSources[existing.Name]; ok {
 			if r.compareSources(required.source, existing) == "" || required.waitingForIp {
 				delete(requiredSources, existing.Name)
 			} else if r.canSourceBeUpdated(required.source, existing) {
 				// Update source without deleting it
 				delete(requiredSources, existing.Name)
-				required.logger.Info("Updating output source")
-				if err := r.client.Update(context.TODO(), existing); err != nil {
+				updated, err := r.modifications.Update(existing, "source", existing.Name)
+				if err != nil {
 					required.logger.Errorln("Failed to update output source:", err)
+				} else if updated {
+					required.logger.Info("Updating output source")
 				}
 			} else {
 				// Updating the source is not possible. Delete it and recreate it afterwards.
-				deleteSource = true
-				required.logger.Info("Re-creating output source")
+				deleteSourceReason = "re-create output"
 			}
 		} else {
-			log.WithFields(log.Fields{"source": existing.Name}).Info("Deleting dangling output source")
-			deleteSource = true
+			deleteSourceReason = "dangling output"
 		}
-		if deleteSource {
-			r.deleteObject(existing, "Failed to delete output source")
+		if deleteSourceReason != "" {
+			r.deleteSource(existing, nil, deleteSourceReason)
 		}
 	}
 
@@ -94,9 +94,11 @@ func (r *BitflowReconciler) reconcileOutputSources() {
 			continue
 		}
 
-		source.logger.Info("Creating output source")
-		if err := r.client.Create(context.TODO(), source.source); err != nil {
+		created, err := r.modifications.Create(source.source, "source", source.source.Name)
+		if err != nil {
 			source.logger.Errorln("Error creating output source:", err)
+		} else if created {
+			source.logger.Info("Creating output source")
 		}
 	}
 }
