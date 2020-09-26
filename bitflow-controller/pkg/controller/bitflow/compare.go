@@ -72,8 +72,10 @@ func (r *BitflowReconciler) compareContainers(container1, container2 *corev1.Con
 		container.Env = nil
 		container.EnvFrom = nil
 		container.Resources = corev1.ResourceRequirements{}
-		// Ignore VolumeMounts, because Kubernetes adds some automatically. TODO should still be checked somehow.
+		// Ignore the following fields, because Kubernetes populates them automatically. TODO should still be checked somehow.
 		container.VolumeMounts = nil
+		container.TerminationMessagePolicy = ""
+		container.TerminationMessagePath = ""
 		return container
 	}
 	return r.compare(clean(container1), clean(container2), "spec")
