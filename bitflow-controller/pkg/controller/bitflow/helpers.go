@@ -10,7 +10,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -22,6 +21,15 @@ func (r *BitflowReconciler) waitForCacheSync() {
 	close(stopper)
 }
 
+func (r *BitflowReconciler) deleteSource(source *bitflowv1.BitflowSource, logger *log.Entry, reason string) bool {
+	deleted, err := r.modifications.Delete(source, "source", source.Name)
+	if logger == nil {
+		logger = log.WithFields(nil)
+	}
+	logger = logger.WithField("source", source.Name)
+	return r.logDeletion(deleted, err, "source", reason, logger)
+}
+
 func (r *BitflowReconciler) deletePod(pod *corev1.Pod, logger *log.Entry, reason string) bool {
 	if !common.IsBeingDeleted(pod) {
 		gracePeriod := r.config.GetDeleteGracePeriod()
@@ -30,15 +38,29 @@ func (r *BitflowReconciler) deletePod(pod *corev1.Pod, logger *log.Entry, reason
 			delOpt = client.GracePeriodSeconds(int64(gracePeriod.Seconds()))
 		}
 
-		logger = logger.WithField("pod", pod.Name)
-		logger.Infof("Deleting pod (%v)", reason)
-		if err := r.client.Delete(context.TODO(), pod, delOpt); err != nil {
-			logger.Errorf("Failed to delete pod (%v): %v", reason, err)
-		} else {
-			return true
+		deleted, err := r.modifications.Delete(pod, "pod", pod.Name, delOpt)
+		if logger == nil {
+			logger = log.WithFields(nil)
 		}
+		logger = logger.WithField("pod", pod.Name)
+		return r.logDeletion(deleted, err, "pod", reason, logger)
 	}
 	return false
+}
+
+func (r *BitflowReconciler) logDeletion(deleted bool, err error, objectKind, reason string, logger *log.Entry) bool {
+	if err != nil {
+		deleted = true
+		level := log.ErrorLevel
+		if errors.IsNotFound(err) {
+			level = log.DebugLevel
+			err = nil
+		}
+		logger.Logf(level, "Failed to delete %v (%v): %v", objectKind, reason, err)
+	} else if deleted {
+		logger.Infof("Deleting %v (%v)", objectKind, reason)
+	}
+	return deleted && err == nil
 }
 
 func (r *BitflowReconciler) listPodsForStep(stepName string) (*corev1.PodList, error) {
@@ -104,18 +126,4 @@ func (r *BitflowReconciler) listMatchingSteps(source *bitflowv1.BitflowSource) (
 		}
 	}
 	return matchedSteps, nil
-}
-
-func (r *BitflowReconciler) deleteObject(obj runtime.Object, errMsg string, fmtParams ...interface{}) (ok bool) {
-	ok = true
-	if err := r.client.Delete(context.TODO(), obj); err != nil {
-		level := log.ErrorLevel
-		if errors.IsNotFound(err) {
-			level = log.DebugLevel
-		} else {
-			ok = false
-		}
-		log.StandardLogger().Logf(level, errMsg+": %v", append(fmtParams, err)...)
-	}
-	return
 }
