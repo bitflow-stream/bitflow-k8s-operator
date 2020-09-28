@@ -67,10 +67,12 @@ func (r *BitflowReconciler) reconcileOutputSources() {
 		if required, ok := requiredSources[existing.Name]; ok {
 			if r.compareSources(required.source, existing) == "" || required.waitingForIp {
 				delete(requiredSources, existing.Name)
-			} else if r.canSourceBeUpdated(required.source, existing) {
-				// Update source without deleting it
+			} else if sourceMetaDiff := r.compareSourceMetadata(required.source, existing); sourceMetaDiff == "" {
+				// Update source without deleting it: only the .Spec of the source differs
 				delete(requiredSources, existing.Name)
-				updated, err := r.modifications.Update(existing, "source", existing.Name)
+				// Setting this value is required for an update operation
+				required.source.ResourceVersion = existing.ResourceVersion
+				updated, err := r.modifications.Update(required.source, "source", required.source.Name)
 				if err != nil {
 					required.logger.Errorln("Failed to update output source:", err)
 				} else if updated {
@@ -78,7 +80,7 @@ func (r *BitflowReconciler) reconcileOutputSources() {
 				}
 			} else {
 				// Updating the source is not possible. Delete it and recreate it afterwards.
-				deleteSourceReason = "re-create output"
+				deleteSourceReason = "re-create output, " + sourceMetaDiff
 			}
 		} else {
 			deleteSourceReason = "dangling output"
@@ -101,17 +103,6 @@ func (r *BitflowReconciler) reconcileOutputSources() {
 			source.logger.Info("Creating output source")
 		}
 	}
-}
-
-func (r *BitflowReconciler) compareSources(source1, source2 *bitflowv1.BitflowSource) string {
-	return r.compareObjects(source1.TypeMeta, source2.TypeMeta, source1.ObjectMeta, source2.ObjectMeta, source1.Spec, source2.Spec)
-}
-
-func (r *BitflowReconciler) canSourceBeUpdated(required, existing *bitflowv1.BitflowSource) bool {
-	// Simple update is only possible, if the .Spec field is the only changed field. The TypeMeta, ObjectMeta and Status require deletion of the object.
-	// TODO check if Labels can be updated without deletion.
-
-	return r.compareMetaData(required.TypeMeta, existing.TypeMeta, required.ObjectMeta, existing.ObjectMeta) == ""
 }
 
 func createOutputSource(step *bitflowv1.BitflowStep, pod *corev1.Pod, out *bitflowv1.StepOutput, matchedInputSources []*bitflowv1.BitflowSource, extraLabels map[string]string) *bitflowv1.BitflowSource {

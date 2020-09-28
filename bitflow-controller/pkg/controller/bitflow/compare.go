@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	bitflowv1 "github.com/bitflow-stream/bitflow-k8s-operator/bitflow-controller/pkg/apis/bitflow/v1"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -74,6 +76,7 @@ func (r *BitflowReconciler) compareContainers(container1, container2 *corev1.Con
 		container.Resources = corev1.ResourceRequirements{}
 		// Ignore the following fields, because Kubernetes populates them automatically. TODO should still be checked somehow.
 		container.VolumeMounts = nil
+		container.VolumeDevices = nil
 		container.TerminationMessagePolicy = ""
 		container.TerminationMessagePath = ""
 		return container
@@ -114,7 +117,7 @@ func (r *BitflowReconciler) compareContainerEnv(env1, env2 []corev1.EnvVar) stri
 	}
 
 	if !reflect.DeepEqual(map1, map2) {
-		return "container-env"
+		return "env"
 	}
 	return ""
 }
@@ -130,9 +133,25 @@ func (r *BitflowReconciler) compareContainerEnvFrom(envFrom1, envFrom2 []corev1.
 	}
 
 	if !reflect.DeepEqual(map1, map2) {
-		return "container-env-from"
+		return "env-from"
 	}
 	return ""
+}
+
+func (r *BitflowReconciler) compareSources(source1, source2 *bitflowv1.BitflowSource) string {
+	if diff := r.compareSourceMetadata(source1, source2); diff != "" {
+		return diff
+	}
+	return r.compare(source1.Spec, source2.Spec, "spec")
+}
+
+func (r *BitflowReconciler) compareSourceMetadata(source1, source2 *bitflowv1.BitflowSource) string {
+	// TODO Ignore the TypeMeta for sources, because Kubernetes returns empty values sometimes (inconsistently).
+	x := r.compareMetaData(metav1.TypeMeta{}, metav1.TypeMeta{}, source1.ObjectMeta, source2.ObjectMeta)
+	if x == "TypeMeta" {
+		log.Warnf("TYPE required: %v. TYPE existing: %v", source1.TypeMeta, source2.TypeMeta)
+	}
+	return x
 }
 
 func (r *BitflowReconciler) compareObjects(type1, type2 metav1.TypeMeta, meta1, meta2 metav1.ObjectMeta, spec1, spec2 interface{}) string {

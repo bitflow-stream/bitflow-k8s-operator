@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -75,8 +76,9 @@ func (c *ModificationCache) performModification(cache cacheMap, otherCaches []ca
 		cache[objKind] = kindCache
 	}
 
-	operationTime := kindCache[name]
-	if c.operationTimeout <= 0 || operationTime.IsZero() || operationTime.Add(c.operationTimeout).Before(now) {
+	operationTimestamp := kindCache[name]
+	timeSinceOperation := now.Sub(operationTimestamp)
+	if c.operationTimeout <= 0 || operationTimestamp.IsZero() || timeSinceOperation > c.operationTimeout {
 		// Operation not yet performed or timed out
 		if err := modification(); err != nil {
 			// Error: do not refresh the operation timestamp
@@ -94,6 +96,7 @@ func (c *ModificationCache) performModification(cache cacheMap, otherCaches []ca
 		}
 	} else {
 		// Operation is repeated, ignore for now, until it times out
+		log.WithFields(log.Fields{"kind": objKind, "name": name}).Debugf("Ignoring modification operation, because it occurred %v ago")
 		return false, nil
 	}
 }

@@ -21,12 +21,14 @@ func (r *BitflowReconciler) assignPodResources(nodes map[string]*corev1.Node) {
 		podsOnNodes := make(map[string]map[string]*PodStatus)
 		for _, pod := range r.pods.pods {
 			if targetNode := pod.TargetNode(); targetNode != "" {
-				pods, ok := podsOnNodes[targetNode]
-				if !ok {
-					pods = make(map[string]*PodStatus)
-					podsOnNodes[targetNode] = pods
+				if _, nodeExists := nodes[targetNode]; nodeExists {
+					pods, ok := podsOnNodes[targetNode]
+					if !ok {
+						pods = make(map[string]*PodStatus)
+						podsOnNodes[targetNode] = pods
+					}
+					pods[pod.pod.Name] = pod
 				}
-				pods[pod.pod.Name] = pod
 			}
 		}
 

@@ -36,8 +36,12 @@ func (r *BitflowReconciler) ensurePods() {
 		for _, pod := range r.pods.pods {
 			// Copy the target node and resource list into the Pod spec
 			// DeepCopy-ing the pod should not be necessary
-			common.SetTargetNode(pod.pod, pod.targetNode)
-			patchPodResourceLimits(pod.pod, pod.resources)
+			if pod.targetNode != nil {
+				common.SetTargetNode(pod.pod, pod.targetNode)
+			}
+			if pod.resources != nil {
+				patchPodResourceLimits(pod.pod, pod.resources)
+			}
 
 			pods, ok := stepsAndPods[pod.step.Name]
 			if !ok {
