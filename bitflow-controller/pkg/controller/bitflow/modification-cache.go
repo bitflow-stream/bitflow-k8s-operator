@@ -96,7 +96,8 @@ func (c *ModificationCache) performModification(cache cacheMap, otherCaches []ca
 		}
 	} else {
 		// Operation is repeated, ignore for now, until it times out
-		log.WithFields(log.Fields{"kind": objKind, "name": name}).Debugf("Ignoring modification operation, because it occurred %v ago")
+		log.WithFields(log.Fields{"kind": objKind, "name": name}).
+				Debugf("Ignoring modification operation, because it occurred %v ago", timeSinceOperation)
 		return false, nil
 	}
 }
